@@ -8,7 +8,12 @@ export const routes: Routes = [
   },
   {
     path: 'home',
-    loadComponent: () => import('./pages/home/home').then((module) => module.Home),
+    loadComponent: () => import('./pages/home/home').then((module) => module.Book),
+  },
+
+  {
+    path: 'book',
+    loadComponent: () => import('./pages/book/book').then((module) => module.Book),
   },
   {
     path: '**',
