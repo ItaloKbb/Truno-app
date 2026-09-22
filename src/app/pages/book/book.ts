@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { mockCard } from '../../models/mock/card.mock';
+import { mockCards } from '../../models/mock/card.mock';
 
 @Component({
   imports: [],
@@ -8,5 +8,5 @@ import { mockCard } from '../../models/mock/card.mock';
   templateUrl: './book.html',
 })
 export class Book {
-  protected readonly cards = [mockCard];
+  protected readonly cards = mockCards;
 }
