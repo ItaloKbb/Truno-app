@@ -9,5 +9,5 @@ import { mockCard } from '../../models/mock/card.mock';
   templateUrl: './book.html',
 })
 export class Book {
-  protected readonly cards = mockCard;
+  protected readonly cards = [mockCard];
 }
