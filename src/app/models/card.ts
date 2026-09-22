@@ -3,4 +3,6 @@ export default interface Card {
     naipe: string;
     valor: string;
     url: string;
+    spriteIndex?: number;
+    spriteOffset?: string;
 }
