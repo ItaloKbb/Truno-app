@@ -213,7 +213,7 @@ describe('CardService', () => {
         id: 'card-h-a',
         naipe: 'COPAS',
         valor: 'A',
-        url: '/assets/cards/AH.png',
+        url: '/assets/cards/01-copas.png',
       },
     ]);
   });

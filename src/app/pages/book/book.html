@@ -4,17 +4,12 @@
   @for (card of cards; track card.id) {
   <div class="hover-3d">
     <!-- content -->
-    <figure class="card-sprite w-60 overflow-hidden rounded-2xl p-2"
-    role="img"
-    [attr.aria-label]="card.valor + ' de ' + card.naipe.toLocaleUpperCase()"
-    >
-      <img 
-        aria-hidden="true"
-        class="card-sprite__sheet"
+    <figure class="w-60 overflow-hidden rounded-2xl p-2">
+      <img
+        class="block h-auto w-full"
         [src]="card.url"
-        alt=""
+        [alt]="card.valor + ' de ' + card.naipe.toLowerCase()"
         loading="lazy"
-        [style.left]="card.spriteOffset"
       />
     </figure>
     <!-- 8 empty divs needed for the 3D effect -->
