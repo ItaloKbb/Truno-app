@@ -16,6 +16,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/book/book').then((module) => module.Book),
   },
   {
+    path: 'lobby',
+    loadComponent: () => import('./pages/lobby/lobby').then((module) => module.Lobby),
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },
