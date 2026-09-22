@@ -1,0 +1,93 @@
+<main class="profile-page">
+  <header class="topbar">
+    <a class="brand" routerLink="/home" aria-label="Truno - página inicial">
+      <span class="brand-mark">T</span>
+      <span>TRUNO</span>
+    </a>
+
+    <nav aria-label="Navegação principal">
+      <a routerLink="/home">Início</a>
+      <a routerLink="/book">Cartas</a>
+      <a class="active" routerLink="/perfil">Perfil</a>
+    </nav>
+
+    <button class="notification" type="button" aria-label="Notificações">⌁<span></span></button>
+  </header>
+
+  <div class="page-shell">
+    <aside class="sidebar">
+      <div class="mini-user">
+        <div class="avatar small">{{ user.initials }}</div>
+        <div><strong>{{ user.displayName }}</strong><small>&#64;{{ user.username }}</small></div>
+      </div>
+
+      <nav class="profile-nav" aria-label="Seções do perfil">
+        <a class="selected" routerLink="/perfil"><span>◈</span>Visão geral</a>
+        <a routerLink="/perfil/colecao"><span>▦</span>Minha coleção</a>
+        <a routerLink="/perfil/conquistas"><span>★</span>Conquistas</a>
+        <a routerLink="/perfil/configuracoes"><span>⚙</span>Configurações</a>
+      </nav>
+
+      <div class="season-card">
+        <span>Temporada 01</span>
+        <strong>Faltam 18 dias</strong>
+        <div class="season-progress"><i></i></div>
+        <small>Nível 18 de 30</small>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="profile-hero">
+        <div class="avatar large">{{ user.initials }}<button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
+        <div class="identity">
+          <div class="name-line"><h1>{{ user.displayName }}</h1><span class="verified" title="Perfil verificado">✓</span></div>
+          <p>&#64;{{ user.username }}</p>
+          <p class="bio">Colecionador, estrategista e pronto para a próxima partida.</p>
+          <div class="tags"><span>⚡ Competitivo</span><span>Desde set. 2026</span></div>
+        </div>
+        <a class="edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
+      </div>
+
+      <section class="stats" aria-label="Estatísticas do jogador">
+        <article><span class="stat-icon violet">♜</span><div><small>Partidas jogadas</small><strong>128</strong><em>+12 esta semana</em></div></article>
+        <article><span class="stat-icon green">↗</span><div><small>Taxa de vitória</small><strong>68%</strong><em>87 vitórias</em></div></article>
+        <article><span class="stat-icon orange">♨</span><div><small>Sequência atual</small><strong>7</strong><em>Melhor: 12</em></div></article>
+        <article><span class="stat-icon blue">✦</span><div><small>Experiência total</small><strong>1.250</strong><em>XP conquistados</em></div></article>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="panel collection" id="colecao">
+          <div class="panel-head"><div><p class="eyebrow">COLEÇÃO</p><h2>Seu progresso</h2></div><a routerLink="/perfil/colecao">Ver coleção →</a></div>
+          <div class="collection-body">
+            <div class="ring"><strong>62<small>%</small></strong></div>
+            <div class="collection-copy"><strong>186 <span>de 300 cartas</span></strong><p>Você está a 14 cartas de desbloquear a próxima recompensa.</p><div class="rarities"><span><i class="common"></i>Comum <b>92</b></span><span><i class="rare"></i>Rara <b>61</b></span><span><i class="epic"></i>Épica <b>26</b></span><span><i class="legendary"></i>Lendária <b>7</b></span></div></div>
+          </div>
+        </section>
+
+        <section class="panel goal">
+          <p class="eyebrow">PRÓXIMA META</p><h2>Vença 3 partidas ranqueadas</h2><p class="goal-description">Continue jogando para receber a recompensa semanal.</p>
+          <div class="goal-progress"><span><i></i></span><strong>2/3</strong></div>
+          <div class="reward"><span>◈</span><div><small>RECOMPENSA</small><strong>150 moedas + Carta rara</strong></div></div>
+        </section>
+
+        <section class="panel achievements" id="conquistas">
+          <div class="panel-head"><div><p class="eyebrow">CONQUISTAS</p><h2>Desbloqueadas recentemente</h2></div><a routerLink="/perfil/conquistas">Ver todas →</a></div>
+          <div class="achievement-list">
+            <article><span class="medal gold">★</span><div><strong>Primeira lendária</strong><p>Obteve sua primeira carta lendária</p></div><time>Hoje</time></article>
+            <article><span class="medal purple">♛</span><div><strong>Mestre estrategista</strong><p>Venceu 10 partidas consecutivas</p></div><time>3 dias</time></article>
+            <article><span class="medal blue">◉</span><div><strong>Colecionador</strong><p>Coletou 150 cartas diferentes</p></div><time>1 semana</time></article>
+          </div>
+        </section>
+
+        <section class="panel activity">
+          <div class="panel-head"><div><p class="eyebrow">ATIVIDADE</p><h2>Partidas recentes</h2></div><a routerLink="/perfil/historico">Histórico →</a></div>
+          <div class="match-list">
+            <article><span class="result win">V</span><div><strong>Vitória contra @ana</strong><p>Modo ranqueado · 1.248 XP</p></div><time>Há 2 h</time></article>
+            <article><span class="result loss">D</span><div><strong>Derrota contra @pedro</strong><p>Modo ranqueado · 1.231 XP</p></div><time>Ontem</time></article>
+            <article><span class="result win">V</span><div><strong>Vitória contra @marina</strong><p>Desafio rápido · 1.240 XP</p></div><time>Ontem</time></article>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+</main>
