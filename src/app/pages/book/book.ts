@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { mock } from 'node:test';
+import { mockCard } from '../../models/mock/card.mock';
 
 @Component({
   imports: [],
@@ -6,4 +8,6 @@ import { Component } from '@angular/core';
   styleUrl: './book.css',
   templateUrl: './book.html',
 })
-export class Book {}
+export class Book {
+  protected readonly cards = mockCard;
+}
