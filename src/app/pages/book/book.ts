@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { mock } from 'node:test';
 import { mockCard } from '../../models/mock/card.mock';
 
 @Component({
