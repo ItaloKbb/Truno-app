@@ -29,4 +29,4 @@ export const mockCards: Card[] = naipes.flatMap((naipe) =>
     })),
 );
 
-export const mockCard: Card = mockCards[0];
+export const mockCard: Card[] = mockCards;
