@@ -17,7 +17,7 @@
   <div class="page-shell">
     <aside class="sidebar">
       <div class="mini-user">
-        <div class="avatar small">{{ user.initials }}</div>
+        <app-avatar [name]="user.displayName" [avatarUrl]="user.avatarUrl" size="sm" />
         <div><strong>{{ user.displayName }}</strong><small>&#64;{{ user.username }}</small></div>
       </div>
 
@@ -38,14 +38,18 @@
 
     <section class="content">
       <div class="profile-hero">
-        <div class="avatar large">{{ user.initials }}<button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
+        <div class="profile-avatar"><app-avatar [name]="user.displayName" [avatarUrl]="user.avatarUrl" size="lg" /><button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
         <div class="identity">
           <div class="name-line"><h1>{{ user.displayName }}</h1><span class="verified" title="Perfil verificado">✓</span></div>
           <p>&#64;{{ user.username }}</p>
           <p class="bio">Colecionador, estrategista e pronto para a próxima partida.</p>
           <div class="tags"><span>⚡ Competitivo</span><span>Desde set. 2026</span></div>
         </div>
-        <a class="edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
+        <div class="profile-actions">
+          <a class="edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
+          <button type="button" class="account-button" routerLink="/perfil/configuracoes">Trocar conta</button>
+          <button type="button" class="account-button account-button-danger" routerLink="/perfil/configuracoes">Excluir conta</button>
+        </div>
       </div>
 
       <section class="stats" aria-label="Estatísticas do jogador">

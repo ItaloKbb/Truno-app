@@ -1,0 +1,7 @@
+<span class="avatar" [class]="'avatar avatar-' + size" [attr.aria-label]="'Avatar de ' + name" role="img">
+  @if (avatarUrl && !imageFailed) {
+    <img [src]="avatarUrl" [alt]="'Foto de perfil de ' + name" (error)="onImageError()" />
+  } @else {
+    <span class="initials">{{ initials }}</span>
+  }
+</span>

@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { profileUser } from './profile.data';
+import { Avatar } from '../../components/avatar/avatar';
+import { ProfileStorage } from '../../services/profile-storage';
 @Component({
-  imports: [RouterLink],
+  imports: [Avatar, RouterLink],
   selector: 'app-profile',
   styleUrl: './profile.css',
   templateUrl: './profile.html',
 })
 export class Profile {
-  protected readonly user = profileUser;
+  protected readonly user = inject(ProfileStorage).loadProfile();
 }
