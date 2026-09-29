@@ -1,63 +1,63 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { catchError, of, switchMap } from 'rxjs';
-import { AuthService } from '../../services/modules/auth.service';
-import { LobbyService } from '../../services/lobby.service';
+import { Router } from '@angular/router';
+import type { Observable } from 'rxjs';
+import type { CreateGameInput, GameState } from '../../domain/truno-api';
+import { GameService } from '../../services/modules/game.service';
 
 @Component({
-	imports: [AsyncPipe],
 	selector: 'app-lobby',
 	templateUrl: './lobby.html',
 	styleUrl: './lobby.css',
 })
 export class Lobby {
-	private readonly lobby = inject(LobbyService);
-	private readonly auth = inject(AuthService);
-	private readonly reload = signal(0);
+	private readonly games = inject(GameService);
+	private readonly router = inject(Router);
 
-	protected readonly loadError = signal('');
-	protected readonly creating = signal(false);
-	protected readonly createError = signal('');
-	protected readonly rooms$ = toObservable(this.reload).pipe(
-		switchMap(() => {
-			this.loadError.set('');
-			return this.lobby.getAll().pipe(
-				catchError((error: unknown) => {
-					this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as mesas.');
-					return of(null);
-				}),
-			);
-		}),
-	);
+	protected readonly pending = signal(false);
+	protected readonly errorMessage = signal('');
 
-	protected createRoom(name: string): void {
-		const hostId = this.auth.session()?.user.id;
-		if (hostId === undefined || name.trim().length < 3) {
-			this.createError.set('Entre na conta e escolha um nome com pelo menos 3 letras.');
+	protected createGame(name: string): void {
+		const input: CreateGameInput = {
+			name: name.trim(),
+			maxPlayers: 4,
+			initialCards: 3,
+			roundReward: 10,
+			emptyHandReward: 5,
+			trophyPrice: 20,
+		};
+
+		if (input.name.length < 3) {
+			this.errorMessage.set('Digite um nome com pelo menos 3 caracteres.');
 			return;
 		}
 
-		this.creating.set(true);
-		this.createError.set('');
-		this.lobby
-			.create({
-				name: name.trim(),
-				hostId: String(hostId),
-				visibility: 'PUBLICA',
-				maxPlayers: 2,
-				pointsToWin: 12,
-			})
-			.subscribe({
-				next: () => {
-					this.creating.set(false);
-					this.createError.set('');
-					this.reload.set(this.reload() + 1);
-				},
-				error: (error: unknown) => {
-					this.creating.set(false);
-					this.createError.set(error instanceof Error ? error.message : 'Falha ao criar a mesa.');
-				},
-			});
+		this.run(this.games.create(input));
+	}
+
+	protected accessGame(code: string): void {
+		if (!code.trim()) {
+			this.errorMessage.set('Informe o código da partida.');
+			return;
+		}
+
+		this.run(this.games.access(code));
+	}
+
+	private run(request: Observable<GameState>): void {
+		this.pending.set(true);
+		this.errorMessage.set('');
+
+		request.subscribe({
+			next: (game) => {
+				this.pending.set(false);
+				void this.router.navigate(['/partida', game.id]);
+			},
+			error: (error: unknown) => {
+				this.pending.set(false);
+				this.errorMessage.set(
+					error instanceof Error ? error.message : 'Não foi possível abrir a partida.',
+				);
+			},
+		});
 	}
 }

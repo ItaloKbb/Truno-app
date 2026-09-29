@@ -1,31 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { AuthService } from '../../services/modules/auth.service';
-import { LobbyService } from '../../services/lobby.service';
+import { Router } from '@angular/router';
+import type { GameState } from '../../domain/truno-api';
+import { GameService } from '../../services/modules/game.service';
 import { Lobby } from './lobby';
 
 describe('Lobby', () => {
   let fixture: ComponentFixture<Lobby>;
-  let auth: { session: ReturnType<typeof vi.fn> };
-  let lobby: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
+  let games: { create: ReturnType<typeof vi.fn>; access: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    auth = { session: vi.fn(() => ({ user: { id: 42 } })) };
-    lobby = {
-      getAll: vi.fn(() => of([])),
-      create: vi.fn(() => of({})),
+    games = {
+      create: vi.fn(() => of({ id: 42 } as GameState)),
+      access: vi.fn(() => of({ id: 42 } as GameState)),
     };
+    router = { navigate: vi.fn(() => Promise.resolve(true)) };
 
     await TestBed.configureTestingModule({
       imports: [Lobby],
       providers: [
-        { provide: AuthService, useValue: auth },
-        { provide: LobbyService, useValue: lobby },
+        { provide: GameService, useValue: games },
+        { provide: Router, useValue: router },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(Lobby);
-    fixture.detectChanges();
-    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -33,44 +32,41 @@ describe('Lobby', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('loads and displays the rooms from the service', async () => {
-    lobby.getAll.mockReturnValue(
-      of([
-        {
-          id: 'room-1',
-          name: 'Mesa rápida',
-          hostId: '42',
-          visibility: 'PUBLICA',
-          maxPlayers: 2,
-          playerIds: ['42'],
-          pointsToWin: 12,
-          status: 'ABERTA',
-        },
-      ]),
-    );
-    fixture.componentInstance['reload'].set(1);
-    await fixture.whenStable();
-    fixture.detectChanges();
+  it('creates a game and navigates to its route', () => {
+    const nameInput = fixture.nativeElement.querySelector('#game-name') as HTMLInputElement;
+    nameInput.value = '  Mesa do Lucas  ';
+    const createButton = fixture.nativeElement.querySelector('#create-form button') as HTMLButtonElement;
+    createButton.click();
 
-    expect(lobby.getAll).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Mesa rápida');
+    expect(games.create).toHaveBeenCalledWith({
+      name: 'Mesa do Lucas',
+      maxPlayers: 4,
+      initialCards: 3,
+      roundReward: 10,
+      emptyHandReward: 5,
+      trophyPrice: 20,
+    });
+    expect(router.navigate).toHaveBeenCalledWith(['/partida', 42]);
   });
 
-  it('creates a room with the signed-in user and reloads the list', async () => {
-    const nameInput = fixture.nativeElement.querySelector('#room-name') as HTMLInputElement;
-    nameInput.value = 'Mesa do Lucas';
-    const form = fixture.nativeElement.querySelector('#create-room-form') as HTMLFormElement;
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await fixture.whenStable();
+  it('shows a validation error for a short game name', () => {
+    const nameInput = fixture.nativeElement.querySelector('#game-name') as HTMLInputElement;
+    nameInput.value = 'ab';
+    const createButton = fixture.nativeElement.querySelector('#create-form button') as HTMLButtonElement;
+    createButton.click();
     fixture.detectChanges();
 
-    expect(lobby.create).toHaveBeenCalledWith({
-      name: 'Mesa do Lucas',
-      hostId: '42',
-      visibility: 'PUBLICA',
-      maxPlayers: 2,
-      pointsToWin: 12,
-    });
-    expect(lobby.getAll).toHaveBeenCalledTimes(2);
+    expect(games.create).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Digite um nome com pelo menos 3 caracteres.');
+  });
+
+  it('accesses a game by code and navigates to its route', () => {
+    const codeInput = fixture.nativeElement.querySelector('#game-code') as HTMLInputElement;
+    codeInput.value = 'abc123';
+    const accessButton = fixture.nativeElement.querySelector('#access-form button') as HTMLButtonElement;
+    accessButton.click();
+
+    expect(games.access).toHaveBeenCalledWith('abc123');
+    expect(router.navigate).toHaveBeenCalledWith(['/partida', 42]);
   });
 });
