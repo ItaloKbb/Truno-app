@@ -18,3 +18,11 @@ export interface LobbyRoom {
   pointsToWin: PointsToWin;
   status: LobbyStatus;
 }
+
+export interface CreateLobbyRoom {
+  name: string;
+  hostId: string;
+  visibility: LobbyVisibility;
+  maxPlayers: TableSize;
+  pointsToWin: PointsToWin;
+}

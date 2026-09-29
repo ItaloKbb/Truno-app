@@ -1,6 +1,6 @@
 export type ProfileVisibility = 'PUBLICO' | 'AMIGOS' | 'PRIVADO';
 
-/** Perfil público descrito para a área `/perfil`. A API ainda não existe. */
+/** Perfil público da área `/perfil`, servido por `GET /api/profile`. */
 export interface Profile {
   id: string;
   displayName: string;

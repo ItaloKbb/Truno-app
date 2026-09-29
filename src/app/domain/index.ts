@@ -35,6 +35,7 @@ export {
 export {
   LOBBY_STATUSES,
   LOBBY_VISIBILITIES,
+  type CreateLobbyRoom,
   type LobbyRoom,
   type LobbyStatus,
   type LobbyVisibility,
