@@ -71,3 +71,12 @@ export {
   type TrucoCall,
 } from './stake';
 export { type CoinWallet, type User } from './user';
+export {
+  isApiMessage,
+  isAuthSession,
+  type ApiMessage,
+  type AuthSession,
+  type ForgotPasswordRequest,
+  type ForgotPasswordResponse,
+  type LoginCredentials,
+} from './auth';
