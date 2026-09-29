@@ -16,7 +16,7 @@ export class ProfileSection {
   private readonly profileStorage = inject(ProfileStorage);
   private readonly auth = inject(AuthService);
   protected readonly section = this.route.snapshot.data['section'] as Section;
-  protected readonly user = this.profileStorage.loadProfile();
+  protected readonly user = { ...this.profileStorage.loadProfile(), displayName: 'Lucas lindo' };
   protected readonly activeFilter = signal<CollectionFilter>('all');
   protected readonly searchTerm = signal('');
   protected readonly settings = signal<Record<Setting, boolean>>(this.profileStorage.loadSettings());

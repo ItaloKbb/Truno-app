@@ -31,3 +31,16 @@
 .stats article, .panel { border-color: #d7e5f1; background: #fff; box-shadow: 0 8px 22px #38658214; }.stat-icon.violet { background: #dceeff; color: #1769aa; }.stat-icon.blue { background: #dceeff; color: #1769aa; }.eyebrow { color: #2385c5; }.panel-head a { color: #1769aa; }.ring { background: radial-gradient(closest-side, #fff 78%, transparent 80% 100%), conic-gradient(#2385c5 62%, #dce8f1 0); }.collection-copy > strong span, .rarities span { color: #7690a5; }
 .goal { background: linear-gradient(135deg, #e3f2ff, #fff 75%); }.goal-progress span { background: #dce8f1; }.goal-progress i { background: #2385c5; }.reward { border-color: #d7e5f1; }.reward > span { background: #dceeff; color: #1769aa; }.panel h2, .achievement-list strong, .match-list strong { color: #17324d; }.achievement-list p, .match-list p, .achievement-list time, .match-list time { color: #7690a5; }.purple { background: #e4effa; color: #1769aa; }.blue { background: #dceeff; color: #1769aa; }
 @media (max-width: 540px) { .profile-actions { width: 100%; justify-content: stretch; }.profile-actions .edit-button, .profile-actions .account-button { flex: 1; justify-content: center; text-align: center; } }
+
+:host { --ink: #263342; --red: #d85a45; --muted: #68747a; color: var(--ink); font-family: Georgia, serif; }
+.profile-page { background: #f2efe6 repeating-linear-gradient(0deg, transparent 0 31px, #26334208 31px 32px); }
+.topbar { border-color: #273747; background: #1e3040; }.brand { color: #fff; }.brand-mark, .verified { background: var(--red); color: #fff; }
+.sidebar { border-color: #d7d0c2; background: #ebe6d9; }.profile-nav .selected, .profile-nav a:hover { color: #953e32; background: #f6ded5; }
+.season-card { border-color: #344a58; border-radius: 4px; background: #263b4a; color: #fff; }.season-card span, .season-card small { color: #c2c9c7; }
+.name-line h1 { color: var(--ink); font: 34px Georgia, serif; letter-spacing: 0; }
+.identity p { color: var(--muted); }.tags span { border-radius: 3px; color: #8e3c31; background: #f4ded3; }
+.stats article, .panel { border-color: #d9d2c4; border-radius: 4px; background: #fffdf7; box-shadow: none; }.stats article { border-top: 3px solid var(--red); }
+.stats strong, .panel h2, .collection-copy > strong { color: var(--ink); }.eyebrow { color: #bd523f; }.panel-head a { color: #9e4538; }.ring { background: radial-gradient(closest-side, #fffdf7 78%, transparent 80% 100%), conic-gradient(var(--red) var(--collection-progress, 62%), #e6dfd2 0); }
+.goal { border-color: #263b4a; background: #263b4a; color: #fff; }.goal .eyebrow { color: #f3ca65; }.goal h2, .goal-progress strong { color: #fff; }.goal-description { color: #c2c9c7; }.goal-progress i { background: #e1a94d; }
+
+.ring { background: radial-gradient(closest-side, #fff 78%, transparent 80% 100%), conic-gradient(#2385c5 var(--collection-progress, 62%), #dce8f1 0); }
