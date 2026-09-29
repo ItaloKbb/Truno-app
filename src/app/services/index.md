@@ -1,5 +1,7 @@
 # Como criar um service neste projeto
 
+Para ligar esses services às telas, use os guias em [src/app/pages/guias](../pages/guias/index.md).
+
 Um service concentra uma responsabilidade: buscar dados na API, validar a resposta e devolver um
 `Observable` tipado. O componente fica com a tela. Ele não chama `HttpClient`, não importa mock e
 não decide de onde o dado veio.

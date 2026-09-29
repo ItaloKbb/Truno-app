@@ -1,5 +1,7 @@
 # Como criar e acessar uma nova tela no Angular
 
+Depois de criar a pasta e a rota, ligue a tela ao service seguindo [os guias das telas](../guias/index.md).
+
 Este projeto usa componentes **standalone** e o padrao atual do Angular CLI. Uma tela e um
 componente localizado dentro de `src/app/pages`, registrado em `app.routes.ts` e exibido pelo
 `<router-outlet />` do componente principal.
