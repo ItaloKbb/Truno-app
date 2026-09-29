@@ -1,6 +1,2 @@
-export default interface Card {
-    id: string;
-    naipe: string;
-    valor: string;
-    url: string;
-}
+export type { Card, CardEffect, CardEffectKind, Rank, Suit } from '../domain/card';
+export type { Card as default } from '../domain/card';

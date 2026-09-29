@@ -1,8 +1,2 @@
-export default interface Skill {
-    id: string;
-    name: string;
-    description: string;
-    type: string;
-    naipe: string;
-    valor: string;
-}
+export type { Skill, SkillCategory } from '../domain/skill';
+export type { Skill as default } from '../domain/skill';

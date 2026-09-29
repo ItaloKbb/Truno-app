@@ -1,19 +1,9 @@
-import Card from "./card";
-import round from "./round";
-import user from "./user";
-
-export default interface Game {
-    id: string;
-    name: string;
-    players: player[];
-    rounds: round[];
-    status: "PENDENTE" | "EM_ANDAMENTO" | "FINALIZADO";
-    winner: user | null;
-}
-
-interface player{
-    cards: Card[];
-    user: user;
-    effect: string | null;
-    trouphies: number;
-}
+export type {
+  Game,
+  GameStatus,
+  PlayDirection,
+  PlayerSeat,
+  PointsToWin,
+  TrunoRules,
+} from '../domain/game';
+export type { Game as default } from '../domain/game';

@@ -1,17 +1,2 @@
-export default interface Shop {
-    id: string;
-    name: string;
-    status: boolean
-    itens: Item[];
-    url: string;
-    
-}
-
-interface Item {
-    id: string;
-    name: string;
-    price: number;
-    url: string;
-    strouphy: boolean;
-    power: "bomb" | "block";
-}
+export type { Shop, ShopItem, ShopPower } from '../domain/shop';
+export type { Shop as default } from '../domain/shop';

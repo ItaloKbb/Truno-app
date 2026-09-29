@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Avatar } from '../../components/avatar/avatar';
+import type { CollectionCard, CollectionFilter, ProfileSettingKey } from '../../domain/profile';
 import { ProfileStorage } from '../../services/profile-storage';
 
 type Section = 'colecao' | 'conquistas' | 'configuracoes' | 'historico' | 'editar';
-type CollectionFilter = 'all' | 'obtained' | 'missing';
-type Setting = 'notifications' | 'sounds' | 'publicProfile';
-interface Card { name: string; rarity: string; level: number; obtained: boolean; }
+type Setting = ProfileSettingKey;
+type Card = CollectionCard;
 
 @Component({ imports: [Avatar, RouterLink], selector: 'app-profile-section', styleUrl: './profile-section.css', templateUrl: './profile-section.html' })
 export class ProfileSection {

@@ -1,18 +1,13 @@
 import { Injectable } from '@angular/core';
+import type { ProfileSettings, StoredProfile } from '../domain/profile';
 import { profileUser } from '../pages/profile/profile.data';
-
-type ProfileSettings = {
-  notifications: boolean;
-  sounds: boolean;
-  publicProfile: boolean;
-};
 
 const profileStorageKey = 'truno.profile';
 const settingsStorageKey = 'truno.profile.settings';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileStorage {
-  loadProfile(): typeof profileUser {
+  loadProfile(): StoredProfile {
     if (typeof localStorage === 'undefined') return profileUser;
 
     const storedProfile = localStorage.getItem(profileStorageKey);
