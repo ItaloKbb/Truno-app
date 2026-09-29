@@ -2,43 +2,32 @@
   BASE DA TELA — o guia está em src/app/pages/guias/catalogo.md.
   Esta tela só desenha o layout. Falta ligar ao CardService.
 -->
-<main class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold">Catálogo de cartas</h1>
-  <p class="opacity-70">Baralho oficial devolvido pela API.</p>
-
-  <!-- Passo 4 do guia: mensagem de erro (role="alert") -->
-  <p role="alert" class="text-error">Mensagem de erro fica aqui.</p>
-
-  <!-- Passo 3 do guia: filtro por naipe -->
-  <div class="flex flex-wrap gap-2 py-4">
-    <button type="button" class="btn btn-sm btn-neutral">Todos</button>
-    <button type="button" class="btn btn-sm">♦ Ouros</button>
-    <button type="button" class="btn btn-sm">♠ Espadas</button>
-    <button type="button" class="btn btn-sm">♥ Copas</button>
-    <button type="button" class="btn btn-sm">♣ Paus</button>
+@if (loadError$(); as message) {
+<p role="alert">{{message}}</p>
+}@else if (cards$ | async; as cards) {
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-4 py-4">
+  @for (card of cards; track card.id) {
+  <div class="hover-3d">
+    <figure class="w-60 overflow-hidden rounded-2xl p-2">
+      <img class="block h-auto w-full" [src]="card.url" [alt]="card.valor + ' de ' + card.naipe.toLowerCase()" />
+    </figure>
+    <!-- 8 divs vazias são necessárias para o efeito 3D -->
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
   </div>
+  }@empty {
+  <p>Nenhuma carta encontrada.</p>
+  }
+</section>
 
-  <!-- Passo 2 do guia: uma carta por item da lista. Hoje há uma carta de exemplo. -->
-  <section
-    id="catalogo-de-cartas"
-    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-4 py-4"
-  >
-    <div class="hover-3d">
-      <figure class="w-60 overflow-hidden rounded-2xl p-2">
-        <img class="block h-auto w-full" src="/assets/cards/reverso.png" alt="Carta de exemplo" />
-      </figure>
-      <!-- 8 divs vazias são necessárias para o efeito 3D -->
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-    </div>
-  </section>
-
-  <!-- Passo 1 do guia: texto de carregamento -->
-  <p>Carregando cartas...</p>
-</main>
+} @else {
+<p>
+  Carregando cartas...
+</p>
+}
