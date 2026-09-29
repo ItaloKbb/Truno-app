@@ -14,11 +14,14 @@
     <button class="notification" type="button" aria-label="Notificações">⌁<span></span></button>
   </header>
 
+  @if (loadError(); as message) {
+    <div class="alert alert-error" role="alert">{{ message }}</div>
+  } @else if (overview$ | async; as overview) {
   <div class="page-shell">
     <aside class="sidebar">
       <div class="mini-user">
-        <app-avatar [name]="user.displayName" [avatarUrl]="user.avatarUrl" size="sm" />
-        <div><strong>{{ user.displayName }}</strong><small>&#64;{{ user.username }}</small></div>
+        <app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="sm" />
+        <div><strong>Lucas lindo</strong><small>&#64;{{ overview.profile.username }}</small></div>
       </div>
 
       <nav class="profile-nav" aria-label="Seções do perfil">
@@ -32,39 +35,41 @@
         <span>Temporada 01</span>
         <strong>Faltam 18 dias</strong>
         <div class="season-progress"><i></i></div>
-        <small>Nível 18 de 30</small>
+        <small>Nível {{ overview.profile.level }} de 30</small>
       </div>
     </aside>
 
     <section class="content">
       <div class="profile-hero">
-        <div class="profile-avatar"><app-avatar [name]="user.displayName" [avatarUrl]="user.avatarUrl" size="lg" /><button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
+        <div class="profile-avatar"><app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="lg" /><button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
         <div class="identity">
-          <div class="name-line"><h1>{{ user.displayName }}</h1><span class="verified" title="Perfil verificado">✓</span></div>
-          <p>&#64;{{ user.username }}</p>
-          <p class="bio">Colecionador, estrategista e pronto para a próxima partida.</p>
-          <div class="tags"><span>⚡ Competitivo</span><span>Desde set. 2026</span></div>
+          <div class="name-line"><h1>Lucas lindo</h1><span class="verified" title="Perfil verificado">✓</span></div>
+          <p>&#64;{{ overview.profile.username }}</p>
+          <p class="bio">{{ overview.profile.bio }}</p>
+          <div class="tags"><span class="badge badge-sm badge-outline">⚡ Nível {{ overview.profile.level }}</span><span class="badge badge-sm badge-outline">{{ overview.profile.coins }} moedas · {{ overview.profile.gems }} gemas</span></div>
         </div>
         <div class="profile-actions">
-          <a class="edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
-          <button type="button" class="account-button" routerLink="/perfil/configuracoes">Trocar conta</button>
-          <button type="button" class="account-button account-button-danger" routerLink="/perfil/configuracoes">Excluir conta</button>
+          <a class="btn btn-sm btn-ghost edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
+          <button type="button" class="btn btn-sm btn-ghost account-button" routerLink="/perfil/configuracoes">Trocar conta</button>
+          <button type="button" class="btn btn-sm btn-ghost account-button account-button-danger" routerLink="/perfil/configuracoes">Excluir conta</button>
         </div>
       </div>
 
-      <section class="stats" aria-label="Estatísticas do jogador">
-        <article><span class="stat-icon violet">♜</span><div><small>Partidas jogadas</small><strong>128</strong><em>+12 esta semana</em></div></article>
-        <article><span class="stat-icon green">↗</span><div><small>Taxa de vitória</small><strong>68%</strong><em>87 vitórias</em></div></article>
-        <article><span class="stat-icon orange">♨</span><div><small>Sequência atual</small><strong>7</strong><em>Melhor: 12</em></div></article>
-        <article><span class="stat-icon blue">✦</span><div><small>Experiência total</small><strong>1.250</strong><em>XP conquistados</em></div></article>
+      <section class="stats font-sans tabular-nums" aria-label="Estatísticas do jogador">
+        <article><span class="stat-icon violet">♜</span><div><small>Partidas jogadas</small><strong>{{ overview.stats.matchesPlayed }}</strong><em>{{ overview.stats.wins }} vitórias</em></div></article>
+        <article><span class="stat-icon green">↗</span><div><small>Taxa de vitória</small><strong>{{ overview.stats.winRate * 100 }}%</strong><em>{{ overview.stats.wins }} vitórias</em></div></article>
+        <article><span class="stat-icon orange">♨</span><div><small>Sequência atual</small><strong>{{ overview.stats.currentWinStreak }}</strong><em>vitórias consecutivas</em></div></article>
+        <article><span class="stat-icon blue">✦</span><div><small>Experiência total</small><strong>{{ overview.profile.experience }}</strong><em>{{ overview.profile.experienceToNextLevel }} XP para o próximo nível</em></div></article>
       </section>
 
       <div class="dashboard-grid">
         <section class="panel collection" id="colecao">
           <div class="panel-head"><div><p class="eyebrow">COLEÇÃO</p><h2>Seu progresso</h2></div><a routerLink="/perfil/colecao">Ver coleção →</a></div>
           <div class="collection-body">
-            <div class="ring"><strong>62<small>%</small></strong></div>
-            <div class="collection-copy"><strong>186 <span>de 300 cartas</span></strong><p>Você está a 14 cartas de desbloquear a próxima recompensa.</p><div class="rarities"><span><i class="common"></i>Comum <b>92</b></span><span><i class="rare"></i>Rara <b>61</b></span><span><i class="epic"></i>Épica <b>26</b></span><span><i class="legendary"></i>Lendária <b>7</b></span></div></div>
+            <div class="ring" [style.--collection-progress]="collectionPercent(overview.collection) + '%'">
+              <strong>{{ collectionPercent(overview.collection) | number: '1.0-0' }}<small>%</small></strong>
+            </div>
+            <div class="collection-copy"><strong>{{ obtained(overview.collection) }} <span>de {{ overview.collection.length }} cartas</span></strong><p>Cartas obtidas na sua coleção.</p><div class="rarities"><span><i class="common"></i>Comum <b>92</b></span><span><i class="rare"></i>Rara <b>61</b></span><span><i class="epic"></i>Épica <b>26</b></span><span><i class="legendary"></i>Lendária <b>7</b></span></div></div>
           </div>
         </section>
 
@@ -77,21 +82,28 @@
         <section class="panel achievements" id="conquistas">
           <div class="panel-head"><div><p class="eyebrow">CONQUISTAS</p><h2>Desbloqueadas recentemente</h2></div><a routerLink="/perfil/conquistas">Ver todas →</a></div>
           <div class="achievement-list">
-            <article><span class="medal gold">★</span><div><strong>Primeira lendária</strong><p>Obteve sua primeira carta lendária</p></div><time>Hoje</time></article>
-            <article><span class="medal purple">♛</span><div><strong>Mestre estrategista</strong><p>Venceu 10 partidas consecutivas</p></div><time>3 dias</time></article>
-            <article><span class="medal blue">◉</span><div><strong>Colecionador</strong><p>Coletou 150 cartas diferentes</p></div><time>1 semana</time></article>
+            @for (achievement of overview.achievements.slice(0, 3); track achievement.id) {
+              <article><span class="medal gold">★</span><div><strong>{{ achievement.title }}</strong><p>{{ achievement.description }}</p></div><time>{{ achievement.unlockedAt ? (achievement.unlockedAt | date: 'shortDate') : '' }}</time></article>
+            } @empty {
+              <p>Nenhuma conquista ainda. Jogue uma partida para começar.</p>
+            }
           </div>
         </section>
 
         <section class="panel activity">
           <div class="panel-head"><div><p class="eyebrow">ATIVIDADE</p><h2>Partidas recentes</h2></div><a routerLink="/perfil/historico">Histórico →</a></div>
           <div class="match-list">
-            <article><span class="result win">V</span><div><strong>Vitória contra @ana</strong><p>Modo ranqueado · 1.248 XP</p></div><time>Há 2 h</time></article>
-            <article><span class="result loss">D</span><div><strong>Derrota contra @pedro</strong><p>Modo ranqueado · 1.231 XP</p></div><time>Ontem</time></article>
-            <article><span class="result win">V</span><div><strong>Vitória contra @marina</strong><p>Desafio rápido · 1.240 XP</p></div><time>Ontem</time></article>
+            @for (activity of overview.activities; track activity.id) {
+              <article><span class="result" [class.win]="activity.result === 'VITORIA'" [class.loss]="activity.result === 'DERROTA'">{{ activity.result === 'VITORIA' ? 'V' : 'D' }}</span><div><strong>{{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }} contra &#64;{{ activity.opponentName }}</strong><p>Partida recente</p></div><time>{{ activity.playedAt | date: 'short' }}</time></article>
+            } @empty {
+              <p>Nenhuma partida ainda.</p>
+            }
           </div>
         </section>
       </div>
     </section>
   </div>
+  } @else {
+    <p><span class="loading loading-dots loading-sm" aria-hidden="true"></span> Carregando perfil...</p>
+  }
 </main>

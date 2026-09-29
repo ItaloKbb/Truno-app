@@ -1,19 +1,19 @@
 # Habilidades (`/habilidades`)
 
-Você cria esta tela. Ela lista o que uma carta pode disparar no Truno. O service é o `SkillService`. A forma é a mesma do catálogo.
+Nesta atividade, você vai criar uma tela de consulta para as habilidades disponíveis nas cartas.
 
-## Qual service
+## Objetivo
 
-| Método | Uso |
-| --- | --- |
-| `getAll()` | A lista da página |
-| `getById(id)` | O detalhe, se você criar `/habilidades/:id` |
+Criar o componente, registrar a rota e listar as habilidades devolvidas por `SkillService.getAll()`.
 
-Cada `Skill` tem `id`, `name`, `description`, `type`, `effect`, `naipe` e `valor`.
+## Vocabulário da atividade
 
-`type` é a categoria: `DEFESA`, `ATAQUE`, `SUPORTE` ou `CONTROLE`. `effect` é o efeito de UNO, por exemplo `BLOCK` ou `DRAW`. Mostre os dois. Eles não são a mesma coisa: o tipo agrupa, o efeito é o que a carta faz.
+- **skill** (habilidade): efeito associado a uma carta.
+- **definition** (definição): descrição de um tipo disponível no catálogo.
+- **enum-like union** (união semelhante a enum): conjunto fechado de textos aceitos pelo TypeScript.
+- **read-only catalog** (catálogo somente leitura): dados que a tela consulta, mas não altera.
 
-## Criar e registrar
+## Passo 1 — criar e registrar
 
 ```bash
 npm run ng -- generate component pages/habilidades
@@ -27,15 +27,19 @@ npm run ng -- generate component pages/habilidades
 },
 ```
 
-A rota fica antes do `**`.
+## Passo 2 — conhecer o modelo atual
 
-## A classe
+`SkillService` oferece somente `getAll()`. Cada `SkillDefinition` possui `id`, `name`, `description`, `type`, `naipe` e `valor`.
+
+Não use campos antigos como `effect` ou categorias `ATAQUE` e `DEFESA`. O campo `type` já é o efeito técnico, por exemplo `BLOCK`, `BUY`, `BOMB` ou `SHIELD`.
+
+## Passo 3 — carregar a lista
 
 ```ts
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { SkillService } from '../../services/skill.service';
+import { SkillService } from '../../services/modules/skill.service';
 
 @Component({
   imports: [AsyncPipe],
@@ -44,20 +48,16 @@ import { SkillService } from '../../services/skill.service';
 })
 export class Habilidades {
   protected readonly loadError = signal('');
-  protected readonly skills$ = inject(SkillService)
-    .getAll()
-    .pipe(
-      catchError((error: unknown) => {
-        this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as habilidades.');
-        return of(null);
-      }),
-    );
+  protected readonly skills$ = inject(SkillService).getAll().pipe(
+    catchError((error: unknown) => {
+      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as habilidades.');
+      return of(null);
+    }),
+  );
 }
 ```
 
-O nome da classe gerada é `Habilidades`. O `loadComponent` tem de devolver `module.Habilidades`. Se os nomes divergirem, a rota abre uma tela em branco.
-
-## O template
+## Passo 4 — desenhar o template
 
 ```html
 <main>
@@ -71,9 +71,8 @@ O nome da classe gerada é `Habilidades`. O `loadComponent` tem de devolver `mod
         <li>
           <h2>{{ skill.name }}</h2>
           <p>{{ skill.description }}</p>
-          <span>{{ skill.type }}</span>
-          <span>{{ skill.effect }}</span>
-          <span>{{ skill.valor }} de {{ skill.naipe }}</span>
+          <p>Tipo: {{ skill.type }}</p>
+          <p>Carta: {{ skill.valor }} de {{ skill.naipe }}</p>
         </li>
       } @empty {
         <li>Nenhuma habilidade cadastrada.</li>
@@ -85,8 +84,17 @@ O nome da classe gerada é `Habilidades`. O `loadComponent` tem de devolver `mod
 </main>
 ```
 
-Filtro por categoria pode ser um `signal` na tela. Não crie outro método no service só para filtrar: a lista já chegou. Algo como `skills.filter((skill) => skill.type === category())` no template, ou um getter. O service continua responsável só por buscar.
+Os textos em maiúsculas são valores do contrato com o backend. Se quiser uma tradução amigável, crie um mapa de apresentação; não altere o valor original.
 
-## Erro e teste
+## Passo 5 — conferir
 
-A mensagem de falha do service é "Falha ao carregar as habilidades." No teste, `expectOne('/api/skills')` e dê `flush` com pelo menos um objeto que tenha `id`, `name`, `description`, `type`, `effect`, `naipe` e `valor`. `type` e `effect` precisam ser um dos valores do domínio. `type: 'MAGIA'` não passa no guard e a tela cai no alerta, mesmo com HTTP 200.
+1. Abra `/habilidades` com sessão.
+2. Confira nome, descrição, tipo e carta.
+3. Teste uma resposta vazia.
+4. Teste um `type` inválido e confirme que o guarda rejeita a resposta.
+
+## Erros comuns
+
+- Chamar `getById()`: esse método não existe no serviço atual.
+- Ler `skill.effect`: esse campo não existe.
+- Importar o serviço do caminho antigo sem `modules`.

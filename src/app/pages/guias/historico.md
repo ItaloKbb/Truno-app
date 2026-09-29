@@ -1,20 +1,38 @@
 # Histórico (`/perfil/historico`)
 
-A rota já existe. O HTML descreve vitória contra `@ana` e derrota contra `@pedro` como texto fixo. Passe a usar `ProfileService.getActivities()`.
+Nesta atividade, você vai carregar as partidas recentes com `ProfileService.getActivities()` e formatar a data para leitura humana.
 
-## Qual service
+## Objetivo
 
-`getActivities()` devolve `MatchActivity[]`.
+Exibir resultado, adversário e data de cada atividade, sem manter textos fixos no HTML.
 
-Cada item tem `id`, `result` (`VITORIA` ou `DERROTA`), `opponentName` e `playedAt`. `playedAt` é uma data em texto ISO, por exemplo `2026-09-28T18:00:00.000Z`. Não fatie essa string na mão. Use o `DatePipe`.
+## Vocabulário da atividade
 
-Não há filtro na API. Se quiser só vitórias, filtre o array na tela depois que ele chegar.
+- **activity/history** (atividade/histórico): registro de algo que já aconteceu.
+- **ISO date** (data ISO): texto padronizado como `2026-09-28T18:00:00.000Z`.
+- **DatePipe** (pipe de data): formatador de datas do Angular.
+- **locale** (localidade): regras regionais de idioma, data e números.
 
-## A classe
+## Passo 1 — preparar os imports
 
 ```ts
 import { AsyncPipe, DatePipe } from '@angular/common';
+import { catchError, of } from 'rxjs';
+import { ProfileService } from '../../services/modules/profile.service';
+```
 
+Adicione os dois ao array `imports`. `AsyncPipe` lê o fluxo; `DatePipe` transforma a data no template.
+
+Injete o serviço e prepare a mensagem de erro:
+
+```ts
+private readonly profileApi = inject(ProfileService);
+protected readonly loadError = signal('');
+```
+
+## Passo 2 — criar o fluxo
+
+```ts
 protected readonly activities$ =
   this.section === 'historico'
     ? this.profileApi.getActivities().pipe(
@@ -26,38 +44,49 @@ protected readonly activities$ =
     : of([]);
 ```
 
-Coloque `DatePipe` ao lado de `AsyncPipe` em `imports`.
+Cada `MatchActivity` tem `id`, `result`, `opponentName` e `playedAt`. Não corte a string da data manualmente.
 
-## O template
-
-Dentro de `@if (section === 'historico')`:
+## Passo 3 — montar o template
 
 ```html
 @if (loadError(); as message) {
   <p role="alert">{{ message }}</p>
 } @else if (activities$ | async; as activities) {
-  <div class="settings">
-    @for (activity of activities; track activity.id) {
-      <article>
-        <strong>
-          {{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }}
-          contra &#64;{{ activity.opponentName }}
-        </strong>
-        <p>{{ activity.playedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
-      </article>
-    } @empty {
-      <p>Nenhuma partida registrada. Jogue a primeira para ver o histórico.</p>
-    }
-  </div>
+  @for (activity of activities; track activity.id) {
+    <article>
+      <strong>
+        {{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }}
+        contra &#64;{{ activity.opponentName }}
+      </strong>
+      <time [attr.datetime]="activity.playedAt">
+        {{ activity.playedAt | date: 'dd/MM/yyyy HH:mm' }}
+      </time>
+    </article>
+  } @empty {
+    <p>Nenhuma partida registrada.</p>
+  }
 } @else {
   <p>Carregando o histórico...</p>
 }
 ```
 
-`&#64;` é como o template do Angular escreve um `@` literal. Sem isso, `@ana` é lido como bloco de controle.
+O elemento `<time>` melhora a semântica. `[attr.datetime]` mantém a data original para tecnologias assistivas. `&#64;` representa um `@` literal no template Angular.
 
-O `@empty` é a conta sem partidas. Não reuse a frase de erro. "Falha ao carregar o histórico." só aparece quando o observable falha.
+## Passo 4 — ordenar somente se a tela exigir
 
-## Confira
+Se o requisito for “mais recente primeiro”, ordene uma cópia:
 
-`/perfil/historico` mostra a vitória contra `@ana` e a derrota contra `@pedro`, com data formatada. A ordem é a ordem do array da API. Não reordene no service. Se a tela precisar da mais recente primeiro, ordene uma cópia no componente com `[...activities].sort(...)`.
+```ts
+return [...activities].sort(
+  (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
+);
+```
+
+O **spread operator** (`...`) cria uma cópia. Assim, o array recebido da API não é alterado.
+
+## Checklist
+
+- [ ] `DatePipe` está em `imports`.
+- [ ] A data não é cortada com `substring` ou `split`.
+- [ ] O estado vazio não é tratado como erro.
+- [ ] A ordenação, se existir, não modifica o array original.

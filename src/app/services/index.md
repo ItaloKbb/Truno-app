@@ -17,11 +17,10 @@ registrar o service nos `providers` de cada componente.
 | `AuthService` | Login, sessão e logout | `/api/auth/login`, `/api/auth/session`, `/api/auth/logout`, `/api/auth/forgot-password` |
 | `AuthSessionStore` | Guarda o token e o `User` no navegador | nenhum |
 | `CardService` | Baralho espanhol | `GET /api/cards`, `GET /api/cards/:id` |
-| `GameService` | Partidas | `GET /api/games`, `GET /api/games/:id` |
+| `GameService` | Criar, acessar e jogar partidas | `POST /api/games`, `POST /api/games/access`, ações de partida |
 | `ShopService` | Loja | `GET /api/shop` |
 | `SkillService` | Habilidades | `GET /api/skills`, `GET /api/skills/:id` |
 | `PuzzleService` | Perguntas | `GET /api/puzzles`, `GET /api/puzzles/:id` |
-| `LobbyService` | Mesas do lobby | `GET /api/lobby/rooms`, `GET /api/lobby/rooms/:id`, `POST /api/lobby/rooms` |
 | `ProfileService` | Perfil remoto | `GET /api/profile`, `/stats`, `/collection`, `/achievements`, `/activities` |
 | `ProfileStorage` | Rascunho do perfil salvo no navegador | nenhum |
 
@@ -95,7 +94,7 @@ O CLI já gera `@Injectable({ providedIn: 'root' })`. Mantenha esse decorator. E
 formato. Por isso os services leem `unknown` e passam por um type guard.
 
 Abra `src/app/services/api-response.ts` e acrescente o guard ao lado dos que já existem (`isCard`,
-`isGame`, `isShop`, `isSkill`, `isPuzzle`, `isLobbyRoom`, `isProfile`):
+`isGame`, `isShop`, `isSkill`, `isPuzzle`, `isProfile`):
 
 ```ts
 export function isRankingEntry(value: unknown): value is RankingEntry {
@@ -158,20 +157,6 @@ Regras que os services atuais seguem:
 - O retorno é `Observable`. A requisição só sai quando alguém se inscreve: `AsyncPipe`, `toSignal()`
   ou `subscribe()`.
 - Não guarde a lista carregada numa propriedade mutável do service. Quem precisa do valor é a tela.
-
-`LobbyService.create` mostra o `POST`:
-
-```ts
-create(room: CreateLobbyRoom): Observable<LobbyRoom> {
-  return readApi(
-    this.http.post<unknown>(this.apiUrl, room),
-    (body) => expectOne(body, isLobbyRoom),
-    'Falha ao criar a mesa.',
-  );
-}
-```
-
-O corpo enviado é o tipo do domínio (`CreateLobbyRoom`). A resposta também passa pelo guard.
 
 ## 5. Publicar a rota na API
 

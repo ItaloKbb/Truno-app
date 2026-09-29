@@ -1,114 +1,120 @@
 # Catálogo de cartas (`/book`)
 
-Esta tela já usa o `CardService`. Ela é o modelo de **leitura**. Loja, habilidades, perguntas, coleção, conquistas e histórico repetem a mesma forma. Muda o service, o método e os campos desenhados.
+Nesta atividade, você vai transformar a tela `Book` em uma leitura da API usando `CardService`.
 
-A pasta é `src/app/pages/book`. A rota `/book` já tem `authGuard`.
+## Objetivo
 
-## Qual service
+A tela deverá buscar as cartas, exibir a imagem correspondente e diferenciar carregamento, lista vazia e erro.
 
-`CardService`.
+## Vocabulário da atividade
 
-| Método | Quando a tela chama | Retorno |
-| --- | --- | --- |
-| `getAll()` | Ao abrir o catálogo | `Observable<Card[]>` |
-| `getById(id)` | Se você abrir o detalhe de uma carta | `Observable<Card>` |
+- **catalog** (catálogo): coleção de itens disponíveis para consulta.
+- **fetch/load** (buscar/carregar): obter dados de uma fonte externa.
+- **stream** (fluxo): sequência assíncrona representada por um `Observable`.
+- **pipe** (encadeamento): sequência de operadores aplicada ao fluxo.
+- **type guard** (guarda de tipo): função que confere o formato recebido em tempo de execução.
+- **alternative text** (texto alternativo): descrição de uma imagem usada por leitores de tela.
 
-Cada `Card` tem, entre outros, `id`, `naipe`, `valor`, `url` e `trucoStrength`. A imagem da carta é `url`. O texto alternativo usa `valor` e `naipe`.
+## Passo 1 — conhecer o dado
 
-Não importe `mockCards`. O mock alimenta a API e os testes. A tela só enxerga o service.
+O `CardService`, em `services/modules/card.service.ts`, oferece:
 
-## A classe
+```ts
+getAll(): Observable<CatalogCard[]>
+getById(id: number): Observable<CatalogCard>
+```
 
-`src/app/pages/book/book.ts`:
+Cada `CatalogCard` tem `id`, `valor` e `naipe`. A API não devolve uma URL de imagem. O caminho correto é criado por `cardAsset(valor, naipe)`.
+
+## Passo 2 — preparar a classe
+
+Em `src/app/pages/book/book.ts`:
 
 ```ts
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { CardService } from '../../services/card.service';
+import { cardAsset, cardLabel, type CatalogCard } from '../../domain/truno-api';
+import { CardService } from '../../services/modules/card.service';
 
 @Component({
   imports: [AsyncPipe],
   selector: 'app-book',
+  styleUrl: './book.css',
   templateUrl: './book.html',
 })
 export class Book {
   protected readonly loadError = signal('');
-  protected readonly cards$ = inject(CardService)
-    .getAll()
-    .pipe(
-      catchError((error: unknown) => {
-        this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as cartas.');
-        return of(null);
-      }),
-    );
+
+  protected readonly cards$ = inject(CardService).getAll().pipe(
+    catchError((error: unknown) => {
+      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as cartas.');
+      return of(null);
+    }),
+  );
+
+  protected imageFor(card: CatalogCard): string {
+    return cardAsset(card.valor, card.naipe);
+  }
+
+  protected labelFor(card: CatalogCard): string {
+    return cardLabel(card.valor, card.naipe);
+  }
 }
 ```
 
-O que cada peça faz:
+O sufixo `$` avisa ao leitor que `cards$` é um `Observable`. `of(null)` encerra o estado de carregamento após um erro; a mensagem continua guardada em `loadError`.
 
-- `inject(CardService)` pede a instância única do service. Não use `new CardService()`.
-- `getAll()` devolve um `Observable`. A requisição ainda não saiu.
-- O `AsyncPipe`, no HTML, é quem se inscreve. Aí o `HttpClient` chama `GET /api/cards`.
-- Se o guard `isCard` recusar o JSON, ou se a rede falhar, o service emite um `Error` com "Falha ao carregar as cartas."
-- O `catchError` da tela guarda essa frase e devolve `null`, para o carregamento terminar.
-
-## O template
+## Passo 3 — desenhar os quatro estados
 
 ```html
-@if (loadError(); as message) {
-  <p role="alert">{{ message }}</p>
-} @else if (cards$ | async; as cards) {
-  <section>
-    @for (card of cards; track card.id) {
-      <img [src]="card.url" [alt]="card.valor + ' de ' + card.naipe.toLowerCase()" />
-    } @empty {
-      <p>Nenhuma carta encontrada.</p>
-    }
-  </section>
-} @else {
-  <p>Carregando cartas...</p>
-}
+<main>
+  <h1>Catálogo de cartas</h1>
+
+  @if (loadError(); as message) {
+    <p role="alert">{{ message }}</p>
+  } @else if (cards$ | async; as cards) {
+    <section class="cards">
+      @for (card of cards; track card.id) {
+        <article>
+          <img [src]="imageFor(card)" [alt]="labelFor(card)" />
+          <h2>{{ labelFor(card) }}</h2>
+        </article>
+      } @empty {
+        <p>Nenhuma carta encontrada.</p>
+      }
+    </section>
+  } @else {
+    <p>Carregando cartas...</p>
+  }
+</main>
 ```
 
-A ordem do `@if` é a aula inteira:
+`cards$ | async` usa o `AsyncPipe` para assinar o fluxo. O pipe também cancela a inscrição quando o componente sai da tela, evitando **memory leaks** (vazamentos de memória).
 
-1. Se existe `loadError`, mostre o alerta e não mostre a grade.
-2. Senão, se o observable já emitiu um array, desenhe as cartas. Array vazio é verdade no `@if` e cai no `@empty`.
-3. Senão, ainda está carregando. `AsyncPipe` entrega `null` enquanto espera.
+`track card.id` permite que o Angular reutilize o elemento correto quando a lista muda.
 
-`track card.id` evita recriar o DOM quando a lista atualiza.
+## Passo 4 — entender a validação
 
-## Detalhe de uma carta
+O serviço lê a resposta como `unknown` e usa `isCatalogCard`. O tipo genérico do `HttpClient` não valida o JSON em execução. Se a API devolver uma carta incompleta, a tela recebe um erro em vez de desenhar dados quebrados.
 
-Se a rota for `/book/:id`, leia o parâmetro e chame `getById`:
-
-```ts
-private readonly route = inject(ActivatedRoute);
-
-protected readonly card$ = this.route.paramMap.pipe(
-  switchMap((params) => this.cards.getById(params.get('id') ?? '')),
-  catchError((error: unknown) => {
-    this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar a carta.');
-    return of(null);
-  }),
-);
-```
-
-Importe `switchMap` de `rxjs`. Trocar de carta cancela a requisição anterior. Um id desconhecido responde `404` e a tela mostra "Falha ao carregar a carta."
-
-## Teste da tela
-
-O teste não liga o servidor. Ele responde no lugar da API:
+## Passo 5 — testar
 
 ```ts
 fixture.detectChanges();
-http.expectOne('/api/cards').flush([
-  /* uma carta completa, com id, naipe, valor, url e trucoStrength */
+http.expectOne(`${api}/cards`).flush([
+  { id: 1, valor: 'AS', naipe: 'ESPADAS' },
 ]);
 fixture.detectChanges();
 ```
 
-`detectChanges()` antes do `flush` faz o `AsyncPipe` assinar. O segundo `detectChanges()` desenha as imagens. O corpo do `flush` precisa passar em `isCard`. Carta sem `trucoStrength` é erro de resposta, não uma carta.
+`flush` significa “entregar a resposta simulada”. Não é necessário subir o servidor.
 
-O arquivo `book.spec.ts` já faz esse teste com as duas primeiras cartas do baralho.
+## Checklist
+
+- [ ] `AsyncPipe` está em `imports`.
+- [ ] A tela importa `CardService` de `services/modules`.
+- [ ] A imagem é calculada com `cardAsset`.
+- [ ] O `alt` descreve valor e naipe.
+- [ ] Carregamento, vazio e erro têm mensagens diferentes.
+- [ ] A tela não importa `mockCards`.
