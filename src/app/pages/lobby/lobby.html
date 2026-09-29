@@ -14,6 +14,38 @@
 		<h2 class="welcome">BEM-VINDO, TRUNO MASTER!</h2>
 
 		<section class="play panel"><div class="panel-heading"><h2>Jogar</h2><b>Rank: Prata III</b></div><button class="quick-play" type="button"><span class="versus">1v1</span><strong>JOGAR RÁPIDO - 1v1 CASUAL</strong></button><div class="play-options"><button type="button"><span class="mini-deck">♠♣♦</span><strong>PARTIDA RANKEADA</strong></button><button type="button"><span class="trophy">♜</span><strong>MODO EVENTO</strong></button></div></section>
-		<nav class="bottom-nav"><a href="#perfil">PERFIL</a><a href="#configuracoes">CONFIGURAÇÕES</a><a href="#regras">REGRAS</a></nav>
+		<!--
+			BASE DA TELA — o guia está em src/app/pages/guias/lobby.md.
+			Os dados do topo (nome, rank, moedas) ainda são texto fixo. Os formulários abaixo ainda não fazem nada.
+		-->
+		<section class="panel game-forms">
+			<form id="access-form">
+				<h2>Entrar com código</h2>
+				<label for="access-code">Código da partida (6 caracteres)</label>
+				<input id="access-code" type="text" maxlength="6" placeholder="ABC123" />
+				<button type="submit">ENTRAR NA PARTIDA</button>
+			</form>
+
+			<form id="create-form">
+				<h2>Criar partida</h2>
+				<label for="game-name">Nome (até 60 caracteres)</label>
+				<input id="game-name" type="text" maxlength="60" />
+				<label for="max-players">Jogadores (2 a 6)</label>
+				<input id="max-players" type="number" min="2" max="6" value="4" />
+				<label for="initial-cards">Cartas iniciais (1 a 10)</label>
+				<input id="initial-cards" type="number" min="1" max="10" value="3" />
+				<label for="round-reward">Prêmio da rodada</label>
+				<input id="round-reward" type="number" min="0" value="10" />
+				<label for="empty-hand-reward">Prêmio por mão vazia</label>
+				<input id="empty-hand-reward" type="number" min="0" value="5" />
+				<label for="trophy-price">Preço do troféu</label>
+				<input id="trophy-price" type="number" min="1" value="20" />
+				<button type="submit">CRIAR PARTIDA</button>
+			</form>
+
+			<!-- Passo 5 do guia: mensagem de erro da API -->
+			<p role="alert" class="form-error">Mensagem de erro fica aqui.</p>
+		</section>
+		<nav class="bottom-nav"><a href="/perfil">PERFIL</a><a href="/ranking">RANKING</a><a href="/book">CARTAS</a><a href="#configuracoes">CONFIGURAÇÕES</a><a href="#regras">REGRAS</a></nav>
 	</div>
 </main>

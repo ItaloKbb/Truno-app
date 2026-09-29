@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
-import type { Shop } from '../domain/shop';
-import { expectOne, isShop, readApi } from './api-response';
+import type { Shop } from '../../domain/shop';
+import { expectOne, isShop, readApi } from '../config/api-response';
 
 @Injectable({ providedIn: 'root' })
 export class ShopService {

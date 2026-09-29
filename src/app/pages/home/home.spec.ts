@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/modules/auth.service';
 import { Home } from './home';
 
 @Component({ template: '' })
@@ -11,7 +11,7 @@ class LobbyStub {}
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
-  let auth: { login: ReturnType<typeof vi.fn>; forgotPassword: ReturnType<typeof vi.fn> };
+  let auth: { login: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     auth = {
@@ -32,85 +32,55 @@ describe('Home', () => {
     fixture.detectChanges();
   });
 
-  function fill(email: string, password = ''): void {
-    const emailInput = fixture.nativeElement.querySelector('#email') as HTMLInputElement;
-    emailInput.value = email;
-    emailInput.dispatchEvent(new Event('input'));
-    const passwordInput = fixture.nativeElement.querySelector(
-      '#password',
-    ) as HTMLInputElement | null;
-    if (passwordInput) {
-      passwordInput.value = password;
-      passwordInput.dispatchEvent(new Event('input'));
-    }
+  function fill(nickname: string, code = ''): void {
+    const nicknameInput = fixture.nativeElement.querySelector('#nickname') as HTMLInputElement;
+    nicknameInput.value = nickname;
+    nicknameInput.dispatchEvent(new Event('input'));
+    const codeInput = fixture.nativeElement.querySelector('#code') as HTMLInputElement;
+    codeInput.value = code;
+    codeInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   }
 
-  it('keeps login disabled until email and password are valid', () => {
-    const button = fixture.nativeElement.querySelector(
-      'button[type="submit"]',
-    ) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
+  function submitButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+  }
 
-    fill('lucasmartins@truno.app', 'truno1234');
+  it('keeps login disabled until nickname and code are valid', () => {
+    expect(submitButton().disabled).toBe(true);
 
-    expect(button.disabled).toBe(false);
+    fill('lucas', '123');
+    expect(submitButton().disabled).toBe(true);
+
+    fill('lucas', '1234');
+    expect(submitButton().disabled).toBe(false);
   });
 
   it('shows the API error when the credentials are rejected', async () => {
     auth.login.mockReturnValue(
       throwError(
-        () =>
-          new HttpErrorResponse({ status: 401, error: { message: 'E-mail ou senha inválidos.' } }),
+        () => new HttpErrorResponse({ status: 401, error: { message: 'Código inválido.' } }),
       ),
     );
-    fill('lucasmartins@truno.app', 'senhaerrada');
+    fill('lucas', 'errado');
 
-    (fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    submitButton().click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('E-mail ou senha inválidos.');
-    expect(auth.login).toHaveBeenCalledWith({
-      email: 'lucasmartins@truno.app',
-      password: 'senhaerrada',
-    });
+    expect(fixture.nativeElement.textContent).toContain('Código inválido.');
+    expect(auth.login).toHaveBeenCalledWith({ nickname: 'lucas', code: 'errado' });
   });
 
   it('opens the lobby after the API returns a session', async () => {
     auth.login.mockReturnValue(
-      of({
-        token: 'token-1',
-        user: {
-          id: 'user-lucas',
-          name: 'Lucas Martins',
-          email: 'lucasmartins@truno.app',
-          url: '',
-          coin: { id: 'coin-lucas', balance: 15750 },
-        },
-      }),
+      of({ token: 'token-1', user: { id: 1, nickname: 'lucas', rankingPoints: 0 } }),
     );
-    fill('lucasmartins@truno.app', 'truno1234');
+    fill('lucas', '1234');
 
-    (fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    submitButton().click();
     await fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/lobby');
-  });
-
-  it('asks the API to send password instructions without confirming the account', async () => {
-    auth.forgotPassword.mockReturnValue(
-      of({ message: 'Se existir uma conta com esse e-mail, enviaremos as instruções.' }),
-    );
-    (fixture.nativeElement.querySelector('button.link') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    fill('outra@truno.app');
-
-    (fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(auth.forgotPassword).toHaveBeenCalledWith('outra@truno.app');
-    expect(fixture.nativeElement.textContent).toContain('enviaremos as instruções');
   });
 });

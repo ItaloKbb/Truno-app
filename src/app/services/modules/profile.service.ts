@@ -7,7 +7,7 @@ import type {
   MatchActivity,
   PlayerStats,
   Profile,
-} from '../domain/profile';
+} from '../../domain/profile';
 import {
   expectList,
   expectOne,
@@ -17,7 +17,7 @@ import {
   isPlayerStats,
   isProfile,
   readApi,
-} from './api-response';
+} from '../config/api-response';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {

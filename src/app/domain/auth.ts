@@ -1,58 +1,48 @@
-import type { User } from './user';
+import type { PlayerUser } from './truno-api';
 
 /**
- * Contrato da API de autenticação em `/api/auth`.
+ * Contrato da API de autenticação.
  *
- * POST `/api/auth/login` { email, password }
+ * POST `/auth/sessions` { nickname, code }
  *   200 AuthSession | 400 ou 401 { message }
- * GET `/api/auth/session` com `Authorization: Bearer <token>`
- *   200 AuthSession | 401 { message }
- * POST `/api/auth/logout` com o mesmo cabeçalho
- *   204
- * POST `/api/auth/forgot-password` { email }
- *   202 { message } | 400 { message }
  *
- * A sessão devolve o `User` do domínio. A senha nunca volta na resposta.
+ * O primeiro acesso cria a conta; nos seguintes, o mesmo código. O token vai no
+ * cabeçalho `X-Player-Token`. Não existem refresh token nem logout remoto.
  */
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  /** Não vazio, no máximo 30 caracteres. */
+  nickname: string;
+  /** De 4 a 30 caracteres. */
+  code: string;
 }
+
+export const NICKNAME_MAX_LENGTH = 30;
+export const CODE_MIN_LENGTH = 4;
+export const CODE_MAX_LENGTH = 30;
 
 export interface AuthSession {
   token: string;
-  user: User;
+  user: PlayerUser;
 }
 
 export interface ApiMessage {
   message: string;
 }
 
-export interface ForgotPasswordRequest {
-  email: string;
-}
-
-export interface ForgotPasswordResponse {
-  message: string;
+export function isPlayerUser(value: unknown): value is PlayerUser {
+  if (!value || typeof value !== 'object') return false;
+  const user = value as Partial<PlayerUser>;
+  return (
+    typeof user.id === 'number' &&
+    typeof user.nickname === 'string' &&
+    typeof user.rankingPoints === 'number'
+  );
 }
 
 export function isAuthSession(value: unknown): value is AuthSession {
   if (!value || typeof value !== 'object') return false;
-
   const session = value as Partial<AuthSession>;
-  const user = session.user;
-  return (
-    typeof session.token === 'string' &&
-    session.token.length > 0 &&
-    !!user &&
-    typeof user.id === 'string' &&
-    typeof user.name === 'string' &&
-    typeof user.email === 'string' &&
-    typeof user.url === 'string' &&
-    !!user.coin &&
-    typeof user.coin.id === 'string' &&
-    typeof user.coin.balance === 'number'
-  );
+  return typeof session.token === 'string' && session.token.length > 0 && isPlayerUser(session.user);
 }
 
 export function isApiMessage(value: unknown): value is ApiMessage {

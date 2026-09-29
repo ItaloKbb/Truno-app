@@ -1,14 +1,23 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AuthSessionStore } from '../services/auth-session';
+import { API_BASE_URL } from '../services/config/api-config';
+import { AuthSessionStore } from '../services/modules/auth-session';
 
+/**
+ * Anexa `X-Player-Token` nas chamadas à API Truno Crazzy. Um 401 em rota
+ * autenticada invalida a sessão local e leva o jogador de volta ao login.
+ * `POST /auth/sessions` fica de fora: credencial errada também responde 401.
+ */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  const apiUrl = inject(API_BASE_URL);
+  if (!request.url.startsWith(apiUrl)) return next(request);
+
   const store = inject(AuthSessionStore);
+  const router = inject(Router);
   const token = store.token();
-  const authorized = token
-    ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : request;
+  const authorized = token ? request.clone({ setHeaders: { 'X-Player-Token': token } }) : request;
 
   return next(authorized).pipe(
     catchError((error: unknown) => {
@@ -16,9 +25,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
         token &&
-        !request.url.includes('/api/auth/login')
+        !request.url.endsWith('/auth/sessions')
       ) {
         store.clear();
+        if (!router.url.startsWith('/home')) void router.navigateByUrl('/home');
       }
       return throwError(() => error);
     }),

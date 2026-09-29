@@ -19,6 +19,16 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/lobby/lobby').then((module) => module.Lobby),
   },
   {
+    path: 'partida/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/partida/partida').then((module) => module.Partida),
+  },
+  {
+    path: 'ranking',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/ranking/ranking').then((module) => module.Ranking),
+  },
+  {
     path: 'perfil',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/profile/profile').then((module) => module.Profile),

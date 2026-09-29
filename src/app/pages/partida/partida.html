@@ -1,0 +1,66 @@
+<!--
+  BASE DA TELA — o guia está em src/app/pages/guias/partida.md.
+  Tudo abaixo é texto de exemplo. Cada bloco marca o passo do guia que o liga ao GameService.
+-->
+<main class="container mx-auto px-4 py-6 space-y-4">
+  <!-- Passo 3: carregando / erro -->
+  <p>Carregando a partida...</p>
+  <p role="alert" class="text-error">Mensagem de erro fica aqui.</p>
+
+  <!-- Passo 4: cabeçalho da partida -->
+  <header class="card bg-base-200 p-4">
+    <h1 class="text-2xl font-bold">Nome da partida</h1>
+    <p>Código: <strong>ABC123</strong> · Fase: AGUARDANDO_JOGADORES</p>
+    <p>Rodada 0 · Direção: HORARIO</p>
+    <p>Vencedor: —</p>
+  </header>
+
+  <!-- Passo 4: jogadores -->
+  <section class="card bg-base-200 p-4">
+    <h2 class="text-xl font-bold">Jogadores</h2>
+    <table class="table">
+      <thead>
+        <tr><th></th><th>Jogador</th><th>Moedas</th><th>Troféus</th><th>Cartas</th><th>Pronto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>▶</td><td>apelido (host)</td><td>0</td><td>0</td><td>3</td><td>não</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Passo 4: vira e jogadas na mesa -->
+  <section class="card bg-base-200 p-4">
+    <h2 class="text-xl font-bold">Mesa</h2>
+    <p>Vira: <img class="inline w-16" src="/assets/cards/reverso.png" alt="Vira" /></p>
+    <ul>
+      <li>1ª jogada — apelido jogou uma carta</li>
+    </ul>
+  </section>
+
+  <!-- Passo 6: pergunta pendente (só aparece quando existir um puzzle) -->
+  <section class="card bg-base-200 p-4">
+    <h2 class="text-xl font-bold">Pergunta</h2>
+    <p>Texto da pergunta.</p>
+    <label class="label"><input type="radio" name="alternative" /> Alternativa</label>
+    <button type="button" class="btn btn-neutral">Responder</button>
+  </section>
+
+  <!-- Passo 5: sua mão -->
+  <section class="card bg-base-200 p-4">
+    <h2 class="text-xl font-bold">Sua mão</h2>
+    <div class="flex gap-2">
+      <button type="button" class="w-24">
+        <img src="/assets/cards/reverso.png" alt="Carta da mão" />
+      </button>
+    </div>
+  </section>
+
+  <!-- Passo 7: ações -->
+  <footer class="flex flex-wrap gap-2">
+    <button type="button" class="btn btn-neutral">Iniciar partida</button>
+    <button type="button" class="btn btn-neutral">Próxima rodada</button>
+    <button type="button" class="btn btn-neutral">Comprar troféu</button>
+    <button type="button" class="btn btn-error">Cancelar partida</button>
+    <a class="btn" href="/lobby">Voltar ao lobby</a>
+  </footer>
+</main>

@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
-import { isAuthSession, type AuthSession } from '../domain/auth';
+import { isAuthSession, type AuthSession } from '../../domain/auth';
 
 const storageKey = 'truno.auth.session';
 

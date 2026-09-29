@@ -1,18 +1,36 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
-import { CARD_EFFECTS, type Card } from '../domain/card';
-import { GAME_STATUSES, POINTS_TO_WIN, type Game } from '../domain/game';
-import { LOBBY_STATUSES, LOBBY_VISIBILITIES, type LobbyRoom } from '../domain/lobby';
+import { isApiMessage } from '../../domain/auth';
+import { COLLECTION_RARITIES, type Achievement, type CollectionCard, type MatchActivity, type PlayerStats, type Profile } from '../../domain/profile';
+import type { Shop } from '../../domain/shop';
 import {
-  COLLECTION_RARITIES,
-  type Achievement,
-  type CollectionCard,
-  type MatchActivity,
-  type PlayerStats,
-  type Profile,
-} from '../domain/profile';
-import type { Puzzle } from '../domain/puzzle';
-import type { Shop } from '../domain/shop';
-import { SKILL_CATEGORIES, type Skill } from '../domain/skill';
+  CARD_SUITS,
+  CARD_VALUES,
+  GAME_DIRECTIONS,
+  GAME_PHASES,
+  SKILL_TYPES,
+  type CatalogCard,
+  type GameState,
+  type PuzzleDefinition,
+  type RankingEntry,
+  type SkillDefinition,
+} from '../../domain/truno-api';
+
+/** Falha da API com o status HTTP e a mensagem devolvida pelo servidor. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+
+  /** 409: o estado mudou; consulte o estado da partida antes de tentar de novo. */
+  get isConflict(): boolean {
+    return this.status === 409;
+  }
+}
 
 export function readApi<T>(
   source: Observable<unknown>,
@@ -23,7 +41,11 @@ export function readApi<T>(
     map((body) => parse(body)),
     catchError((error: unknown) => {
       console.error(message, error);
-      return throwError(() => new Error(message));
+      if (error instanceof HttpErrorResponse) {
+        const apiMessage = isApiMessage(error.error) ? error.error.message : message;
+        return throwError(() => new ApiError(apiMessage, error.status));
+      }
+      return throwError(() => new ApiError(message, -1));
     }),
   );
 }
@@ -38,26 +60,60 @@ export function expectOne<T>(value: unknown, guard: (item: unknown) => item is T
   return value;
 }
 
-export function isCard(value: unknown): value is Card {
+export function isCatalogCard(value: unknown): value is CatalogCard {
   if (!isRecord(value)) return false;
   return (
-    typeof value['id'] === 'string' &&
-    typeof value['naipe'] === 'string' &&
-    typeof value['valor'] === 'string' &&
-    typeof value['url'] === 'string' &&
-    typeof value['trucoStrength'] === 'number'
+    typeof value['id'] === 'number' &&
+    includes(CARD_VALUES, value['valor']) &&
+    includes(CARD_SUITS, value['naipe'])
   );
 }
 
-export function isGame(value: unknown): value is Game {
+export function isSkillDefinition(value: unknown): value is SkillDefinition {
   if (!isRecord(value)) return false;
   return (
-    typeof value['id'] === 'string' &&
+    typeof value['id'] === 'number' &&
     typeof value['name'] === 'string' &&
-    includes(GAME_STATUSES, value['status']) &&
+    typeof value['description'] === 'string' &&
+    includes(SKILL_TYPES, value['type']) &&
+    includes(CARD_SUITS, value['naipe']) &&
+    includes(CARD_VALUES, value['valor'])
+  );
+}
+
+export function isPuzzleDefinition(value: unknown): value is PuzzleDefinition {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value['id'] === 'number' &&
+    typeof value['question'] === 'string' &&
+    Array.isArray(value['alternativas']) &&
+    value['alternativas'].every((item) => typeof item === 'string')
+  );
+}
+
+export function isRankingEntry(value: unknown): value is RankingEntry {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value['id'] === 'number' &&
+    typeof value['nickname'] === 'string' &&
+    typeof value['rankingPoints'] === 'number'
+  );
+}
+
+export function isGameState(value: unknown): value is GameState {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value['id'] === 'number' &&
+    typeof value['code'] === 'string' &&
+    typeof value['name'] === 'string' &&
+    includes(GAME_PHASES, value['phase']) &&
+    typeof value['stateVersion'] === 'number' &&
+    isRecord(value['settings']) &&
+    includes(GAME_DIRECTIONS, value['direction']) &&
+    typeof value['roundNumber'] === 'number' &&
     Array.isArray(value['players']) &&
-    Array.isArray(value['rounds']) &&
-    includes(POINTS_TO_WIN, value['pointsToWin'])
+    Array.isArray(value['plays']) &&
+    Array.isArray(value['hand'])
   );
 }
 
@@ -69,44 +125,6 @@ export function isShop(value: unknown): value is Shop {
     typeof value['status'] === 'boolean' &&
     typeof value['url'] === 'string' &&
     Array.isArray(value['itens'])
-  );
-}
-
-export function isSkill(value: unknown): value is Skill {
-  if (!isRecord(value)) return false;
-  return (
-    typeof value['id'] === 'string' &&
-    typeof value['name'] === 'string' &&
-    typeof value['description'] === 'string' &&
-    includes(SKILL_CATEGORIES, value['type']) &&
-    includes(CARD_EFFECTS, value['effect']) &&
-    typeof value['naipe'] === 'string' &&
-    typeof value['valor'] === 'string'
-  );
-}
-
-export function isPuzzle(value: unknown): value is Puzzle {
-  if (!isRecord(value)) return false;
-  return (
-    typeof value['id'] === 'string' &&
-    typeof value['title'] === 'string' &&
-    Array.isArray(value['alternativas']) &&
-    value['alternativas'].every((item) => typeof item === 'string') &&
-    typeof value['alternativaCorreta'] === 'number'
-  );
-}
-
-export function isLobbyRoom(value: unknown): value is LobbyRoom {
-  if (!isRecord(value)) return false;
-  return (
-    typeof value['id'] === 'string' &&
-    typeof value['name'] === 'string' &&
-    typeof value['hostId'] === 'string' &&
-    includes(LOBBY_VISIBILITIES, value['visibility']) &&
-    (value['maxPlayers'] === 2 || value['maxPlayers'] === 4) &&
-    Array.isArray(value['playerIds']) &&
-    includes(POINTS_TO_WIN, value['pointsToWin']) &&
-    includes(LOBBY_STATUSES, value['status'])
   );
 }
 

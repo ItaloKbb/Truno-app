@@ -1,8 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CODE_MAX_LENGTH, CODE_MIN_LENGTH, NICKNAME_MAX_LENGTH } from '../../domain/auth';
 import { safeReturnUrl } from '../../guards/return-url';
-import { AuthService, messageFromApi } from '../../services/auth.service';
+import { AuthService, messageFromApi } from '../../services/modules/auth.service';
 
 @Component({
   imports: [ReactiveFormsModule],
@@ -15,72 +16,53 @@ export class Home {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly mode = signal<'login' | 'forgot'>('login');
+  protected readonly nicknameMax = NICKNAME_MAX_LENGTH;
+  protected readonly codeMin = CODE_MIN_LENGTH;
+  protected readonly codeMax = CODE_MAX_LENGTH;
+
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly infoMessage = signal('');
   protected readonly form = new FormGroup({
-    email: new FormControl('', {
+    nickname: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.required, Validators.maxLength(NICKNAME_MAX_LENGTH)],
     }),
-    password: new FormControl('', {
+    code: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
+      validators: [
+        Validators.required,
+        Validators.minLength(CODE_MIN_LENGTH),
+        Validators.maxLength(CODE_MAX_LENGTH),
+      ],
     }),
   });
 
-  protected showForgot(): void {
-    this.mode.set('forgot');
-    this.errorMessage.set('');
-    this.infoMessage.set('');
-    this.form.controls.password.disable();
-  }
-
-  protected showLogin(): void {
-    this.mode.set('login');
-    this.errorMessage.set('');
-    this.infoMessage.set('');
-    this.form.controls.password.enable();
-  }
-
-  protected fieldError(field: 'email' | 'password'): string {
+  protected fieldError(field: 'nickname' | 'code'): string {
     const control = this.form.controls[field];
     if (!control.touched && !control.dirty) return '';
-    if (control.hasError('required')) {
-      return field === 'email' ? 'Informe o e-mail.' : 'Informe a senha.';
+    if (field === 'nickname') {
+      if (control.hasError('required')) return 'Informe o apelido.';
+      if (control.hasError('maxlength')) return `Use até ${NICKNAME_MAX_LENGTH} caracteres.`;
+      return '';
     }
-    if (control.hasError('email')) return 'Informe um e-mail válido.';
-    if (control.hasError('minlength')) return 'A senha deve ter pelo menos 8 caracteres.';
+    if (control.hasError('required')) return 'Informe o código.';
+    if (control.hasError('minlength') || control.hasError('maxlength')) {
+      return `O código deve ter de ${CODE_MIN_LENGTH} a ${CODE_MAX_LENGTH} caracteres.`;
+    }
     return '';
   }
 
   protected submit(): void {
     this.errorMessage.set('');
-    this.infoMessage.set('');
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     this.submitting.set(true);
-    const { email, password } = this.form.getRawValue();
+    const { nickname, code } = this.form.getRawValue();
 
-    if (this.mode() === 'forgot') {
-      this.auth.forgotPassword(email).subscribe({
-        next: (response) => {
-          this.submitting.set(false);
-          this.infoMessage.set(response.message);
-        },
-        error: (error: unknown) => {
-          this.submitting.set(false);
-          this.errorMessage.set(messageFromApi(error, 'Não foi possível enviar as instruções.'));
-        },
-      });
-      return;
-    }
-
-    this.auth.login({ email, password }).subscribe({
+    this.auth.login({ nickname, code }).subscribe({
       next: () => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
         void this.router

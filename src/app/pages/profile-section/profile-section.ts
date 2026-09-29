@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Avatar } from '../../components/avatar/avatar';
 import type { CollectionCard, CollectionFilter, ProfileSettingKey } from '../../domain/profile';
-import { AuthService } from '../../services/auth.service';
-import { ProfileStorage } from '../../services/profile-storage';
+import { AuthService } from '../../services/modules/auth.service';
+import { ProfileStorage } from '../../services/modules/profile-storage';
 
 type Section = 'colecao' | 'conquistas' | 'configuracoes' | 'historico' | 'editar';
 type Setting = ProfileSettingKey;

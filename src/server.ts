@@ -6,7 +6,6 @@ import {
 } from '@angular/ssr/node';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
-import { authRouter, createAuthApi } from './server/auth-api';
 import { catalogRouter, createCatalogApi } from './server/catalog-api';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -15,11 +14,10 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 app.use(express.json());
-app.use('/api/auth', authRouter(createAuthApi()));
 app.use('/api', catalogRouter(createCatalogApi()));
 app.use((error: unknown, _request: Request, response: Response, next: NextFunction) => {
   if (error instanceof SyntaxError && 'body' in error) {
-    response.status(400).json({ message: 'Informe um e-mail e uma senha válidos.' });
+    response.status(400).json({ message: 'Corpo da requisição inválido.' });
     return;
   }
   next(error);
