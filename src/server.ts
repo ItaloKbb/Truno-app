@@ -4,25 +4,24 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
+import { authRouter, createAuthApi } from './server/auth-api';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.use(express.json());
+app.use('/api/auth', authRouter(createAuthApi()));
+app.use((error: unknown, _request: Request, response: Response, next: NextFunction) => {
+  if (error instanceof SyntaxError && 'body' in error) {
+    response.status(400).json({ message: 'Informe um e-mail e uma senha válidos.' });
+    return;
+  }
+  next(error);
+});
 
 /**
  * Serve static files from /browser
@@ -41,9 +40,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 

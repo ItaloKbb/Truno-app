@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Avatar } from '../../components/avatar/avatar';
 import type { CollectionCard, CollectionFilter, ProfileSettingKey } from '../../domain/profile';
+import { AuthService } from '../../services/auth.service';
 import { ProfileStorage } from '../../services/profile-storage';
 
 type Section = 'colecao' | 'conquistas' | 'configuracoes' | 'historico' | 'editar';
@@ -13,6 +14,7 @@ export class ProfileSection {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly profileStorage = inject(ProfileStorage);
+  private readonly auth = inject(AuthService);
   protected readonly section = this.route.snapshot.data['section'] as Section;
   protected readonly user = this.profileStorage.loadProfile();
   protected readonly activeFilter = signal<CollectionFilter>('all');
@@ -44,7 +46,7 @@ export class ProfileSection {
   }
   protected updateDraft(field: 'displayName' | 'username' | 'avatarUrl' | 'bio', value: string): void { this.draft.update((current) => ({ ...current, [field]: value })); this.formError.set(''); this.saveMessage.set(''); }
   protected saveProfile(): void { const draft = this.draft(); const displayName = draft.displayName.trim(); const username = draft.username.trim(); if (displayName.length < 3) { this.formError.set('O nome de exibição deve ter pelo menos 3 caracteres.'); return; } if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { this.formError.set('Use de 3 a 20 letras, números ou _ no nome de usuário.'); return; } this.user.displayName = displayName; this.user.username = username; this.user.avatarUrl = draft.avatarUrl.trim(); this.user.initials = displayName.split(/\s+/).slice(0, 2).map((name) => name[0]).join('').toUpperCase(); this.profileStorage.saveProfile(); this.saveMessage.set('Alterações salvas com sucesso.'); }
-  protected logout(): void { this.accountMessage.set('Sessão encerrada.'); this.router.navigateByUrl('/home'); }
+  protected logout(): void { this.auth.logout().subscribe(() => { this.accountMessage.set('Sessão encerrada.'); void this.router.navigateByUrl('/home'); }); }
   protected requestDeactivation(): void { this.deactivateConfirmationVisible.set(true); }
   protected cancelDeactivation(): void { this.deactivateConfirmationVisible.set(false); }
   protected deactivateAccount(): void { this.accountMessage.set('Conta desativada nesta demonstração.'); this.deactivateConfirmationVisible.set(false); }
