@@ -212,6 +212,7 @@ export interface PuzzleDefinition {
   id: number;
   question: string;
   alternativas: string[];
+  alternativaCorreta: string;
 }
 
 /** `GET /users/ranking` */

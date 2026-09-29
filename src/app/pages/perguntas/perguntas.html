@@ -1,0 +1,22 @@
+<main>
+  <h1>Perguntas</h1>
+
+  @if (loadError(); as message) {
+    <p role="alert">{{ message }}</p>
+  } @else if (puzzles$ | async; as puzzles) {
+    @for (puzzle of puzzles; track puzzle.id) {
+      <article>
+        <h2>{{ puzzle.question }}</h2>
+        <ol>
+          @for (alternative of puzzle.alternativas; track $index) {
+            <li>{{ alternative }}</li>
+          }
+        </ol>
+      </article>
+    } @empty {
+      <p>Nenhuma pergunta disponível.</p>
+    }
+  } @else {
+    <p>Carregando perguntas...</p>
+  }
+</main>
