@@ -1,101 +1,100 @@
-import Game from "../game";
+import { createCard, withEffect } from '../../domain/deck';
+import type Game from '../game';
+import type { User } from '../user';
 
-const playerOne = {
-    id: "user-1",
-    name: "Ana",
-    email: "ana@example.com",
-    url: "https://i.pravatar.cc/150?img=47",
-    coin: {
-        id: "coin-1",
-        balance: 250,
-    },
+const playerOne: User = {
+  id: 'user-1',
+  name: 'Ana',
+  email: 'ana@example.com',
+  url: 'https://i.pravatar.cc/150?img=47',
+  coin: {
+    id: 'coin-1',
+    balance: 250,
+  },
 };
 
-const playerTwo = {
-    id: "user-2",
-    name: "Bruno",
-    email: "bruno@example.com",
-    url: "https://i.pravatar.cc/150?img=12",
-    coin: {
-        id: "coin-2",
-        balance: 180,
-    },
+const playerTwo: User = {
+  id: 'user-2',
+  name: 'Bruno',
+  email: 'bruno@example.com',
+  url: 'https://i.pravatar.cc/150?img=12',
+  coin: {
+    id: 'coin-2',
+    balance: 180,
+  },
 };
+
+const anaCopas = withEffect(createCard('COPAS', '1'), { kind: 'SHIELD' });
+const anaEspadas = createCard('ESPADAS', '7');
+const brunoOuros = withEffect(createCard('OUROS', '12'), { kind: 'BLOCK' });
+const brunoBastos = createCard('BASTOS', '5');
 
 export const mockGame: Game = {
-    id: "game-1",
-    name: "Partida entre amigos",
-    players: [
+  id: 'game-1',
+  name: 'Partida entre amigos',
+  players: [
+    {
+      user: playerOne,
+      cards: [anaCopas, anaEspadas],
+      effect: null,
+      trophies: 2,
+      points: 0,
+      calledUno: false,
+    },
+    {
+      user: playerTwo,
+      cards: [brunoOuros, brunoBastos],
+      effect: 'BLOCK',
+      trophies: 1,
+      points: 1,
+      calledUno: false,
+    },
+  ],
+  rounds: [
+    {
+      id: 'round-1',
+      number: 1,
+      tricks: [
         {
-            user: playerOne,
-            cards: [
-                {
-                    id: "card-1",
-                    naipe: "COPAS",
-                    valor: "1",
-                    url: "/assets/cards/01-copas.png",
-                },
-                {
-                    id: "card-2",
-                    naipe: "ESPADAS",
-                    valor: "7",
-                    url: "/assets/cards/07-espadas.png",
-                },
-            ],
-            effect: null,
-            trouphies: 2,
+          id: 'trick-1',
+          number: 1,
+          plays: [
+            {
+              id: 'play-1',
+              playerId: playerOne.id,
+              cardId: anaCopas.id,
+              skillId: null,
+              targetPlayerId: null,
+            },
+            {
+              id: 'play-2',
+              playerId: playerTwo.id,
+              cardId: brunoOuros.id,
+              skillId: 'skill-1',
+              targetPlayerId: playerOne.id,
+            },
+          ],
+          winnerId: null,
         },
+      ],
+      stakes: [
         {
-            user: playerTwo,
-            cards: [
-                {
-                    id: "card-3",
-                    naipe: "OUROS",
-                    valor: "12",
-                    url: "/assets/cards/12-oros.png",
-                },
-                {
-                    id: "card-4",
-                    naipe: "BASTOS",
-                    valor: "5",
-                    url: "/assets/cards/05-bastos.png",
-                },
-            ],
-            effect: "block",
-            trouphies: 1,
+          id: 'stake-1',
+          kind: 'TRUCO',
+          call: 'TRUCO',
+          callerId: playerTwo.id,
+          response: null,
+          pointsIfAccepted: 3,
         },
-    ],
-    rounds: [
-        {
-            id: "round-1",
-            number: 1,
-            turns: [
-                {
-                    id: "turn-1",
-                    player: playerOne,
-                    card: "card-1",
-                    skill: null,
-                    playertarget: null,
-                },
-                {
-                    id: "turn-2",
-                    player: playerTwo,
-                    card: "card-3",
-                    skill: {
-                        id: "skill-1",
-                        name: "Block",
-                        description: "Impede a proxima jogada do adversario.",
-                        type: "DEFESA",
-                        naipe: "OUROS",
-                        valor: "12",
-                    },
-                    playertarget: playerOne,
-                },
-            ],
-            winner: null,
-            status: "EM_ANDAMENTO",
-        },
-    ],
-    status: "EM_ANDAMENTO",
-    winner: null,
+      ],
+      winnerId: null,
+      status: 'EM_ANDAMENTO',
+    },
+  ],
+  status: 'EM_ANDAMENTO',
+  winner: null,
+  pointsToWin: 12,
+  direction: 'HORARIO',
+  currentSuit: 'COPAS',
+  handSize: 3,
 };
