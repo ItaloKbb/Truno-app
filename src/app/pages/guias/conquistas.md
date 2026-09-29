@@ -1,18 +1,39 @@
 # Conquistas (`/perfil/conquistas`)
 
-A rota já existe e cai em `ProfileSection` com `section === 'conquistas'`. O HTML repete três títulos fixos. Troque isso por `ProfileService.getAchievements()`.
+Nesta atividade, você vai trocar os textos fixos da seção por `ProfileService.getAchievements()`.
 
-## Qual service
+## Objetivo
 
-`getAchievements()` devolve `Achievement[]`.
+Exibir progresso, recompensa e situação de cada conquista, buscando os dados somente na rota de conquistas.
 
-Cada conquista tem `id`, `title`, `description`, `progress`, `goal`, `reward` e, se já foi desbloqueada, `unlockedAt`. Sem `unlockedAt`, ela ainda está em progresso. Não invente um booleano `unlocked`. A data é o sinal.
+## Vocabulário da atividade
 
-O progresso é `progress` de `goal`. Uma conquista 24/100 não está concluída, mesmo que o título apareça na lista.
+- **achievement** (conquista): objetivo que o jogador pode completar.
+- **progress** (progresso): quantidade já alcançada.
+- **goal** (meta): quantidade necessária para concluir.
+- **unlocked** (desbloqueada): conquista concluída.
+- **optional property** (propriedade opcional): campo que pode não existir, marcado com `?` no TypeScript.
 
-## A classe
+## Passo 1 — conhecer o modelo
 
-Mesma ideia da coleção: só busque nesta seção.
+Cada `Achievement` possui `id`, `title`, `description`, `progress`, `goal`, `reward` e, quando concluída, `unlockedAt`.
+
+Não crie um booleano `unlocked`. A presença de `unlockedAt` já representa esse estado.
+
+## Passo 2 — criar o fluxo
+
+Importe `Achievement`, injete o serviço e prepare a mensagem de erro:
+
+```ts
+import { AsyncPipe } from '@angular/common';
+import type { Achievement } from '../../domain/profile';
+import { ProfileService } from '../../services/modules/profile.service';
+
+private readonly profileApi = inject(ProfileService);
+protected readonly loadError = signal('');
+```
+
+Adicione `AsyncPipe` aos `imports` do componente. Em seguida, crie o fluxo:
 
 ```ts
 protected readonly achievements$ =
@@ -24,51 +45,55 @@ protected readonly achievements$ =
         }),
       )
     : of([]);
+
+protected unlockedCount(achievements: Achievement[]): number {
+  return achievements.filter((achievement) => achievement.unlockedAt).length;
+}
 ```
 
-`profileApi`, `loadError` e `AsyncPipe` são os mesmos da coleção. Se as duas telas forem feitas no mesmo componente, um `loadError` serve para a seção aberta, porque só uma requisição dispara.
+`filter` cria um novo array. O `.length` desse resultado fornece a contagem sem modificar os dados originais.
 
-## O template
-
-Substitua o `@for (achievement of ['Primeira lendária', ...])` por isto, dentro de `@if (section === 'conquistas')`:
+## Passo 3 — desenhar a seção
 
 ```html
 @if (loadError(); as message) {
   <p role="alert">{{ message }}</p>
 } @else if (achievements$ | async; as achievements) {
-  <p>
-    {{ unlocked(achievements) }} de {{ achievements.length }} desbloqueadas
-  </p>
-  <div class="achievement-grid">
-    @for (achievement of achievements; track achievement.id) {
-      <article>
-        <strong>{{ achievement.title }}</strong>
-        <p>{{ achievement.description }}</p>
-        <small>{{ achievement.progress }}/{{ achievement.goal }}</small>
-        <small>{{ achievement.reward }}</small>
-        @if (achievement.unlockedAt) {
-          <time>{{ achievement.unlockedAt }}</time>
-        } @else {
-          <small>Em progresso</small>
-        }
-      </article>
-    } @empty {
-      <p>Nenhuma conquista cadastrada.</p>
-    }
-  </div>
+  <p>{{ unlockedCount(achievements) }} de {{ achievements.length }} desbloqueadas</p>
+
+  @for (achievement of achievements; track achievement.id) {
+    <article>
+      <h2>{{ achievement.title }}</h2>
+      <p>{{ achievement.description }}</p>
+      <p>{{ achievement.progress }} / {{ achievement.goal }}</p>
+      <p>Recompensa: {{ achievement.reward }}</p>
+
+      @if (achievement.unlockedAt) {
+        <p>Desbloqueada</p>
+      } @else {
+        <p>Em progresso</p>
+      }
+    </article>
+  } @empty {
+    <p>Nenhuma conquista cadastrada.</p>
+  }
 } @else {
   <p>Carregando conquistas...</p>
 }
 ```
 
-```ts
-protected unlocked(achievements: { unlockedAt?: string }[]): number {
-  return achievements.filter((achievement) => achievement.unlockedAt).length;
-}
-```
+`@if (achievement.unlockedAt)` faz **narrowing** (estreitamento de tipo): dentro do bloco, o Angular sabe que a data existe.
 
-Destaque visual de "quase lá" também fica na tela: `achievement.progress / achievement.goal >= 0.8` e ainda sem `unlockedAt`. Não peça isso ao service.
+## Passo 4 — conferir
 
-## Confira
+1. Abra `/perfil/conquistas` com sessão.
+2. Confira título, progresso e recompensa.
+3. Diferencie concluídas das que estão em progresso.
+4. Simule uma lista vazia no teste.
+5. Simule erro e confirme `role="alert"`.
 
-`/perfil/conquistas` lista Primeira lendária, Mestre estrategista e Colecionador. As duas primeiras têm data. Colecionador mostra 24/100 e "Em progresso". A mensagem de falha do service é "Falha ao carregar as conquistas."
+## Erros comuns
+
+- Considerar `progress > 0` como conclusão.
+- Calcular progresso no serviço quando ele já vem da API.
+- Usar o índice do array no `track`; prefira `achievement.id`.

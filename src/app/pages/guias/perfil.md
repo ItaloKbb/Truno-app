@@ -1,24 +1,32 @@
 # Perfil (`/perfil`)
 
-A visão geral já tem layout em `src/app/pages/profile`. Os números 128, 68% e 1.250 estão escritos no HTML. A tarefa de hoje é substituir esses números pelo que o `ProfileService` devolve. Não apague o menu, o avatar nem as classes CSS.
+Nesta atividade, você vai substituir números fixos da visão geral por dados do `ProfileService`.
 
-## Qual service
+## Objetivo
 
-`ProfileService`. A visão geral precisa de mais de um método, porque cada bloco mora num endpoint:
+Carregar perfil, estatísticas, coleção, conquistas e atividades como uma única visão consistente.
 
-| Método | Endpoint | Para que serve na tela |
-| --- | --- | --- |
-| `getProfile()` | `GET /api/profile` | Nome, usuário, nível, XP, moedas e gemas |
-| `getStats()` | `GET /api/profile/stats` | Partidas, vitórias, taxa e sequência |
-| `getCollection()` | `GET /api/profile/collection` | Quantas cartas foram obtidas |
-| `getAchievements()` | `GET /api/profile/achievements` | Três conquistas recentes |
-| `getActivities()` | `GET /api/profile/activities` | Partidas recentes |
+## Vocabulário da atividade
 
-`ProfileStorage` é outra coisa. Ele guarda o rascunho local (`displayName`, `username`, `avatarUrl`, `initials`, `level`). Não use o storage para partidas, coleção ou conquistas. Esses dados vêm do `ProfileService`.
+- **profile overview** (visão geral do perfil): resumo de várias fontes de dados.
+- **parallel requests** (requisições paralelas): chamadas iniciadas sem esperar uma pela outra.
+- **forkJoin** (junção): operador RxJS que espera todos os fluxos terminarem.
+- **aggregate** (agregado): objeto formado pela combinação de vários resultados.
+- **consistent state** (estado consistente): dados que pertencem à mesma carga, sem misturar valores antigos e novos.
 
-## Uma inscrição para vários métodos
+## Passo 1 — entender os serviços
 
-Se você criar cinco `AsyncPipe`, são cinco carregamentos independentes e cinco lugares para errar. `forkJoin` espera todos e entrega um objeto só.
+`ProfileService` busca dados remotos. `ProfileStorage` mantém apenas o rascunho local usado por partes da interface. Para estatísticas e histórico, use o serviço remoto.
+
+| Método | Informação |
+| --- | --- |
+| `getProfile()` | Identidade, nível, experiência e moedas. |
+| `getStats()` | Partidas, vitórias e sequência. |
+| `getCollection()` | Cartas obtidas. |
+| `getAchievements()` | Conquistas. |
+| `getActivities()` | Atividades recentes. |
+
+## Passo 2 — combinar as requisições
 
 ```ts
 import { AsyncPipe } from '@angular/common';
@@ -26,17 +34,19 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { Avatar } from '../../components/avatar/avatar';
-import { ProfileService } from '../../services/profile.service';
+import type { CollectionCard } from '../../domain/profile';
+import { ProfileService } from '../../services/modules/profile.service';
 
 @Component({
   imports: [AsyncPipe, RouterLink, Avatar],
   selector: 'app-profile',
+  styleUrl: './profile.css',
   templateUrl: './profile.html',
 })
 export class Profile {
   private readonly profiles = inject(ProfileService);
-
   protected readonly loadError = signal('');
+
   protected readonly overview$ = forkJoin({
     profile: this.profiles.getProfile(),
     stats: this.profiles.getStats(),
@@ -49,49 +59,42 @@ export class Profile {
       return of(null);
     }),
   );
+
+  protected obtainedCount(cards: CollectionCard[]): number {
+    return cards.filter((card) => card.obtained).length;
+  }
 }
 ```
 
-Se um dos cinco falhar, o `forkJoin` inteiro falha. A tela mostra um alerta e não mistura número novo com número antigo. É melhor do que exibir vitórias sem conseguir dizer de quem são.
+`forkJoin` é adequado porque chamadas HTTP emitem uma resposta e terminam. Se uma falhar, o agregado inteiro falha; isso evita mostrar dados incompletos como se fossem uma visão confiável.
 
-O componente já importa `Avatar` e `RouterLink`. Mantenha os dois no array `imports`, junto com `AsyncPipe`.
-
-## Onde mexer no HTML
-
-Envolva o miolo em `@if (overview$ | async; as overview)`. Dentro, troque o texto fixo pelo campo. Exemplos do que substituir em `profile.html`:
+## Passo 3 — proteger o layout com os estados
 
 ```html
-<h1>{{ overview.profile.displayName }}</h1>
-<p>&#64;{{ overview.profile.username }}</p>
-<p>Nível {{ overview.profile.level }}</p>
-<p>{{ overview.profile.experience }} / {{ overview.profile.experienceToNextLevel }} XP</p>
+@if (loadError(); as message) {
+  <p role="alert">{{ message }}</p>
+} @else if (overview$ | async; as overview) {
+  <h1>{{ overview.profile.displayName }}</h1>
+  <p>&#64;{{ overview.profile.username }}</p>
+  <p>Nível {{ overview.profile.level }}</p>
+  <p>{{ overview.profile.experience }} / {{ overview.profile.experienceToNextLevel }} XP</p>
 
-<strong>{{ overview.stats.matchesPlayed }}</strong>
-<strong>{{ overview.stats.wins }} vitórias</strong>
-<strong>{{ overview.stats.winRate * 100 }}%</strong>
-<strong>{{ overview.stats.currentWinStreak }}</strong>
-```
+  <p>{{ overview.stats.matchesPlayed }} partidas</p>
+  <p>{{ overview.stats.wins }} vitórias</p>
+  <p>{{ overview.stats.winRate * 100 }}% de aproveitamento</p>
 
-`winRate` vem como fração. `0.625` na tela é `62.5%` se você multiplicar por 100.
-
-Coleção, no card de progresso:
-
-```html
-<strong>
-  {{ obtained(overview.collection) }}
-  <span>de {{ overview.collection.length }} cartas</span>
-</strong>
-```
-
-O método fica na classe. Conta é regra de apresentação pequena, e a lista já chegou:
-
-```ts
-protected obtained(cards: { obtained: boolean }[]): number {
-  return cards.filter((card) => card.obtained).length;
+  <p>
+    {{ obtainedCount(overview.collection) }} de
+    {{ overview.collection.length }} cartas obtidas
+  </p>
+} @else {
+  <p>Carregando perfil...</p>
 }
 ```
 
-Conquistas recentes: as que têm `unlockedAt`. Se não quiser filtrar, mostre as três primeiras.
+`winRate` é uma fração: `0.625` corresponde a `62.5%`. A multiplicação pertence à apresentação, não ao serviço.
+
+## Passo 4 — renderizar listas internas
 
 ```html
 @for (achievement of overview.achievements.slice(0, 3); track achievement.id) {
@@ -100,36 +103,16 @@ Conquistas recentes: as que têm `unlockedAt`. Se não quiser filtrar, mostre as
     <p>{{ achievement.description }}</p>
   </article>
 } @empty {
-  <p>Nenhuma conquista ainda. Jogue uma partida para começar.</p>
+  <p>Nenhuma conquista ainda.</p>
 }
 ```
 
-Atividade:
+`slice(0, 3)` devolve uma cópia com no máximo três itens. Isso é **client-side presentation** (apresentação no cliente), pois a API já entregou a lista.
 
-```html
-@for (activity of overview.activities; track activity.id) {
-  <article>
-    <strong>{{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }} contra &#64;{{ activity.opponentName }}</strong>
-  </article>
-} @empty {
-  <p>Nenhuma partida ainda.</p>
-}
-```
+## Checklist
 
-O `@empty` aqui é o estado vazio de verdade: a API respondeu e a lista tem zero itens. A conta nova vê esse texto, não um card sem número.
-
-O carregamento e o erro ficam em volta de tudo:
-
-```html
-@if (loadError(); as message) {
-  <p role="alert">{{ message }}</p>
-} @else if (overview$ | async; as overview) {
-  <!-- o layout que já existe, com os campos acima -->
-} @else {
-  <p>Carregando perfil...</p>
-}
-```
-
-## Confira
-
-Logado, `/perfil` deixa de mostrar 128 partidas fixas. O serviço de estatística devolve 200 partidas, 125 vitórias e taxa 0,625. O nome do perfil da API é Lucas Martins. Se a coleção falhar, a página inteira mostra o alerta, não só o card da coleção.
+- [ ] `AsyncPipe`, `RouterLink` e `Avatar` permanecem em `imports`.
+- [ ] Os números fixos foram removidos.
+- [ ] O template só lê `overview` dentro do bloco em que ele existe.
+- [ ] Lista vazia tem mensagem própria.
+- [ ] Uma falha não deixa números antigos visíveis.

@@ -1,51 +1,92 @@
-# Guias das telas
+# Guias práticos das telas
 
-Estes guias são para usar hoje. O service de cada tela já existe. O seu trabalho é criar ou completar a tela e pedir os dados para esse service.
+Estes tutoriais ensinam a ligar uma tela Angular aos serviços do projeto. Cada guia segue uma sequência curta: entender o objetivo, reconhecer os termos, implementar uma etapa por vez e conferir o resultado.
 
-Leia primeiro [como um service funciona](../../services/index.md). A receita genérica de pasta, rota e `router-outlet` está em [pages/home/index.md](../home/index.md). Daqui para a frente o foco é outro: **como a tela usa o service**.
+Antes de começar, leia [como os serviços estão organizados](../../services/index.md). Os arquivos compartilhados ficam em `services/config`; os serviços usados pelas telas ficam em `services/modules`.
 
-## Regra que vale para todas
+## Como estudar com estes guias
 
-A tela não importa arquivo de `src/app/models/mock`. Ela não chama `HttpClient`. Ela injeta um service e trata três situações:
+Em cada etapa:
 
-| Situação | O que o service fez | O que a tela mostra |
+1. Leia a explicação antes de copiar o código.
+2. Digite ou adapte um bloco por vez.
+3. Salve o arquivo e observe os erros do TypeScript.
+4. Teste no navegador antes de seguir.
+5. Ao terminar, use o checklist do guia.
+
+Copiar tudo de uma vez pode esconder qual alteração causou um erro. O objetivo é compreender o caminho percorrido pelo dado.
+
+## Vocabulário essencial
+
+| Termo | Significado no projeto |
+| --- | --- |
+| **component** (componente) | Classe e template que formam uma parte da interface. |
+| **template** (modelo de tela) | Arquivo HTML do componente. |
+| **service** (serviço) | Classe que concentra acesso à API ou outra responsabilidade compartilhada. |
+| **dependency injection** (injeção de dependência) | Mecanismo do Angular que entrega uma instância com `inject(...)`. Por isso não usamos `new CardService()`. |
+| **endpoint** (ponto de acesso) | Endereço da API, como `GET /cards`. |
+| **request** (requisição) | Pedido enviado pelo navegador à API. |
+| **response** (resposta) | Dados e status devolvidos pela API. |
+| **payload** (carga de dados) | Objeto enviado no corpo de uma requisição, normalmente em um `POST`. |
+| **Observable** (fluxo observável) | Valor que pode chegar depois. Uma chamada HTTP do Angular devolve um `Observable`. |
+| **subscribe** (inscrever-se) | Iniciar e acompanhar um `Observable` pelo TypeScript. É útil para ações disparadas por botão. |
+| **AsyncPipe** (pipe assíncrono) | Operador `| async` do template. Ele se inscreve e cancela a inscrição automaticamente. |
+| **signal** (sinal) | Estado reativo local. Ao chamar `set` ou `update`, o Angular atualiza a parte dependente da tela. |
+| **guard** (guarda de rota ou de tipo) | Regra de proteção. `authGuard` protege rotas; funções como `isCatalogCard` validam dados. |
+| **mock** (dado simulado) | Dado falso usado em testes. Uma tela real não importa os arquivos de `models/mock`. |
+
+## O caminho do dado
+
+```text
+template -> component -> service -> API
+   ^                               |
+   |---------- response -----------|
+```
+
+O componente pede o dado ao serviço. O serviço chama a API e valida a resposta. Quando o valor chega, o componente o entrega ao template.
+
+Uma tela de leitura deve representar quatro estados:
+
+| Estado | Significado | Exemplo de mensagem |
 | --- | --- | --- |
-| Carregando | A requisição ainda não voltou | Um texto como "Carregando..." |
-| Vazio | Voltou uma lista válida com zero itens | "Nenhum item encontrado." |
-| Erro | A rede falhou ou o JSON não passou no guard | A `message` do `Error`, com `role="alert"` |
+| Carregando | A resposta ainda não chegou. | `Carregando cartas...` |
+| Sucesso | A API devolveu dados válidos. | A lista ou o objeto. |
+| Vazio | A resposta é válida, mas a lista não tem itens. | `Nenhuma carta encontrada.` |
+| Erro | A rede falhou ou a resposta foi inválida. | Mensagem com `role="alert"`. |
 
-Lista vazia não é erro. Erro não vira lista vazia.
+Lista vazia não é erro. Erro também não deve ser convertido silenciosamente em lista vazia.
 
-Quase toda tela fica atrás do `authGuard`. Sem sessão, o Angular manda para `/home?returnUrl=...`. Para ver a tela, entre com `lucasmartins@truno.app` e senha `truno1234`.
+## Mapa dos tutoriais
 
-O `HttpClient` e o interceptor de autenticação já estão em `app.config.ts`. Não mexa neles para criar uma tela.
+| Tela | Rota | Serviço principal | Guia |
+| --- | --- | --- | --- |
+| Entrada | `/home` | `AuthService` | [Login](login.md) |
+| Catálogo | `/book` | `CardService` | [Catálogo](catalogo.md) |
+| Lobby | `/lobby` | `GameService` | [Lobby](lobby.md) |
+| Partida | `/partida/:id` | `GameService` | [Partida](partida.md) |
+| Ranking | `/ranking` | `RankingService` | [Ranking](ranking.md) |
+| Perfil | `/perfil` | `ProfileService` | [Perfil](perfil.md) |
+| Coleção | `/perfil/colecao` | `ProfileService` | [Coleção](colecao.md) |
+| Conquistas | `/perfil/conquistas` | `ProfileService` | [Conquistas](conquistas.md) |
+| Histórico | `/perfil/historico` | `ProfileService` | [Histórico](historico.md) |
+| Configurações | `/perfil/configuracoes` | `ProfileStorage` e `AuthService` | [Configurações](configuracoes.md) |
+| Loja | `/loja` | `ShopService` | [Loja](loja.md) |
+| Habilidades | `/habilidades` | `SkillService` | [Habilidades](habilidades.md) |
+| Perguntas | `/perguntas` | `PuzzleService` | [Perguntas](perguntas.md) |
 
-## Mapa
+## Receita para criar uma tela
 
-| Tela | Rota | Service | Guia | Situação da pasta |
-| --- | --- | --- | --- | --- |
-| Login | `/home` | `AuthService` | [login.md](login.md) | Pronta. É o modelo de formulário. |
-| Catálogo | `/book` | `CardService` | [catalogo.md](catalogo.md) | Pronta. É o modelo de leitura. |
-| Lobby | `/lobby` | `LobbyService` | [lobby.md](lobby.md) | Existe, ainda sem o service. |
-| Loja | `/loja` | `ShopService` | [loja.md](loja.md) | Criar. |
-| Habilidades | `/habilidades` | `SkillService` | [habilidades.md](habilidades.md) | Criar. |
-| Perguntas | `/perguntas` | `PuzzleService` | [perguntas.md](perguntas.md) | Criar. |
-| Partida | `/partida` | `GameService` | [partida.md](partida.md) | Criar. |
-| Perfil | `/perfil` | `ProfileService` | [perfil.md](perfil.md) | Existe. Trocar os números fixos pelos dados do service. |
-| Coleção | `/perfil/colecao` | `ProfileService.getCollection` | [colecao.md](colecao.md) | A rota existe. Os dados ainda estão escritos na tela. |
-| Conquistas | `/perfil/conquistas` | `ProfileService.getAchievements` | [conquistas.md](conquistas.md) | A rota existe. Os dados ainda estão escritos na tela. |
-| Histórico | `/perfil/historico` | `ProfileService.getActivities` | [historico.md](historico.md) | A rota existe. Os dados ainda estão escritos na tela. |
-| Configurações | `/perfil/configuracoes` | `ProfileStorage` e `AuthService` | [configuracoes.md](configuracoes.md) | A rota existe. É a tela que grava no navegador e encerra a sessão. |
-
-## Receita de uma tela nova
-
-Na raiz do projeto:
+### Passo 1 — gerar o componente
 
 ```bash
 npm run ng -- generate component pages/loja
 ```
 
-Em `src/app/app.routes.ts`, registre a rota **antes** de `{ path: '**', redirectTo: 'home' }`:
+`generate` significa “gerar”. O Angular CLI cria os arquivos TypeScript, HTML, CSS e teste.
+
+### Passo 2 — registrar a rota
+
+Adicione a rota antes do curinga `**` em `src/app/app.routes.ts`:
 
 ```ts
 {
@@ -55,27 +96,25 @@ Em `src/app/app.routes.ts`, registre a rota **antes** de `{ path: '**', redirect
 },
 ```
 
-`authGuard` já está importado nesse arquivo. A rota protegida é renderizada no navegador por causa de `path: '**'` em `app.routes.server.ts`. Não precisa cadastrar cada tela nova lá.
+`loadComponent` faz **lazy loading** (carregamento sob demanda): o código da tela só é carregado quando a rota é aberta. O curinga `**` captura rotas desconhecidas; por isso deve continuar por último.
 
-Suba o projeto com `npm start` e abra `http://localhost:4200/loja` depois do login.
+### Passo 3 — ligar o serviço
 
-## Como ligar o service
-
-Leitura, o caso do catálogo, da loja, das habilidades e da coleção:
+Para leitura, use `AsyncPipe`:
 
 ```ts
 protected readonly loadError = signal('');
-protected readonly items$ = inject(UmService)
-  .getAll()
-  .pipe(
-    catchError((error: unknown) => {
-      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar.');
-      return of(null);
-    }),
-  );
+protected readonly items$ = inject(UmService).getAll().pipe(
+  catchError((error: unknown) => {
+    this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar.');
+    return of(null);
+  }),
+);
 ```
 
-`of(null)` no erro existe para o `AsyncPipe` parar de esperar. A frase vem do `signal`. `AsyncPipe` entra no array `imports` do componente.
+O sufixo `$` é uma convenção para indicar um `Observable`. `pipe` significa “encadear operadores”; aqui ele conecta o tratamento de erro ao fluxo.
+
+### Passo 4 — representar os estados no HTML
 
 ```html
 @if (loadError(); as message) {
@@ -91,12 +130,22 @@ protected readonly items$ = inject(UmService)
 }
 ```
 
-Formulário, o caso do login e de criar uma mesa: o clique chama `subscribe`. Não use `AsyncPipe` para um `POST` disparado pelo botão.
+`track` informa a identidade de cada item e evita recriar elementos desnecessariamente. `@empty` só é usado quando a lista chegou vazia.
 
-## Ordem sugerida para hoje
+### Passo 5 — validar
 
-1. Leia o [catálogo](catalogo.md) e o [login](login.md). São as duas formas de usar service.
-2. Faça o [lobby](lobby.md): a pasta já existe e o service também.
-3. Crie [loja](loja.md), [habilidades](habilidades.md) e [perguntas](perguntas.md). As três são listas.
-4. Faça a [partida](partida.md).
-5. Ligue o [perfil](perfil.md) e, em seguida, [coleção](colecao.md), [conquistas](conquistas.md), [histórico](historico.md) e [configurações](configuracoes.md).
+```bash
+npx ng test --watch=false
+npm run build
+```
+
+`build` significa “construção”: o Angular compila o projeto como faria para publicação.
+
+## Ordem sugerida
+
+1. [Login](login.md), para aprender formulários e `subscribe`.
+2. [Catálogo](catalogo.md), para aprender leitura com `AsyncPipe`.
+3. [Lobby](lobby.md) e [Partida](partida.md), para acompanhar uma operação completa.
+4. [Ranking](ranking.md), [Habilidades](habilidades.md) e [Perguntas](perguntas.md), para praticar listas.
+5. [Perfil](perfil.md) e suas subseções.
+6. [Loja](loja.md), para praticar um objeto que contém uma lista.

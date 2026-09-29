@@ -1,27 +1,45 @@
 # Coleção (`/perfil/colecao`)
 
-A rota já abre `ProfileSection` com `data: { section: 'colecao' }`. As seis cartas estão escritas no TypeScript do componente. A tarefa é ler `ProfileService.getCollection()` e apagar esse array fixo.
+Nesta atividade, você vai substituir as cartas fixas de `ProfileSection` por dados de `ProfileService.getCollection()`.
 
-## Qual service
+## Objetivo
 
-Só este método: `getCollection()`. Ele devolve `CollectionCard[]`.
+Buscar a coleção somente quando a seção aberta for `colecao`, manter os filtros locais e representar carregamento, vazio e erro.
 
-Cada carta da coleção tem `name`, `rarity`, `level` e `obtained`. Não tem `id`. No `@for`, use `track card.name`. Também não tem `url`: esta coleção não é o baralho de `CardService`. Não misture os dois services nesta tela. O catálogo de imagens fica em `/book`.
+## Vocabulário da atividade
 
-`rarity` é `Comum`, `Rara`, `Épica`, `Lendária` ou `Desconhecida`.
+- **collection** (coleção): conjunto de cartas do jogador.
+- **filter** (filtro): regra local que escolhe quais itens aparecem.
+- **derived data** (dado derivado): valor calculado a partir de outro, como a quantidade obtida.
+- **ternary operator** (operador ternário): forma curta de escolher entre dois valores com `condição ? valorA : valorB`.
 
-## Onde colocar o observable
+## Passo 1 — conhecer o modelo
 
-`ProfileSection` atende várias rotas. A coleção só deve chamar `getCollection()` quando `section === 'colecao'`. Nas outras seções, não dispare essa requisição.
+`getCollection()` devolve `Observable<CollectionCard[]>`. Cada carta tem:
+
+```ts
+{ name, rarity, level, obtained }
+```
+
+Não há `id` nem `url`. Portanto, use `track card.name` e não misture esta coleção com o catálogo do `CardService`.
+
+## Passo 2 — importar e injetar
 
 ```ts
 import { AsyncPipe } from '@angular/common';
 import { catchError, of } from 'rxjs';
-import { ProfileService } from '../../services/profile.service';
+import type { CollectionCard } from '../../domain/profile';
+import { ProfileService } from '../../services/modules/profile.service';
 
 private readonly profileApi = inject(ProfileService);
 protected readonly loadError = signal('');
+```
 
+Adicione `AsyncPipe` aos `imports` do componente.
+
+## Passo 3 — buscar apenas nesta rota
+
+```ts
 protected readonly collection$ =
   this.section === 'colecao'
     ? this.profileApi.getCollection().pipe(
@@ -33,69 +51,58 @@ protected readonly collection$ =
     : of([]);
 ```
 
-`this.section` já vem de `this.route.snapshot.data['section']`. É um valor fixo para aquela abertura da rota. O ternário evita a requisição nas conquistas e no histórico.
+`ProfileSection` atende várias rotas. O operador ternário impede uma requisição de coleção ao abrir histórico ou configurações.
 
-Inclua `AsyncPipe` nos `imports` do `@Component`.
-
-Apague o array `cards` que lista Guardião da Floresta, Feiticeira Lunar e as outras. Se ele continuar, a tela mente: mostra um dado que não passou pelo service.
-
-## O template
-
-No bloco `@if (section === 'colecao')`, troque o `@for (card of filteredCards` pela lista que chegou.
-
-O filtro por obtida, não obtida e busca continua na tela. A lista completa vem uma vez. Filtrar no service obrigaria um endpoint novo para cada clique.
+## Passo 4 — manter o filtro no componente
 
 ```ts
-protected visibleCollection(
-  cards: { name: string; rarity: string; level: number; obtained: boolean }[],
-): typeof cards {
+protected visibleCollection(cards: CollectionCard[]): CollectionCard[] {
   const filter = this.activeFilter();
   const term = this.searchTerm().trim().toLocaleLowerCase();
+
   return cards.filter((card) => {
-    const matchesFilter = filter === 'all' || (filter === 'obtained' ? card.obtained : !card.obtained);
+    const matchesStatus =
+      filter === 'all' || (filter === 'obtained' ? card.obtained : !card.obtained);
     const matchesName = !term || card.name.toLocaleLowerCase().includes(term);
-    return matchesFilter && matchesName;
+    return matchesStatus && matchesName;
   });
 }
-```
 
-```html
-@if (section === 'colecao') {
-  @if (loadError(); as message) {
-    <p role="alert">{{ message }}</p>
-  } @else if (collection$ | async; as cards) {
-    <p>{{ obtainedCount(cards) }} de {{ cards.length }} cartas</p>
-    <div class="filters">
-      <button type="button" (click)="setFilter('all')">Todas</button>
-      <button type="button" (click)="setFilter('obtained')">Obtidas</button>
-      <button type="button" (click)="setFilter('missing')">Não obtidas</button>
-      <input type="search" (input)="setSearchTerm($any($event.target).value)" placeholder="Buscar carta" />
-    </div>
-    <div class="cards">
-      @for (card of visibleCollection(cards); track card.name) {
-        <article>
-          <strong>{{ card.obtained ? card.name : 'Carta desconhecida' }}</strong>
-          <small>{{ card.rarity }}</small>
-          @if (card.obtained) {
-            <small>Nível {{ card.level }}</small>
-          } @else {
-            <small>Ainda não obtida</small>
-          }
-        </article>
-      } @empty {
-        <p>Nenhuma carta encontrada com esse filtro.</p>
-      }
-    </div>
-  } @else {
-    <p>Carregando a coleção...</p>
-  }
+protected obtainedCount(cards: CollectionCard[]): number {
+  return cards.filter((card) => card.obtained).length;
 }
 ```
 
-Carta com `obtained: false` não revela o nome. A API manda o nome mesmo assim. Esconder é decisão da tela, para a coleção bloqueada não entregar a resposta de graça. O `@empty` do filtro é diferente de uma coleção que ainda está carregando.
+O servidor entrega a coleção completa. Busca por texto e filtro são **presentation logic** (lógica de apresentação), por isso ficam na tela.
 
-`obtainedCount` é o mesmo filtro `card.obtained` usado no perfil.
+## Passo 5 — montar o template
 
-## Confira
+```html
+@if (loadError(); as message) {
+  <p role="alert">{{ message }}</p>
+} @else if (collection$ | async; as cards) {
+  <p>{{ obtainedCount(cards) }} de {{ cards.length }} cartas obtidas</p>
 
-Em `/perfil/colecao`, logado, as cartas vêm de `GET /api/profile/collection`. Caçador Solar e Oráculo das Marés aparecem como "Carta desconhecida". Se você buscar "Dragão", só o Dragão Rubro permanece. Limpar a busca devolve a lista. A falha do endpoint mostra "Falha ao carregar a coleção." e não uma grade em branco.
+  @for (card of visibleCollection(cards); track card.name) {
+    <article>
+      <strong>{{ card.obtained ? card.name : 'Carta desconhecida' }}</strong>
+      <span>{{ card.rarity }}</span>
+      <span>{{ card.obtained ? 'Nível ' + card.level : 'Ainda não obtida' }}</span>
+    </article>
+  } @empty {
+    <p>Nenhuma carta encontrada com este filtro.</p>
+  }
+} @else {
+  <p>Carregando a coleção...</p>
+}
+```
+
+Uma carta bloqueada não revela o nome. Essa é uma decisão visual; o objeto original não deve ser alterado.
+
+## Checklist
+
+- [ ] O array fixo foi removido.
+- [ ] A requisição só ocorre na seção `colecao`.
+- [ ] O filtro usa uma nova lista e não modifica a resposta.
+- [ ] `track card.name` é usado.
+- [ ] Falha e filtro sem resultados mostram mensagens diferentes.
