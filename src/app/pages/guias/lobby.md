@@ -1,137 +1,147 @@
 # Lobby (`/lobby`)
 
-A pasta `src/app/pages/lobby` já existe e a rota `/lobby` já está protegida. O HTML de hoje é estático: os nomes das mesas estão escritos na tela. A sua tarefa é pedir as mesas ao `LobbyService` e permitir criar uma mesa nova.
+O lobby é o ponto de entrada para partidas. Nesta atividade, você vai permitir que o jogador crie uma partida ou entre em uma existente usando um código.
 
-Não gere o componente de novo.
+## Objetivo
 
-## Qual service
+O lobby deverá criar uma partida, acessar uma existente, mostrar o estado de envio e navegar para `/partida/:id` após o sucesso.
 
-`LobbyService`.
+## Vocabulário da atividade
 
-| Método | Uso na tela |
-| --- | --- |
-| `getAll()` | Lista as mesas ao abrir |
-| `getById(id)` | Detalhe, se você quiser uma rota `/lobby/:id` |
-| `create(room)` | Botão "Criar mesa" |
+- **lobby** (sala de espera): tela em que o jogador cria ou acessa uma partida.
+- **create** (criar): operação `POST /games`.
+- **access/join** (acessar/entrar): operação `POST /games/access`.
+- **payload** (carga de dados): objeto enviado no corpo do `POST`.
+- **mutation** (mutação): operação que altera dados no servidor.
+- **pending** (pendente): estado enquanto a resposta ainda não chegou.
 
-Uma `LobbyRoom` tem `id`, `name`, `hostId`, `visibility` (`PUBLICA` ou `PRIVADA`), `maxPlayers` (`2` ou `4`), `playerIds`, `pointsToWin` (`12`, `15` ou `30`) e `status` (`ABERTA`, `EM_JOGO` ou `ENCERRADA`).
+## Passo 1 — escolher o serviço correto
 
-O corpo do `create` é um `CreateLobbyRoom`: `name`, `hostId`, `visibility`, `maxPlayers` e `pointsToWin`. O `hostId` é o `user.id` da sessão, não um texto digitado.
-
-## Listar
-
-Siga o catálogo. Troque `CardService.getAll` por `LobbyService.getAll`.
+Não existe mais `LobbyService`. O contrato atual concentra criação, acesso e ações da partida no `GameService`, em `services/modules/game.service.ts`.
 
 ```ts
-import { AsyncPipe } from '@angular/common';
+create(input: CreateGameInput): Observable<GameState>
+access(code: string): Observable<GameState>
+```
+
+Os dois métodos devolvem o estado completo da partida. O `id` será usado na navegação.
+
+## Passo 2 — preparar os estados
+
+```ts
 import { Component, inject, signal } from '@angular/core';
-import { catchError, of } from 'rxjs';
-import { LobbyService } from '../../services/lobby.service';
+import { Router } from '@angular/router';
+import type { Observable } from 'rxjs';
+import type { CreateGameInput, GameState } from '../../domain/truno-api';
+import { GameService } from '../../services/modules/game.service';
 
 @Component({
-  imports: [AsyncPipe],
   selector: 'app-lobby',
+  styleUrl: './lobby.css',
   templateUrl: './lobby.html',
 })
 export class Lobby {
-  private readonly lobby = inject(LobbyService);
+  private readonly games = inject(GameService);
+  private readonly router = inject(Router);
 
-  protected readonly loadError = signal('');
-  protected readonly rooms$ = this.lobby.getAll().pipe(
-    catchError((error: unknown) => {
-      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as mesas.');
-      return of(null);
-    }),
-  );
-}
+  protected readonly pending = signal(false);
+  protected readonly errorMessage = signal('');
 ```
 
-`AsyncPipe` entra em `imports`. O componente já se chama `Lobby`. Mantenha o `selector: 'app-lobby'`.
+`pending` impede cliques duplicados. `errorMessage` mantém a falha visível sem usar `alert()` do navegador.
 
-```html
-@if (loadError(); as message) {
-  <p role="alert">{{ message }}</p>
-} @else if (rooms$ | async; as rooms) {
-  <ul>
-    @for (room of rooms; track room.id) {
-      <li>
-        <strong>{{ room.name }}</strong>
-        <span>{{ room.status }}</span>
-        <span>{{ room.playerIds.length }}/{{ room.maxPlayers }}</span>
-        <span>{{ room.pointsToWin }} pontos</span>
-      </li>
-    } @empty {
-      <li>Nenhuma mesa aberta.</li>
-    }
-  </ul>
-} @else {
-  <p>Carregando mesas...</p>
-}
-```
-
-Você pode manter o visual que já está em `lobby.html`. O que sai são os textos fixos de mesa. No lugar deles, entra o `@for`.
-
-## Criar uma mesa
-
-Criar é formulário, como o login. A lista continua sendo `AsyncPipe`. São duas coisas no mesmo componente.
+## Passo 3 — criar uma partida
 
 ```ts
-import { AuthService } from '../../services/auth.service';
+protected createGame(name: string): void {
+  const input: CreateGameInput = {
+    name: name.trim(),
+    maxPlayers: 4,
+    initialCards: 3,
+    roundReward: 10,
+    emptyHandReward: 5,
+    trophyPrice: 20,
+  };
 
-private readonly auth = inject(AuthService);
-protected readonly creating = signal(false);
-protected readonly createError = signal('');
-
-protected createRoom(name: string): void {
-  const hostId = this.auth.session()?.user.id;
-  if (!hostId || name.trim().length < 3) {
-    this.createError.set('Entre na conta e escolha um nome com pelo menos 3 letras.');
+  if (input.name.length < 3) {
+    this.errorMessage.set('Digite um nome com pelo menos 3 caracteres.');
     return;
   }
 
-  this.creating.set(true);
-  this.lobby
-    .create({
-      name: name.trim(),
-      hostId,
-      visibility: 'PUBLICA',
-      maxPlayers: 2,
-      pointsToWin: 12,
-    })
-    .subscribe({
-      next: () => {
-        this.creating.set(false);
-        this.createError.set('');
-        this.reload.set(this.reload() + 1);
-      },
-      error: (error: unknown) => {
-        this.creating.set(false);
-        this.createError.set(error instanceof Error ? error.message : 'Falha ao criar a mesa.');
-      },
-    });
+  this.run(this.games.create(input));
 }
 ```
 
-A lista não atualiza sozinha depois do `POST`, porque o `AsyncPipe` já recebeu o primeiro array. Force uma nova leitura com um `signal` que entra no `pipe`:
+`CreateGameInput` é um **interface contract** (contrato de interface): descreve os campos esperados pela API.
+
+## Passo 4 — entrar com um código
 
 ```ts
-private readonly reload = signal(0);
+protected accessGame(code: string): void {
+  if (!code.trim()) {
+    this.errorMessage.set('Informe o código da partida.');
+    return;
+  }
 
-protected readonly rooms$ = toObservable(this.reload).pipe(
-  switchMap(() => this.lobby.getAll()),
-  catchError((error: unknown) => {
-    this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as mesas.');
-    return of(null);
-  }),
-);
+  this.run(this.games.access(code));
+}
+
+private run(request: Observable<GameState>): void {
+  this.pending.set(true);
+  this.errorMessage.set('');
+
+  request.subscribe({
+    next: (game) => {
+      this.pending.set(false);
+      void this.router.navigate(['/partida', game.id]);
+    },
+    error: (error: unknown) => {
+      this.pending.set(false);
+      this.errorMessage.set(error instanceof Error ? error.message : 'Não foi possível abrir a partida.');
+    },
+  });
+}
 ```
 
-Importe `toObservable` de `@angular/core/rxjs-interop` e `switchMap`, `catchError`, `of` de `rxjs`. Cada vez que `reload` muda, `getAll()` roda de novo.
+O método privado `run` remove duplicação. A API converte o código para maiúsculas dentro do serviço; o componente não repete essa regra.
 
-No HTML, um campo e um botão chamam `createRoom`. Desabilite o botão com `[disabled]="creating()"`. Mostre `createError()` num `role="alert"` separado do erro da lista. São falhas diferentes: uma é "não consegui ler as mesas", a outra é "não consegui criar".
+## Passo 5 — ligar os formulários
 
-Nome com menos de 3 caracteres, `maxPlayers` fora de `2` ou `4`, ou `pointsToWin` fora de `12`, `15` e `30` faz a API responder `400`. O service transforma isso em "Falha ao criar a mesa."
+```html
+<section>
+  <h2>Criar partida</h2>
+  <label for="game-name">Nome da partida</label>
+  <input #gameName id="game-name" type="text" />
+  <button type="button" [disabled]="pending()" (click)="createGame(gameName.value)">Criar</button>
+</section>
 
-## Confira
+<section>
+  <h2>Entrar com código</h2>
+  <label for="game-code">Código</label>
+  <input #gameCode id="game-code" type="text" />
+  <button type="button" [disabled]="pending()" (click)="accessGame(gameCode.value)">Entrar</button>
+</section>
 
-Logado, `/lobby` mostra "Mesa rápida" e "Desafio valendo quatro", que são as mesas da API. Crie "Mesa do Lucas" e veja a terceira aparecer sem recarregar o navegador.
+@if (pending()) {
+  <p role="status">Aguarde...</p>
+}
+@if (errorMessage(); as message) {
+  <p role="alert">{{ message }}</p>
+}
+```
+
+`#gameName` é uma **template reference variable** (variável de referência do template). Para formulários maiores, prefira `ReactiveFormsModule`, como no login.
+
+## Passo 6 — conferir
+
+1. Tente criar uma partida sem nome.
+2. Crie uma partida válida e confira `/partida/<id>`.
+3. Volte ao lobby e entre com o código da partida.
+4. Tente um código inexistente e confira o alerta.
+
+## Erros comuns
+
+- Importar `LobbyService`: ele não pertence mais ao contrato atual.
+- Enviar `hostId`: a API identifica o jogador pelo token.
+- Navegar para `/partida` sem o `id`.
+- Manter o botão ativo durante o `POST`.

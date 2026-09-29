@@ -1,19 +1,26 @@
 # Perguntas (`/perguntas`)
 
-Você cria esta tela. Ela mostra as perguntas de tutorial que o `PuzzleService` entrega. A pessoa escolhe uma alternativa e a tela compara com o índice correto. A comparação é da tela. O service só busca.
+Nesta atividade, você vai criar um catálogo público de perguntas. A tela mostra enunciados e alternativas, mas nunca revela a resposta correta.
 
-## Qual service
+## Objetivo
 
-| Método | Uso |
-| --- | --- |
-| `getAll()` | Todas as perguntas |
-| `getById(id)` | Uma pergunta, se a tela for passo a passo |
+Criar a rota, buscar as definições pelo `PuzzleService` e compreender a diferença entre consultar perguntas e responder um desafio de partida.
 
-Cada `Puzzle` tem `id`, `title`, `alternativas` (array de strings) e `alternativaCorreta` (índice dentro desse array, começando em zero).
+## Vocabulário da atividade
 
-Não escreva as perguntas no HTML. Se a API mudar o texto, a tela acompanha.
+- **puzzle/challenge** (pergunta/desafio): atividade apresentada durante o jogo.
+- **alternative** (alternativa): uma opção de resposta.
+- **answer key** (gabarito): informação que indica a resposta correta.
+- **server-side validation** (validação no servidor): decisão feita pela API, não pelo navegador.
+- **information leak** (vazamento de informação): exposição de um dado que deveria permanecer secreto.
 
-## Criar e registrar
+## Passo 1 — entender a regra de segurança
+
+`PuzzleDefinition` possui `id`, `question` e `alternativas`. Não possui título nem índice correto.
+
+O endpoint `GET /puzzles` nunca devolve o gabarito. Isso impede que alguém inspecione a rede e descubra a resposta antes de jogar.
+
+## Passo 2 — criar e registrar
 
 ```bash
 npm run ng -- generate component pages/perguntas
@@ -27,15 +34,13 @@ npm run ng -- generate component pages/perguntas
 },
 ```
 
-## A classe
-
-Busque com `getAll()`, no mesmo `pipe` do catálogo. Guarde a resposta escolhida num `signal`. A chave é o `id` da pergunta.
+## Passo 3 — carregar o catálogo
 
 ```ts
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { PuzzleService } from '../../services/puzzle.service';
+import { PuzzleService } from '../../services/modules/puzzle.service';
 
 @Component({
   imports: [AsyncPipe],
@@ -44,32 +49,16 @@ import { PuzzleService } from '../../services/puzzle.service';
 })
 export class Perguntas {
   protected readonly loadError = signal('');
-  protected readonly answers = signal<Record<string, number>>({});
-  protected readonly puzzles$ = inject(PuzzleService)
-    .getAll()
-    .pipe(
-      catchError((error: unknown) => {
-        this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as perguntas.');
-        return of(null);
-      }),
-    );
-
-  protected choose(puzzleId: string, index: number): void {
-    this.answers.update((current) => ({ ...current, [puzzleId]: index }));
-  }
-
-  protected chosen(puzzleId: string): number | null {
-    const index = this.answers()[puzzleId];
-    return index === undefined ? null : index;
-  }
+  protected readonly puzzles$ = inject(PuzzleService).getAll().pipe(
+    catchError((error: unknown) => {
+      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar as perguntas.');
+      return of(null);
+    }),
+  );
 }
 ```
 
-`choose` não chama o service. A resposta certa já veio no objeto. Chamar a API de novo a cada clique não acrescenta nada.
-
-## O template
-
-Não mostre `alternativaCorreta` antes do clique. Depois do clique, diga se acertou.
+## Passo 4 — mostrar sem corrigir
 
 ```html
 <main>
@@ -80,17 +69,12 @@ Não mostre `alternativaCorreta` antes do clique. Depois do clique, diga se acer
   } @else if (puzzles$ | async; as puzzles) {
     @for (puzzle of puzzles; track puzzle.id) {
       <article>
-        <h2>{{ puzzle.title }}</h2>
-        @for (option of puzzle.alternativas; track option) {
-          <button type="button" (click)="choose(puzzle.id, $index)" [disabled]="chosen(puzzle.id) !== null">
-            {{ option }}
-          </button>
-        }
-        @if (chosen(puzzle.id) !== null) {
-          <p role="status">
-            {{ chosen(puzzle.id) === puzzle.alternativaCorreta ? 'Resposta certa.' : 'Resposta errada.' }}
-          </p>
-        }
+        <h2>{{ puzzle.question }}</h2>
+        <ol>
+          @for (alternative of puzzle.alternativas; track $index) {
+            <li>{{ alternative }}</li>
+          }
+        </ol>
       </article>
     } @empty {
       <p>Nenhuma pergunta disponível.</p>
@@ -101,12 +85,21 @@ Não mostre `alternativaCorreta` antes do clique. Depois do clique, diga se acer
 </main>
 ```
 
-`$index` é a posição da alternativa. É esse número que se compara com `alternativaCorreta`. A comparação no template usa `!== null` de propósito: a alternativa zero é uma resposta válida, e `@if (chosen(...); as picked)` trataria `0` como ausência.
+Usamos `track $index` porque alternativas diferentes podem ter o mesmo texto. O índice é estável dentro daquela pergunta.
 
-O `@empty` fica no `@for` das perguntas, não no das alternativas. Uma pergunta sem alternativas é outro caso: o `@for` interno simplesmente não desenha botões.
+## Passo 5 — responder durante a partida
 
-`track option` funciona porque os textos do baralho de exemplo não se repetem dentro da mesma pergunta. Se duas alternativas tivessem o mesmo texto, use `track $index`.
+Quando uma partida tem `pendingPuzzle`, o clique envia:
 
-## Confira
+```ts
+games.answerPuzzle(gameId, pendingPuzzle.challengeId, alternativeIndex)
+```
 
-Abra `/perguntas` logado. A primeira pergunta da API é sobre a quantidade de naipes. Escolha uma alternativa e leia "Resposta certa." ou "Resposta errada." Recarregar a página zera o `signal`: ele não é persistido, e não deve ser. Não grave resposta em `localStorage` neste exercício.
+O servidor verifica a resposta e devolve o novo `GameState`. Não compare com um campo `alternativaCorreta`, pois esse campo não existe no contrato público.
+
+## Checklist
+
+- [ ] A tela usa `question`, não `title`.
+- [ ] Nenhum gabarito é inventado no cliente.
+- [ ] O catálogo só apresenta as alternativas.
+- [ ] A resposta de uma partida passa por `GameService.answerPuzzle`.

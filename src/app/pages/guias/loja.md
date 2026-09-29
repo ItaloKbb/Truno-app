@@ -1,24 +1,25 @@
 # Loja (`/loja`)
 
-A loja ainda não tem pasta. Você cria a tela e ela lê um único objeto no `ShopService`, não uma lista de lojas.
+Nesta atividade, você vai criar uma tela que lê um único objeto `Shop` e percorre a lista `shop.itens`.
 
-## Qual service
+## Objetivo
 
-`ShopService.get()` devolve `Observable<Shop>`.
+Registrar a rota, carregar a loja, mostrar seu estado e listar os itens disponíveis.
 
-A loja tem `id`, `name`, `status`, `url` e `itens`. Cada item tem `id`, `name`, `price`, `url`, `trophyPrice` e `power` (`bomb` ou `block`).
+## Vocabulário da atividade
 
-`trophyPrice === true` significa que o preço é em troféus. `false` significa moedas. A tela explica isso. Não invente outro campo.
+- **shop/store** (loja): recurso único que contém itens.
+- **nested list** (lista aninhada): array que existe dentro de outro objeto.
+- **status** (estado): neste caso, informa se a loja está aberta.
+- **disabled state** (estado desabilitado): controle visível que não aceita interação.
 
-Não existe `getAll()` nem `create()`. A loja do Truno é uma só.
-
-## Criar a tela
+## Passo 1 — gerar e registrar
 
 ```bash
 npm run ng -- generate component pages/loja
 ```
 
-Em `src/app/app.routes.ts`, antes da rota `**`:
+Adicione antes da rota `**`:
 
 ```ts
 {
@@ -28,17 +29,13 @@ Em `src/app/app.routes.ts`, antes da rota `**`:
 },
 ```
 
-A classe gerada chama `Loja` e o seletor é `app-loja`. Mantenha os dois.
-
-## A classe
-
-A diferença para o catálogo: o valor emitido é um objeto, não um array. Não use `@for` na loja inteira. Use `@for` só em `shop.itens`.
+## Passo 2 — carregar o objeto
 
 ```ts
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { ShopService } from '../../services/shop.service';
+import { ShopService } from '../../services/modules/shop.service';
 
 @Component({
   imports: [AsyncPipe],
@@ -47,58 +44,46 @@ import { ShopService } from '../../services/shop.service';
 })
 export class Loja {
   protected readonly loadError = signal('');
-  protected readonly shop$ = inject(ShopService)
-    .get()
-    .pipe(
-      catchError((error: unknown) => {
-        this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar a loja.');
-        return of(null);
-      }),
-    );
+  protected readonly shop$ = inject(ShopService).get().pipe(
+    catchError((error: unknown) => {
+      this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar a loja.');
+      return of(null);
+    }),
+  );
 }
 ```
 
-## O template
+O serviço oferece `get()`, não `getAll()`, porque existe uma loja. A lista está dentro dela.
+
+## Passo 3 — montar o template
 
 ```html
-<main>
-  @if (loadError(); as message) {
-    <p role="alert">{{ message }}</p>
-  } @else if (shop$ | async; as shop) {
-    <h1>{{ shop.name }}</h1>
-    <p>{{ shop.status ? 'Aberta' : 'Fechada' }}</p>
+@if (loadError(); as message) {
+  <p role="alert">{{ message }}</p>
+} @else if (shop$ | async; as shop) {
+  <h1>{{ shop.name }}</h1>
+  <p>{{ shop.status ? 'Aberta' : 'Fechada' }}</p>
 
-    @if (!shop.status) {
-      <p>A loja está fechada. Os itens continuam visíveis, mas o botão de compra fica desligado.</p>
+  <ul>
+    @for (item of shop.itens; track item.id) {
+      <li>
+        <img [src]="item.url" [alt]="item.name" />
+        <strong>{{ item.name }}</strong>
+        <span>{{ item.price }} {{ item.trophyPrice ? 'troféus' : 'moedas' }}</span>
+        <button type="button" [disabled]="!shop.status">Comprar</button>
+      </li>
+    } @empty {
+      <li>Nenhum item à venda.</li>
     }
-
-    <ul>
-      @for (item of shop.itens; track item.id) {
-        <li>
-          <img [src]="item.url" [alt]="item.name" />
-          <strong>{{ item.name }}</strong>
-          <span>{{ item.power }}</span>
-          <span>
-            {{ item.price }}
-            {{ item.trophyPrice ? 'troféus' : 'moedas' }}
-          </span>
-          <button type="button" [disabled]="!shop.status">Comprar</button>
-        </li>
-      } @empty {
-        <li>Nenhum item à venda.</li>
-      }
-    </ul>
-  } @else {
-    <p>Carregando a loja...</p>
-  }
-</main>
+  </ul>
+} @else {
+  <p>Carregando a loja...</p>
+}
 ```
 
-O botão Comprar, neste guia, não chama API. Não há endpoint de compra. Deixe o botão desabilitado quando `shop.status` for falso e não finja um `POST`.
+O botão Comprar é apenas visual enquanto não existir endpoint de compra. Não simule sucesso nem altere saldo localmente.
 
-Se `get()` falhar, a frase do service é "Falha ao carregar a loja." Ela aparece no `role="alert"`. Não desenhe uma loja com zero itens nesse caso.
-
-## Teste
+## Passo 4 — testar
 
 ```ts
 fixture.detectChanges();
@@ -107,12 +92,13 @@ http.expectOne('/api/shop').flush({
   name: 'Truno Shop',
   status: true,
   url: '/loja.png',
-  itens: [
-    { id: '1', name: 'Bomb', price: 100, url: '/bomb.png', trophyPrice: true, power: 'bomb' },
-  ],
+  itens: [],
 });
-await fixture.whenStable();
 fixture.detectChanges();
 ```
 
-Confira o texto "Truno Shop" e "100 troféus". O `flush` precisa dos campos que `isShop` exige: `id`, `name`, `status` booleano, `url` e `itens` array.
+## Erros comuns
+
+- Usar `@for` em `shop`; ele é um objeto, não um array.
+- Habilitar compra sem contrato de API.
+- Transformar falha de rede em uma loja vazia.

@@ -1,123 +1,163 @@
-# Partida (`/partida`)
+# Partida (`/partida/:id`)
 
-Você cria esta tela. Ela mostra a partida que o `GameService` conhece: quem está na mesa, quantas cartas cada um tem e em que pé está a mão.
+Nesta atividade, você vai ler o identificador da URL, carregar o `GameState` e atualizar a tela com o estado devolvido por cada ação.
 
-## Qual service
+## Objetivo
 
-| Método | Uso |
-| --- | --- |
-| `getAll()` | A lista, se houver mais de uma partida |
-| `getById(id)` | Uma partida. A de exemplo tem id `game-1` |
+Exibir uma partida real e compreender o padrão usado por `start`, `playCard`, `answerPuzzle`, `buyTrophy`, `readyForNextRound` e `cancel`.
 
-Um `Game` tem `id`, `name`, `status` (`PENDENTE`, `EM_ANDAMENTO` ou `FINALIZADO`), `players`, `rounds`, `winner`, `pointsToWin`, `direction` (`HORARIO` ou `ANTI_HORARIO`), `currentSuit` e `handSize`.
+## Vocabulário da atividade
 
-Cada lugar em `players` é um `PlayerSeat`: `user` (com `name`), `cards`, `points`, `trophies`, `effect` e `calledUno`. A quantidade de cartas na mão é `player.cards.length`. Não peça outro endpoint para contar.
+- **route parameter** (parâmetro de rota): valor dinâmico da URL; em `/partida/5`, o `id` é `5`.
+- **state** (estado): retrato completo da partida em um instante.
+- **action/mutation** (ação/mutação): comando que modifica a partida.
+- **aggregate response** (resposta agregada): estado completo devolvido após a ação.
+- **conflict** (conflito): resposta HTTP `409`, comum quando o estado mudou antes da sua ação.
 
-Cada `rounds[]` é uma mão, com `number`, `status`, `tricks` e `winnerId`.
+## Passo 1 — conhecer o contrato
 
-## Criar e registrar
-
-```bash
-npm run ng -- generate component pages/partida
-```
+`GameService` não tem `getById`. O método de leitura é:
 
 ```ts
-{
-  path: 'partida',
-  canActivate: [authGuard],
-  loadComponent: () => import('./pages/partida/partida').then((module) => module.Partida),
-},
+getState(gameId: number): Observable<GameState>
 ```
 
-Para a aula de hoje, abra direto a partida `game-1`. Quando existir seleção, troque a string pelo id clicado na lista.
+Todas as ações também devolvem `GameState`. Portanto, após uma ação bem-sucedida, substitua o estado local pela resposta. Não tente reproduzir no navegador as regras de turno, vencedor ou recompensa.
 
-## A classe
+## Passo 2 — ler o `id` e carregar
 
 ```ts
-import { AsyncPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
-import { catchError, of } from 'rxjs';
-import { GameService } from '../../services/game.service';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import type { Observable } from 'rxjs';
+import type { GameState } from '../../domain/truno-api';
+import { GameService } from '../../services/modules/game.service';
 
 @Component({
-  imports: [AsyncPipe],
   selector: 'app-partida',
+  styleUrl: './partida.css',
   templateUrl: './partida.html',
 })
-export class Partida {
-  protected readonly loadError = signal('');
-  protected readonly game$ = inject(GameService)
-    .getById('game-1')
-    .pipe(
-      catchError((error: unknown) => {
-        this.loadError.set(error instanceof Error ? error.message : 'Falha ao carregar a partida.');
-        return of(null);
-      }),
-    );
+export class Partida implements OnInit {
+  private readonly games = inject(GameService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly gameId = Number(this.route.snapshot.paramMap.get('id'));
+
+  protected readonly game = signal<GameState | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly pending = signal(false);
+  protected readonly errorMessage = signal('');
+
+  ngOnInit(): void {
+    if (!Number.isInteger(this.gameId) || this.gameId <= 0) {
+      this.loading.set(false);
+      this.errorMessage.set('Identificador de partida inválido.');
+      return;
+    }
+
+    this.load();
+  }
+
+  private load(): void {
+    this.loading.set(true);
+    this.games.getState(this.gameId).subscribe({
+      next: (game) => {
+        this.game.set(game);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        this.errorMessage.set(error instanceof Error ? error.message : 'Falha ao carregar a partida.');
+      },
+    });
+  }
 }
 ```
 
-`getById` emite um objeto. No template, `@if (game$ | async; as game)` entrega esse objeto. Não faça `@for` nele.
+`snapshot` é uma fotografia dos parâmetros quando o componente é criado. Ele basta se a tela for recriada ao trocar de partida. Se o mesmo componente permanecer aberto durante mudanças de `id`, use `paramMap` como `Observable`.
 
-## O template
+## Passo 3 — desenhar o estado
 
 ```html
-<main>
-  @if (loadError(); as message) {
-    <p role="alert">{{ message }}</p>
-  } @else if (game$ | async; as game) {
-    <h1>{{ game.name }}</h1>
-    <p>{{ game.status }} · vale {{ game.pointsToWin }} · {{ game.direction }}</p>
-    <p>
-      @if (game.currentSuit) {
-        Naipe da vez: {{ game.currentSuit }}
-      } @else {
-        A saída está livre.
-      }
-    </p>
+@if (errorMessage(); as message) {
+  <p role="alert">{{ message }}</p>
+} @else if (game(); as current) {
+  <h1>{{ current.name }}</h1>
+  <p>Código: {{ current.code }}</p>
+  <p>Fase: {{ current.phase }}</p>
+  <p>Rodada: {{ current.roundNumber }}</p>
 
-    <ul>
-      @for (player of game.players; track player.user.id) {
-        <li>
-          <strong>{{ player.user.name }}</strong>
-          <span>{{ player.points }} pontos</span>
-          <span>{{ player.cards.length }} cartas</span>
-          @if (player.effect) {
-            <span>Efeito: {{ player.effect }}</span>
-          }
-          @if (player.calledUno) {
-            <span>Declarou a última carta</span>
-          }
-        </li>
-      } @empty {
-        <li>Ninguém sentou nesta partida.</li>
-      }
-    </ul>
-
-    <h2>Mãos</h2>
-    <ol>
-      @for (round of game.rounds; track round.id) {
-        <li>Mão {{ round.number }} · {{ round.status }} · {{ round.tricks.length }} vazas</li>
-      } @empty {
-        <li>Nenhuma mão começou.</li>
-      }
-    </ol>
-
-    @if (game.winner) {
-      <p>Vencedor: {{ game.winner.name }}</p>
+  <ul>
+    @for (player of current.players; track player.id) {
+      <li>
+        <strong>{{ player.nickname }}</strong>
+        <span>{{ player.handSize }} cartas</span>
+        <span>{{ player.trophies }} troféus</span>
+        @if (player.host) { <span>Anfitrião</span> }
+      </li>
+    } @empty {
+      <li>Aguardando jogadores.</li>
     }
-  } @else {
-    <p>Carregando a partida...</p>
+  </ul>
+
+  <h2>Sua mão</h2>
+  @for (card of current.hand; track card.handCardId) {
+    <button type="button" [disabled]="pending()" (click)="play(card.handCardId)">
+      {{ card.valor }} de {{ card.naipe }}
+    </button>
   }
-</main>
+} @else if (loading()) {
+  <p>Carregando a partida...</p>
+}
 ```
 
-`track player.user.id` usa o id do usuário. Dois lugares não compartilham o mesmo usuário.
+`current.hand` contém somente a mão do jogador autenticado. Para adversários, a API fornece apenas `handSize`. Isso evita expor informação secreta.
 
-As cartas do oponente podem aparecer só pela quantidade. Se você for desenhar a imagem, use `card.url` dentro de um segundo `@for (card of player.cards; track card.id)`. Na partida de exemplo as mãos já vêm preenchidas.
+## Passo 4 — executar ações
 
-## Id que não existe
+```ts
+protected play(handCardId: number | null): void {
+  if (handCardId === null) return;
+  this.run(this.games.playCard(this.gameId, handCardId));
+}
 
-`getById('nao-existe')` recebe `404`. O service emite "Falha ao carregar a partida." A tela mostra o alerta e não desenha uma mesa vazia. Mesa vazia seria `players: []` com HTTP 200.
+protected start(): void {
+  this.run(this.games.start(this.gameId));
+}
 
-No teste, `expectOne('/api/games/game-1')`. O objeto do `flush` precisa de `id`, `name`, `status` válido, `players` array, `rounds` array e `pointsToWin` igual a `12`, `15` ou `30`. Sem isso, `isGame` recusa a resposta.
+private run(request: Observable<GameState>): void {
+  this.pending.set(true);
+  this.errorMessage.set('');
+
+  request.subscribe({
+    next: (updated) => {
+      this.game.set(updated);
+      this.pending.set(false);
+    },
+    error: (error: unknown) => {
+      this.pending.set(false);
+      this.errorMessage.set(error instanceof Error ? error.message : 'A ação não pôde ser concluída.');
+    },
+  });
+}
+```
+
+O método `run` centraliza o padrão. Ele não acrescenta uma carta nem muda o turno manualmente; aceita o novo estado calculado pela API.
+
+## Passo 5 — tratar perguntas pendentes
+
+Quando `current.pendingPuzzle` existir, mostre `question` e `alternatives`. O índice clicado é enviado a:
+
+```ts
+this.games.answerPuzzle(this.gameId, puzzle.challengeId, alternativeIndex)
+```
+
+A pergunta pública nunca informa a resposta correta. Quem decide o resultado é o servidor.
+
+## Checklist
+
+- [ ] O `id` vem da rota e é validado como número positivo.
+- [ ] O estado retornado substitui o anterior.
+- [ ] Somente `handCardId` é enviado ao jogar.
+- [ ] Botões ficam desabilitados durante uma ação.
+- [ ] Um erro `409` é mostrado e pode ser seguido por nova leitura do estado.
