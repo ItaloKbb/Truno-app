@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'home', canActivate: [guestGuard], children: [] },
   { path: 'book', canActivate: [authGuard], children: [] },
   { path: 'lobby', canActivate: [authGuard], children: [] },
+  { path: 'puzzle', canActivate: [authGuard], children: [] },
   { path: 'partida/:id', canActivate: [authGuard], children: [] },
   { path: 'ranking', canActivate: [authGuard], children: [] },
   { path: 'perfil', canActivate: [authGuard], children: [] },

@@ -1,20 +1,23 @@
 @switch (page()) {
-  @case ('home') {
-    <app-home [auth]="auth" (loggedIn)="onLoggedIn()" />
-  }
-  @case ('book') {
-    <app-book />
-  }
-  @case ('lobby') {
-    <app-lobby />
-  }
-  @case ('partida/:id') {
-    <app-partida />
-  }
-  @case ('ranking') {
-    <app-ranking />
-  }
-  @case ('perfil') {
-    <app-profile [profiles]="profileService" (navigate)="navigate($event)" />
-  }
+@case ('home') {
+<app-home [auth]="auth" (loggedIn)="onLoggedIn()" />
+}
+@case ('book') {
+<app-book />
+}
+@case ('lobby') {
+<app-lobby />
+}
+@case ('puzzle') {
+<app-perguntas [service]="puzzleService" />
+}
+@case ('partida/:id') {
+<app-partida />
+}
+@case ('ranking') {
+<app-ranking />
+}
+@case ('perfil') {
+<app-profile [profiles]="profileService" (navigate)="navigate($event)" />
+}
 }

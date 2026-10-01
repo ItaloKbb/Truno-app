@@ -7,10 +7,12 @@ import { Book } from './pages/book/book';
 import { Home } from './pages/home/home';
 import { Lobby } from './pages/lobby/lobby';
 import { Partida } from './pages/partida/partida';
+import { Perguntas } from './pages/perguntas/perguntas';
 import { Profile } from './pages/profile/profile';
 import { Ranking } from './pages/ranking/ranking';
 import { AuthService } from './services/modules/auth.service';
 import { ProfileService } from './services/modules/profile.service';
+import { PuzzleService } from './services/modules/puzzle.service';
 
 /**
  * Raiz da aplicação: concentra o gerenciamento de rotas e a injeção de
@@ -18,7 +20,7 @@ import { ProfileService } from './services/modules/profile.service';
  * navegação via @Output, sem conhecer Router nem routerLink.
  */
 @Component({
-  imports: [Home, Book, Lobby, Partida, Ranking, Profile],
+  imports: [Home, Book, Lobby, Partida, Perguntas, Ranking, Profile],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -27,6 +29,7 @@ export class App {
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
   protected readonly profileService = inject(ProfileService);
+  protected readonly puzzleService = inject(PuzzleService);
 
   protected readonly title = signal('Truno-app');
 
