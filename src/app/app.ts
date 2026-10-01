@@ -10,6 +10,7 @@ import { Partida } from './pages/partida/partida';
 import { Profile } from './pages/profile/profile';
 import { Ranking } from './pages/ranking/ranking';
 import { AuthService } from './services/modules/auth.service';
+import { GameService } from './services/modules/game.service';
 import { ProfileService } from './services/modules/profile.service';
 
 /**
@@ -26,6 +27,7 @@ import { ProfileService } from './services/modules/profile.service';
 export class App {
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
+  protected readonly gameService = inject(GameService);
   protected readonly profileService = inject(ProfileService);
 
   protected readonly title = signal('Truno-app');
