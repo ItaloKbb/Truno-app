@@ -1,72 +1,17 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
+/**
+ * As rotas só controlam URL e acesso; quem renderiza a tela é o App,
+ * pelo seletor da página (ver app.html).
+ */
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'home' },
-  {
-    path: 'home',
-    canActivate: [guestGuard],
-    loadComponent: () => import('./pages/home/home').then((module) => module.Home),
-  },
-  {
-    path: 'book',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/book/book').then((module) => module.Book),
-  },
-  {
-    path: 'lobby',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/lobby/lobby').then((module) => module.Lobby),
-  },
-  {
-    path: 'partida/:id',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/partida/partida').then((module) => module.Partida),
-  },
-  {
-    path: 'ranking',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/ranking/ranking').then((module) => module.Ranking),
-  },
-  {
-    path: 'perfil',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/profile/profile').then((module) => module.Profile),
-  },
-  {
-    path: 'perfil/colecao',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'colecao' },
-  },
-  {
-    path: 'perfil/conquistas',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'conquistas' },
-  },
-  {
-    path: 'perfil/configuracoes',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'configuracoes' },
-  },
-  {
-    path: 'perfil/historico',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'historico' },
-  },
-  {
-    path: 'perfil/editar',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'editar' },
-  },
+  { path: 'home', canActivate: [guestGuard], children: [] },
+  { path: 'book', canActivate: [authGuard], children: [] },
+  { path: 'lobby', canActivate: [authGuard], children: [] },
+  { path: 'partida/:id', canActivate: [authGuard], children: [] },
+  { path: 'ranking', canActivate: [authGuard], children: [] },
+  { path: 'perfil', canActivate: [authGuard], children: [] },
   { path: '**', redirectTo: 'home' },
 ];

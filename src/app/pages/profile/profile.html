@@ -1,109 +1,103 @@
-<main class="profile-page">
-  <header class="topbar">
-    <a class="brand" routerLink="/lobby" aria-label="Truno - lobby">
-      <span class="brand-mark">T</span>
-      <span>TRUNO</span>
-    </a>
-
-    <nav aria-label="Navegação principal">
-      <a routerLink="/lobby">Início</a>
-      <a routerLink="/book">Cartas</a>
-      <a class="active" routerLink="/perfil">Perfil</a>
-    </nav>
-
-    <button class="notification" type="button" aria-label="Notificações">⌁<span></span></button>
-  </header>
-
-  @if (loadError(); as message) {
-    <div class="alert alert-error" role="alert">{{ message }}</div>
-  } @else if (overview$ | async; as overview) {
-  <div class="page-shell">
-    <aside class="sidebar">
-      <div class="mini-user">
-        <app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="sm" />
-        <div><strong>Lucas lindo</strong><small>&#64;{{ overview.profile.username }}</small></div>
-      </div>
-
-      <nav class="profile-nav" aria-label="Seções do perfil">
-        <a class="selected" routerLink="/perfil"><span>◈</span>Visão geral</a>
-        <a routerLink="/perfil/colecao"><span>▦</span>Minha coleção</a>
-        <a routerLink="/perfil/conquistas"><span>★</span>Conquistas</a>
-        <a routerLink="/perfil/configuracoes"><span>⚙</span>Configurações</a>
-      </nav>
-
-      <div class="season-card">
-        <span>Temporada 01</span>
-        <strong>Faltam 18 dias</strong>
-        <div class="season-progress"><i></i></div>
-        <small>Nível {{ overview.profile.level }} de 30</small>
-      </div>
-    </aside>
-
-    <section class="content">
-      <div class="profile-hero">
-        <div class="profile-avatar"><app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="lg" /><button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
-        <div class="identity">
-          <div class="name-line"><h1>Lucas lindo</h1><span class="verified" title="Perfil verificado">✓</span></div>
-          <p>&#64;{{ overview.profile.username }}</p>
-          <p class="bio">{{ overview.profile.bio }}</p>
-          <div class="tags"><span class="badge badge-sm badge-outline">⚡ Nível {{ overview.profile.level }}</span><span class="badge badge-sm badge-outline">{{ overview.profile.coins }} moedas · {{ overview.profile.gems }} gemas</span></div>
-        </div>
-        <div class="profile-actions">
-          <a class="btn btn-sm btn-ghost edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
-          <button type="button" class="btn btn-sm btn-ghost account-button" routerLink="/perfil/configuracoes">Trocar conta</button>
-          <button type="button" class="btn btn-sm btn-ghost account-button account-button-danger" routerLink="/perfil/configuracoes">Excluir conta</button>
-        </div>
-      </div>
-
-      <section class="stats font-sans tabular-nums" aria-label="Estatísticas do jogador">
-        <article><span class="stat-icon violet">♜</span><div><small>Partidas jogadas</small><strong>{{ overview.stats.matchesPlayed }}</strong><em>{{ overview.stats.wins }} vitórias</em></div></article>
-        <article><span class="stat-icon green">↗</span><div><small>Taxa de vitória</small><strong>{{ overview.stats.winRate * 100 }}%</strong><em>{{ overview.stats.wins }} vitórias</em></div></article>
-        <article><span class="stat-icon orange">♨</span><div><small>Sequência atual</small><strong>{{ overview.stats.currentWinStreak }}</strong><em>vitórias consecutivas</em></div></article>
-        <article><span class="stat-icon blue">✦</span><div><small>Experiência total</small><strong>{{ overview.profile.experience }}</strong><em>{{ overview.profile.experienceToNextLevel }} XP para o próximo nível</em></div></article>
-      </section>
-
-      <div class="dashboard-grid">
-        <section class="panel collection" id="colecao">
-          <div class="panel-head"><div><p class="eyebrow">COLEÇÃO</p><h2>Seu progresso</h2></div><a routerLink="/perfil/colecao">Ver coleção →</a></div>
-          <div class="collection-body">
-            <div class="ring" [style.--collection-progress]="collectionPercent(overview.collection) + '%'">
-              <strong>{{ collectionPercent(overview.collection) | number: '1.0-0' }}<small>%</small></strong>
-            </div>
-            <div class="collection-copy"><strong>{{ obtained(overview.collection) }} <span>de {{ overview.collection.length }} cartas</span></strong><p>Cartas obtidas na sua coleção.</p><div class="rarities"><span><i class="common"></i>Comum <b>92</b></span><span><i class="rare"></i>Rara <b>61</b></span><span><i class="epic"></i>Épica <b>26</b></span><span><i class="legendary"></i>Lendária <b>7</b></span></div></div>
-          </div>
-        </section>
-
-        <section class="panel goal">
-          <p class="eyebrow">PRÓXIMA META</p><h2>Vença 3 partidas ranqueadas</h2><p class="goal-description">Continue jogando para receber a recompensa semanal.</p>
-          <div class="goal-progress"><span><i></i></span><strong>2/3</strong></div>
-          <div class="reward"><span>◈</span><div><small>RECOMPENSA</small><strong>150 moedas + Carta rara</strong></div></div>
-        </section>
-
-        <section class="panel achievements" id="conquistas">
-          <div class="panel-head"><div><p class="eyebrow">CONQUISTAS</p><h2>Desbloqueadas recentemente</h2></div><a routerLink="/perfil/conquistas">Ver todas →</a></div>
-          <div class="achievement-list">
-            @for (achievement of overview.achievements.slice(0, 3); track achievement.id) {
-              <article><span class="medal gold">★</span><div><strong>{{ achievement.title }}</strong><p>{{ achievement.description }}</p></div><time>{{ achievement.unlockedAt ? (achievement.unlockedAt | date: 'shortDate') : '' }}</time></article>
-            } @empty {
-              <p>Nenhuma conquista ainda. Jogue uma partida para começar.</p>
-            }
-          </div>
-        </section>
-
-        <section class="panel activity">
-          <div class="panel-head"><div><p class="eyebrow">ATIVIDADE</p><h2>Partidas recentes</h2></div><a routerLink="/perfil/historico">Histórico →</a></div>
-          <div class="match-list">
-            @for (activity of overview.activities; track activity.id) {
-              <article><span class="result" [class.win]="activity.result === 'VITORIA'" [class.loss]="activity.result === 'DERROTA'">{{ activity.result === 'VITORIA' ? 'V' : 'D' }}</span><div><strong>{{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }} contra &#64;{{ activity.opponentName }}</strong><p>Partida recente</p></div><time>{{ activity.playedAt | date: 'short' }}</time></article>
-            } @empty {
-              <p>Nenhuma partida ainda.</p>
-            }
-          </div>
-        </section>
-      </div>
-    </section>
+<div class="navbar bg-base-200 shadow-sm">
+  <div class="flex-1">
+    <a class="btn btn-ghost text-xl" href="/lobby" (click)="go($event, '/lobby')">TRUNO</a>
   </div>
+  <ul class="menu menu-horizontal">
+    <li><a href="/lobby" (click)="go($event, '/lobby')">Início</a></li>
+    <li><a href="/book" (click)="go($event, '/book')">Cartas</a></li>
+    <li><a class="menu-active" href="/perfil" (click)="go($event, '/perfil')">Perfil</a></li>
+  </ul>
+</div>
+
+<main class="mx-auto max-w-4xl space-y-6 p-6">
+  @if (profile$ | async; as profile) {
+    <div class="card bg-base-100 shadow">
+      <div class="card-body flex-row items-center gap-4">
+        <app-avatar [name]="profile.displayName" [avatarUrl]="profile.avatarUrl" size="lg" />
+        <div class="flex-1">
+          <h1 class="card-title">{{ profile.displayName }}</h1>
+          <p class="opacity-70">&#64;{{ profile.username }}</p>
+          <p>{{ profile.bio }}</p>
+          <div class="mt-2 flex gap-2">
+            <span class="badge badge-primary">Nível {{ profile.level }}</span>
+            <span class="badge badge-outline">{{ profile.coins }} moedas</span>
+            <span class="badge badge-outline">{{ profile.gems }} gemas</span>
+          </div>
+        </div>
+      </div>
+    </div>
   } @else {
-    <p><span class="loading loading-dots loading-sm" aria-hidden="true"></span> Carregando perfil...</p>
+    <span class="loading loading-dots"></span>
   }
+
+  @if (stats$ | async; as stats) {
+    <div class="stats stats-vertical sm:stats-horizontal w-full shadow">
+      <div class="stat">
+        <div class="stat-title">Partidas</div>
+        <div class="stat-value">{{ stats.matchesPlayed }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Vitórias</div>
+        <div class="stat-value">{{ stats.wins }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Taxa de vitória</div>
+        <div class="stat-value">{{ stats.winRate * 100 }}%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Sequência atual</div>
+        <div class="stat-value">{{ stats.currentWinStreak }}</div>
+      </div>
+    </div>
+  }
+
+  @if (collection$ | async; as collection) {
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">Coleção</h2>
+        <progress class="progress progress-primary" [value]="collection.obtained" [max]="collection.total"></progress>
+        <p>{{ collection.obtained }} de {{ collection.total }} cartas</p>
+      </div>
+    </div>
+  }
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">Conquistas</h2>
+        <ul class="list">
+          @for (achievement of achievements$ | async; track achievement.id) {
+            <li class="list-row">
+              <div class="list-col-grow">
+                <div>{{ achievement.title }}</div>
+                <div class="text-xs opacity-60">{{ achievement.description }}</div>
+              </div>
+              <span class="badge">{{ achievement.progress }}/{{ achievement.goal }}</span>
+            </li>
+          } @empty {
+            <li class="list-row">Nenhuma conquista ainda.</li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">Partidas recentes</h2>
+        <ul class="list">
+          @for (activity of activities$ | async; track activity.id) {
+            <li class="list-row">
+              <span class="badge" [class.badge-success]="activity.result === 'VITORIA'" [class.badge-error]="activity.result === 'DERROTA'">
+                {{ activity.result === 'VITORIA' ? 'V' : 'D' }}
+              </span>
+              <div class="list-col-grow">contra &#64;{{ activity.opponentName }}</div>
+              <time class="text-xs opacity-60">{{ activity.playedAt | date: 'short' }}</time>
+            </li>
+          } @empty {
+            <li class="list-row">Nenhuma partida ainda.</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
 </main>
