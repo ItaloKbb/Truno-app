@@ -1,7 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
-import  {AsyncPipe} from '@angular/common';
-import {catchError, of} from 'rxjs';
-import {CardService} from '../../services/modules/card.service';
+import { Component, inject, Input, Output, signal } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { CardService } from '../../services/modules/card.service';
+import { Observable } from 'rxjs';
+import { CardSuit, CatalogCard } from '../../domain/truno-api';
+import { EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-book',
@@ -10,13 +12,19 @@ import {CardService} from '../../services/modules/card.service';
   imports: [AsyncPipe],
 })
 export class Book {
-  protected readonly loadError$ = signal(' ');
-  protected readonly cards$ = inject(CardService)
-  .getAll()
-  .pipe(
-    catchError((error) => {
-      this.loadError$.set(error instanceof Error ? error.message : 'Falha ao carregar cartas. Tente novamente mais tarde.');
-      return of([]);
-    })
-  );
+  @Output() navigate = new EventEmitter<string>();
+
+  @Input({ required: true }) service!: CardService;
+  loadError$ = signal(false);
+
+  cards$!: Observable<CatalogCard[]>;
+  naipe$!: CardSuit;
+
+  ngOnInit(): void {
+    this.cards$ = this.service.getAll();
+  }
+  go(event: Event, url: string): void {
+    event.preventDefault();
+    this.navigate.emit(url);
+  }
 }
