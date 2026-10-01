@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { ProfileSettings, StoredProfile } from '../../domain/profile';
-import { profileUser } from '../../pages/profile/profile.data';
+
+const profileUser = {} as StoredProfile;
 
 const profileStorageKey = 'truno.profile';
 const settingsStorageKey = 'truno.profile.settings';
