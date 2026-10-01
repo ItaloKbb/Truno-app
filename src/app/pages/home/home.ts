@@ -1,4 +1,4 @@
-import { Component, Input, output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CODE_MAX_LENGTH, CODE_MIN_LENGTH, NICKNAME_MAX_LENGTH } from '../../domain/auth';
 import { AuthService, messageFromApi } from '../../services/modules/auth.service';
@@ -11,7 +11,7 @@ import { AuthService, messageFromApi } from '../../services/modules/auth.service
 })
 export class Home {
   @Input({ required: true }) auth!: AuthService;
-  readonly loggedIn = output<void>();
+  @Output() loggedIn = new EventEmitter<void>();
 
   protected readonly nicknameMax = NICKNAME_MAX_LENGTH;
   protected readonly codeMin = CODE_MIN_LENGTH;

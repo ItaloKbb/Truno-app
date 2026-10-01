@@ -33,40 +33,5 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/profile/profile').then((module) => module.Profile),
   },
-  {
-    path: 'perfil/colecao',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'colecao' },
-  },
-  {
-    path: 'perfil/conquistas',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'conquistas' },
-  },
-  {
-    path: 'perfil/configuracoes',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'configuracoes' },
-  },
-  {
-    path: 'perfil/historico',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'historico' },
-  },
-  {
-    path: 'perfil/editar',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/profile-section/profile-section').then((module) => module.ProfileSection),
-    data: { section: 'editar' },
-  },
   { path: '**', redirectTo: 'home' },
 ];

@@ -4,7 +4,6 @@ import { safeReturnUrl } from './guards/return-url';
 import { Home } from './pages/home/home';
 import { Profile } from './pages/profile/profile';
 import { AuthService } from './services/modules/auth.service';
-import { ProfileStorage } from './services/modules/profile-storage';
 import { ProfileService } from './services/modules/profile.service';
 
 /**
@@ -22,7 +21,6 @@ export class App {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly profileService = inject(ProfileService);
-  private readonly profileStorage = inject(ProfileStorage);
 
   protected readonly title = signal('Truno-app');
 
@@ -35,7 +33,6 @@ export class App {
       });
     } else if (page instanceof Profile) {
       page.profiles = this.profileService;
-      page.profileStorage = this.profileStorage;
       page.navigate.subscribe((url) => void this.navigate(url));
     }
   }
