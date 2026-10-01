@@ -1,22 +1,43 @@
 <main>
   <h1>Perguntas</h1>
-
   @if (loadError(); as message) {
-    <p role="alert">{{ message }}</p>
+  <p role="alert">{{ message }}</p>
   } @else if (puzzles$ | async; as puzzles) {
-    @for (puzzle of puzzles; track puzzle.id) {
-      <article>
-        <h2>{{ puzzle.question }}</h2>
-        <ol>
-          @for (alternative of puzzle.alternativas; track $index) {
-            <li>{{ alternative }}</li>
-          }
-        </ol>
-      </article>
-    } @empty {
-      <p>Nenhuma pergunta disponível.</p>
-    }
+  @for (puzzle of puzzles; track puzzle.id) {
+  <div class="card bg-base-100 image-full w-96 h- shadow-xl rounded-2xl overflow-hidden">
+    <figure>
+      <img src="https://img.magnific.com/vetores-gratis/fundo-azul-de-design-plano-desenhado-a-mao_23-2149331825.jpg"
+        alt="fundo charada" />
+    </figure>
+    <div class="card-body flex flex-col justify-between p-8">
+      <div>
+        <h1 class="text-4xl font-black tracking-wide drop-shadow-md" style="font-family: 'Luckiest Guy', cursive;">
+          O QUE É, O QUE É?
+        </h1>
+        <p class="text-2xl mt-8">Tem chaves, mas não abre nenhuma porta. Quem é?</p>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button
+          class="bg-white text-[#122f66] border-[2.5px] border-[#122f66] rounded-full px-4 py-1.5 text-sm font-extrabold shadow-[3px_3px_0px_#122f66] hover:translate-x- hover:translate-y- hover:shadow-[1px_1px_0px_#122f66] active:shadow-none active:translate-x- active:translate-y- transition-all whitespace-nowrap">O
+          chaveiro</button>
+        <button
+          class="bg-white text-[#122f66] border-[2.5px] border-[#122f66] rounded-full px-4 py-1.5 text-sm font-extrabold shadow-[3px_3px_0px_#122f66] hover:translate-x- hover:translate-y- hover:shadow-[1px_1px_0px_#122f66] active:shadow-none active:translate-x- active:translate-y- transition-all whitespace-nowrap">O
+          piano</button>
+        <button
+          class="bg-white text-[#122f66] border-[2.5px] border-[#122f66] rounded-full px-4 py-1.5 text-sm font-extrabold shadow-[3px_3px_0px_#122f66] hover:translate-x- hover:translate-y- hover:shadow-[1px_1px_0px_#122f66] active:shadow-none active:translate-x- active:translate-y- transition-all whitespace-nowrap">O
+          segredo</button>
+      </div>
+    </div>
+  </div>
+  @for (alternative of puzzle.alternativas; track $index) {
+  <li>{{ alternative }}</li>
+  }
+
+  } @empty {
+  <p>Nenhuma pergunta disponível.</p>
+  }
   } @else {
-    <p>Carregando perguntas...</p>
+  <p>Carregando perguntas...</p>
   }
 </main>
