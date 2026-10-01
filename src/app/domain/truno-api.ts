@@ -193,7 +193,7 @@ export interface GameState {
 /** `GET /cards` */
 export interface CatalogCard {
   id: number;
-  url: String
+  url: string;
   valor: CardValue;
   naipe: CardSuit;
 }

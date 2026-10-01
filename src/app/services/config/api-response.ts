@@ -65,7 +65,8 @@ export function isCatalogCard(value: unknown): value is CatalogCard {
   return (
     typeof value['id'] === 'number' &&
     includes(CARD_VALUES, value['valor']) &&
-    includes(CARD_SUITS, value['naipe'])
+    includes(CARD_SUITS, value['naipe']) &&
+    typeof value['url'] === 'string'
   );
 }
 
