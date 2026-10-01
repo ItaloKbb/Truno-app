@@ -6,7 +6,7 @@
     <app-book [service]="cardService" (navigate)="navigate($event)" />
   }
   @case ('lobby') {
-    <app-lobby />
+    <app-lobby [games]="gameService" (navigate)="navigate($event)" />
   }
   @case ('partida/:id') {
     <app-partida />
