@@ -1,14 +1,14 @@
 <main class="profile-page">
   <header class="topbar">
-    <a class="brand" routerLink="/lobby" aria-label="Truno - lobby">
+    <a class="brand" href="/lobby" (click)="go($event, '/lobby')" aria-label="Truno - lobby">
       <span class="brand-mark">T</span>
       <span>TRUNO</span>
     </a>
 
     <nav aria-label="Navegação principal">
-      <a routerLink="/lobby">Início</a>
-      <a routerLink="/book">Cartas</a>
-      <a class="active" routerLink="/perfil">Perfil</a>
+      <a href="/lobby" (click)="go($event, '/lobby')">Início</a>
+      <a href="/book" (click)="go($event, '/book')">Cartas</a>
+      <a class="active" href="/perfil" (click)="go($event, '/perfil')">Perfil</a>
     </nav>
 
     <button class="notification" type="button" aria-label="Notificações">⌁<span></span></button>
@@ -25,10 +25,10 @@
       </div>
 
       <nav class="profile-nav" aria-label="Seções do perfil">
-        <a class="selected" routerLink="/perfil"><span>◈</span>Visão geral</a>
-        <a routerLink="/perfil/colecao"><span>▦</span>Minha coleção</a>
-        <a routerLink="/perfil/conquistas"><span>★</span>Conquistas</a>
-        <a routerLink="/perfil/configuracoes"><span>⚙</span>Configurações</a>
+        <a class="selected" href="/perfil" (click)="go($event, '/perfil')"><span>◈</span>Visão geral</a>
+        <a href="/perfil/colecao" (click)="go($event, '/perfil/colecao')"><span>▦</span>Minha coleção</a>
+        <a href="/perfil/conquistas" (click)="go($event, '/perfil/conquistas')"><span>★</span>Conquistas</a>
+        <a href="/perfil/configuracoes" (click)="go($event, '/perfil/configuracoes')"><span>⚙</span>Configurações</a>
       </nav>
 
       <div class="season-card">
@@ -41,7 +41,7 @@
 
     <section class="content">
       <div class="profile-hero">
-        <div class="profile-avatar"><app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="lg" /><button type="button" routerLink="/perfil/editar" aria-label="Alterar foto">✎</button></div>
+        <div class="profile-avatar"><app-avatar name="Lucas lindo" [avatarUrl]="overview.profile.avatarUrl || user.avatarUrl" size="lg" /><button type="button" (click)="navigate.emit('/perfil/editar')" aria-label="Alterar foto">✎</button></div>
         <div class="identity">
           <div class="name-line"><h1>Lucas lindo</h1><span class="verified" title="Perfil verificado">✓</span></div>
           <p>&#64;{{ overview.profile.username }}</p>
@@ -49,9 +49,9 @@
           <div class="tags"><span class="badge badge-sm badge-outline">⚡ Nível {{ overview.profile.level }}</span><span class="badge badge-sm badge-outline">{{ overview.profile.coins }} moedas · {{ overview.profile.gems }} gemas</span></div>
         </div>
         <div class="profile-actions">
-          <a class="btn btn-sm btn-ghost edit-button" routerLink="/perfil/editar">Editar perfil <span>→</span></a>
-          <button type="button" class="btn btn-sm btn-ghost account-button" routerLink="/perfil/configuracoes">Trocar conta</button>
-          <button type="button" class="btn btn-sm btn-ghost account-button account-button-danger" routerLink="/perfil/configuracoes">Excluir conta</button>
+          <a class="btn btn-sm btn-ghost edit-button" href="/perfil/editar" (click)="go($event, '/perfil/editar')">Editar perfil <span>→</span></a>
+          <button type="button" class="btn btn-sm btn-ghost account-button" (click)="navigate.emit('/perfil/configuracoes')">Trocar conta</button>
+          <button type="button" class="btn btn-sm btn-ghost account-button account-button-danger" (click)="navigate.emit('/perfil/configuracoes')">Excluir conta</button>
         </div>
       </div>
 
@@ -64,7 +64,7 @@
 
       <div class="dashboard-grid">
         <section class="panel collection" id="colecao">
-          <div class="panel-head"><div><p class="eyebrow">COLEÇÃO</p><h2>Seu progresso</h2></div><a routerLink="/perfil/colecao">Ver coleção →</a></div>
+          <div class="panel-head"><div><p class="eyebrow">COLEÇÃO</p><h2>Seu progresso</h2></div><a href="/perfil/colecao" (click)="go($event, '/perfil/colecao')">Ver coleção →</a></div>
           <div class="collection-body">
             <div class="ring" [style.--collection-progress]="collectionPercent(overview.collection) + '%'">
               <strong>{{ collectionPercent(overview.collection) | number: '1.0-0' }}<small>%</small></strong>
@@ -80,7 +80,7 @@
         </section>
 
         <section class="panel achievements" id="conquistas">
-          <div class="panel-head"><div><p class="eyebrow">CONQUISTAS</p><h2>Desbloqueadas recentemente</h2></div><a routerLink="/perfil/conquistas">Ver todas →</a></div>
+          <div class="panel-head"><div><p class="eyebrow">CONQUISTAS</p><h2>Desbloqueadas recentemente</h2></div><a href="/perfil/conquistas" (click)="go($event, '/perfil/conquistas')">Ver todas →</a></div>
           <div class="achievement-list">
             @for (achievement of overview.achievements.slice(0, 3); track achievement.id) {
               <article><span class="medal gold">★</span><div><strong>{{ achievement.title }}</strong><p>{{ achievement.description }}</p></div><time>{{ achievement.unlockedAt ? (achievement.unlockedAt | date: 'shortDate') : '' }}</time></article>
@@ -91,7 +91,7 @@
         </section>
 
         <section class="panel activity">
-          <div class="panel-head"><div><p class="eyebrow">ATIVIDADE</p><h2>Partidas recentes</h2></div><a routerLink="/perfil/historico">Histórico →</a></div>
+          <div class="panel-head"><div><p class="eyebrow">ATIVIDADE</p><h2>Partidas recentes</h2></div><a href="/perfil/historico" (click)="go($event, '/perfil/historico')">Histórico →</a></div>
           <div class="match-list">
             @for (activity of overview.activities; track activity.id) {
               <article><span class="result" [class.win]="activity.result === 'VITORIA'" [class.loss]="activity.result === 'DERROTA'">{{ activity.result === 'VITORIA' ? 'V' : 'D' }}</span><div><strong>{{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }} contra &#64;{{ activity.opponentName }}</strong><p>Partida recente</p></div><time>{{ activity.playedAt | date: 'short' }}</time></article>

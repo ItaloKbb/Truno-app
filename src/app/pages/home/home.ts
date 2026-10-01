@@ -1,8 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, Input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { CODE_MAX_LENGTH, CODE_MIN_LENGTH, NICKNAME_MAX_LENGTH } from '../../domain/auth';
-import { safeReturnUrl } from '../../guards/return-url';
 import { AuthService, messageFromApi } from '../../services/modules/auth.service';
 
 @Component({
@@ -12,9 +10,8 @@ import { AuthService, messageFromApi } from '../../services/modules/auth.service
   templateUrl: './home.html',
 })
 export class Home {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
+  @Input({ required: true }) auth!: AuthService;
+  readonly loggedIn = output<void>();
 
   protected readonly nicknameMax = NICKNAME_MAX_LENGTH;
   protected readonly codeMin = CODE_MIN_LENGTH;
@@ -64,10 +61,8 @@ export class Home {
 
     this.auth.login({ nickname, code }).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        void this.router
-          .navigateByUrl(safeReturnUrl(returnUrl))
-          .finally(() => this.submitting.set(false));
+        this.submitting.set(false);
+        this.loggedIn.emit();
       },
       error: (error: unknown) => {
         this.submitting.set(false);
