@@ -12,9 +12,9 @@ import { EventEmitter } from '@angular/core';
   imports: [AsyncPipe],
 })
 export class Book {
+  @Input({ required: true }) service!: CardService;
   @Output() navigate = new EventEmitter<string>();
 
-  @Input({ required: true }) service!: CardService;
   loadError$ = signal(false);
 
   cards$!: Observable<CatalogCard[]>;
