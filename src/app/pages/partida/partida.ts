@@ -22,3 +22,4 @@ export class Partida {
   getState(gameId: number): Observable<GameState> {
     return this.service.getState(gameId);
   }
+}

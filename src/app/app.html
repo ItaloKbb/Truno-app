@@ -9,7 +9,7 @@
     <app-lobby [games]="gameService" (navigate)="navigate($event)" />
   }
   @case ('partida/:id') {
-    <app-partida />
+    <app-partida [service]="gameService" [partidaId]="+page().split('/')[1]" />
   }
   @case ('ranking') {
     <app-ranking />
