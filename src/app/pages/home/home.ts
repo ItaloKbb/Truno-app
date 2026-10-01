@@ -19,6 +19,7 @@ export class Home {
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal('');
+  
   protected readonly form = new FormGroup({
     nickname: new FormControl('', {
       nonNullable: true,
