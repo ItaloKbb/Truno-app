@@ -42,7 +42,7 @@
         </div>
       }
       @case ('ready') {
-        @let overview = this.overview()!;
+        @let overview = readyOverview()!;
         <section class="profile-hero" aria-label="Identidade e progresso">
           <div class="profile-identity">
             <app-avatar [name]="overview.profile.displayName" [avatarUrl]="overview.profile.avatarUrl" size="lg" />

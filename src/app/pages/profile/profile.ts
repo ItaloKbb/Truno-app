@@ -44,7 +44,7 @@ export class Profile implements OnInit {
     return state.status === 'error' ? state.message : '';
   });
 
-  protected readonly overview = computed(() => {
+  protected readonly readyOverview = computed(() => {
     const state = this.state();
     return state.status === 'ready' ? state.overview : null;
   });
