@@ -1,7 +1,3 @@
-<!--
-  BASE DA TELA — o guia está em src/app/pages/guias/catalogo.md.
-  Esta tela só desenha o layout. Falta ligar ao CardService.
--->
 @if (loadError$(); as message) {
 <p role="alert">{{message}}</p>
 }@else if (cards$ | async; as cards) {
