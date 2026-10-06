@@ -15,7 +15,7 @@
 <app-partida [service]="gameService" [partidaId]="partidaId()" />
 }
 @case ('ranking') {
-<app-ranking />
+<app-ranking  (navigate)="navigate($event)"/>
 }
 @case ('perfil') {
 <app-profile [profiles]="profileService" (navigate)="navigate($event)" />

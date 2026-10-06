@@ -10,9 +10,9 @@
         <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
       </div>
       <nav class="lobby-nav" aria-label="Navegação principal">
+        <button type="button" (click)="navigate.emit('/lobby')">Início</button>
         <button type="button" (click)="navigate.emit('/perfil')">Perfil</button>
         <button type="button" (click)="navigate.emit('/ranking')">Ranking</button>
-        <button type="button" (click)="navigate.emit('/lobby')">Início</button>
       </nav>
     </header>
     <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-4 py-4">

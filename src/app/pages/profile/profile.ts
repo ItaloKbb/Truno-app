@@ -7,6 +7,7 @@ import { ProfileService } from '../../services/modules/profile.service';
 
 @Component({
   imports: [AsyncPipe, DatePipe, Avatar],
+  styleUrls: [ '../lobby/lobby.css'],
   selector: 'app-profile',
   templateUrl: './profile.html',
 })

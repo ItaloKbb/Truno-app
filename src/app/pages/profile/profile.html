@@ -1,16 +1,18 @@
-<div class="navbar bg-base-200 shadow-sm">
-  <div class="flex-1">
-    <a class="btn btn-ghost text-xl" href="/lobby" (click)="go($event, '/lobby')">TRUNO</a>
-  </div>
-  <ul class="menu menu-horizontal">
-    <li><a href="/lobby" (click)="go($event, '/lobby')">Início</a></li>
-    <li><a href="/book" (click)="go($event, '/book')">Cartas</a></li>
-    <li><a class="menu-active" href="/perfil" (click)="go($event, '/perfil')">Perfil</a></li>
-  </ul>
-</div>
-
-<main class="mx-auto max-w-4xl space-y-6 p-6">
-  @if (profile$ | async; as profile) {
+<main class="lobby-page">
+  <div class="lobby-shell">
+    <header class="lobby-header">
+      <div class="lobby-brand">
+        <span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
+        <span>TRUNOCRAZZY/PERFIL</span>
+        <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
+      </div>
+      <nav class="lobby-nav" aria-label="Navegação principal">
+        <button type="button" (click)="go($event, '/lobby')">Início</button>
+        <button type="button" (click)="go($event, '/perfil')">Perfil</button>
+        <button type="button" (click)="go($event, '/ranking')">Ranking</button>
+      </nav>
+    </header>
+    @if (profile$ | async; as profile) {
     <div class="card bg-base-100 shadow">
       <div class="card-body flex-row items-center gap-4">
         <app-avatar [name]="profile.displayName" [avatarUrl]="profile.avatarUrl" size="lg" />
@@ -26,11 +28,11 @@
         </div>
       </div>
     </div>
-  } @else {
+    } @else {
     <span class="loading loading-dots"></span>
-  }
+    }
 
-  @if (stats$ | async; as stats) {
+    @if (stats$ | async; as stats) {
     <div class="stats stats-vertical sm:stats-horizontal w-full shadow">
       <div class="stat">
         <div class="stat-title">Partidas</div>
@@ -49,24 +51,24 @@
         <div class="stat-value">{{ stats.currentWinStreak }}</div>
       </div>
     </div>
-  }
+    }
 
-  @if (collection$ | async; as collection) {
-    <div class="card bg-base-100 shadow">
+    @if (collection$ | async; as collection) {
+    <div class="card shadow">
       <div class="card-body">
         <h2 class="card-title">Coleção</h2>
         <progress class="progress progress-primary" [value]="collection.obtained" [max]="collection.total"></progress>
         <p>{{ collection.obtained }} de {{ collection.total }} cartas</p>
       </div>
     </div>
-  }
+    }
 
-  <div class="grid gap-6 md:grid-cols-2">
-    <div class="card bg-base-100 shadow">
-      <div class="card-body">
-        <h2 class="card-title">Conquistas</h2>
-        <ul class="list">
-          @for (achievement of achievements$ | async; track achievement.id) {
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title">Conquistas</h2>
+          <ul class="list">
+            @for (achievement of achievements$ | async; track achievement.id) {
             <li class="list-row">
               <div class="list-col-grow">
                 <div>{{ achievement.title }}</div>
@@ -74,29 +76,31 @@
               </div>
               <span class="badge">{{ achievement.progress }}/{{ achievement.goal }}</span>
             </li>
-          } @empty {
+            } @empty {
             <li class="list-row">Nenhuma conquista ainda.</li>
-          }
-        </ul>
+            }
+          </ul>
+        </div>
       </div>
-    </div>
 
-    <div class="card bg-base-100 shadow">
-      <div class="card-body">
-        <h2 class="card-title">Partidas recentes</h2>
-        <ul class="list">
-          @for (activity of activities$ | async; track activity.id) {
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">Partidas recentes</h2>
+          <ul class="list">
+            @for (activity of activities$ | async; track activity.id) {
             <li class="list-row">
-              <span class="badge" [class.badge-success]="activity.result === 'VITORIA'" [class.badge-error]="activity.result === 'DERROTA'">
+              <span class="badge" [class.badge-success]="activity.result === 'VITORIA'"
+                [class.badge-error]="activity.result === 'DERROTA'">
                 {{ activity.result === 'VITORIA' ? 'V' : 'D' }}
               </span>
               <div class="list-col-grow">contra &#64;{{ activity.opponentName }}</div>
               <time class="text-xs opacity-60">{{ activity.playedAt | date: 'short' }}</time>
             </li>
-          } @empty {
+            } @empty {
             <li class="list-row">Nenhuma partida ainda.</li>
-          }
-        </ul>
+            }
+          </ul>
+        </div>
       </div>
     </div>
   </div>
