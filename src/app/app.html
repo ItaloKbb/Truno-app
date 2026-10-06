@@ -12,7 +12,7 @@
 <app-perguntas [service]="puzzleService" />
 }
 @case ('partida/:id') {
-<app-partida [service]="gameService" [partidaId]="+page().split('/')[1]" />
+<app-partida [service]="gameService" [partidaId]="partidaId()" />
 }
 @case ('ranking') {
 <app-ranking />

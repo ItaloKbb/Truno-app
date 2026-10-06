@@ -46,6 +46,17 @@ export class App {
     { initialValue: '' },
   );
 
+  protected readonly partidaId = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => {
+        const id = this.router.routerState.snapshot.root.firstChild?.paramMap.get('id');
+        return id === null || id === undefined ? Number.NaN : Number(id);
+      }),
+    ),
+    { initialValue: Number.NaN },
+  );
+
   protected onLoggedIn(): void {
     const returnUrl = this.router.routerState.snapshot.root.queryParamMap.get('returnUrl');
     void this.navigate(safeReturnUrl(returnUrl));
