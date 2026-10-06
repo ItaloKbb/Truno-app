@@ -36,13 +36,13 @@
           <span aria-hidden="true">♠</span>
           <div>
             <strong>Não foi possível carregar o perfil.</strong>
-            <p>{{ state().message }}</p>
+            <p>{{ errorMessage() }}</p>
           </div>
           <button type="button" (click)="reload()">Tentar novamente</button>
         </div>
       }
       @case ('ready') {
-        @let overview = state().overview;
+        @let overview = this.overview()!;
         <section class="profile-hero" aria-label="Identidade e progresso">
           <div class="profile-identity">
             <app-avatar [name]="overview.profile.displayName" [avatarUrl]="overview.profile.avatarUrl" size="lg" />

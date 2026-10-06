@@ -3,7 +3,7 @@
 <app-home [auth]="auth" (loggedIn)="onLoggedIn()" />
 }
 @case ('book') {
-<app-book [service]="cardService" (navigate)="navigate($event)" />
+<app-book [service]="cardService" [skills]="skillService" (navigate)="navigate($event)" />
 }
 @case ('lobby') {
 <app-lobby [games]="gameService" (navigate)="navigate($event)" />

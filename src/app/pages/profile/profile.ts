@@ -1,5 +1,5 @@
 ﻿import { DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { Avatar } from '../../components/avatar/avatar';
@@ -38,6 +38,16 @@ export class Profile implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   protected readonly state = signal<ProfileState>({ status: 'loading' });
+
+  protected readonly errorMessage = computed(() => {
+    const state = this.state();
+    return state.status === 'error' ? state.message : '';
+  });
+
+  protected readonly overview = computed(() => {
+    const state = this.state();
+    return state.status === 'ready' ? state.overview : null;
+  });
 
   ngOnInit(): void {
     this.reload();
