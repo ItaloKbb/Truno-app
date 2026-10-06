@@ -161,3 +161,12 @@ A pergunta pública nunca informa a resposta correta. Quem decide o resultado é
 - [ ] Somente `handCardId` é enviado ao jogar.
 - [ ] Botões ficam desabilitados durante uma ação.
 - [ ] Um erro `409` é mostrado e pode ser seguido por nova leitura do estado.
+
+## Atualização e nomes das fases
+
+A tela consulta o estado da partida automaticamente a cada dois segundos, sem
+recarregar a página. A API continua sendo a fonte de verdade; a tela só aplica
+respostas com uma versão (`stateVersion`) igual ou mais recente que a exibida.
+Entre rodadas, a fase aparece como **Fase de compra de troféus** e cada jogador
+pode confirmar **PRONTO**. O botão fica verde quando a API indicar que o
+jogador autenticado já confirmou a prontidão.

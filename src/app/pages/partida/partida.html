@@ -5,16 +5,22 @@
     <div class="match-shell">
       <header class="match-header">
         <div>
-          <p class="eyebrow">PARTIDA EM ANDAMENTO</p>
+          <p class="eyebrow">{{ phaseLabel(current.phase) }}</p>
           <h1>{{ current.name }}</h1>
         </div>
         <span class="match-badge">{{ current.code }}</span>
       </header>
 
+      @if (liveUpdateError(); as message) {
+        <p class="status-banner status-error" role="status">
+          Atualização em tempo real indisponível. Tentando novamente: {{ message }}
+        </p>
+      }
+
       <section class="stat-row" aria-label="Dados da partida">
         <div class="stat-card">
           <span class="label">Fase</span>
-          <strong>{{ current.phase }}</strong>
+          <strong>{{ phaseLabel(current.phase) }}</strong>
         </div>
         <div class="stat-card">
           <span class="label">Rodada</span>
@@ -22,7 +28,7 @@
         </div>
         <div class="stat-card">
           <span class="label">Direção</span>
-          <strong>{{ current.direction }}</strong>
+          <strong>{{ directionLabel(current.direction) }}</strong>
         </div>
         <div class="stat-card">
           <span class="label">Vencedor</span>
@@ -142,18 +148,31 @@
       </section>
 
       <footer class="action-bar">
-        <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="start()">
-          Iniciar partida
-        </button>
-        <button type="button" class="btn btn-neutral" [disabled]="pending()" (click)="readyForNextRound()">
-          Próxima rodada
-        </button>
-        <button type="button" class="btn btn-neutral" [disabled]="pending()" (click)="buyTrophy()">
-          Comprar troféu
-        </button>
-        <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="cancel()">
-          Cancelar partida
-        </button>
+        @if (current.phase === 'AGUARDANDO_JOGADORES') {
+          <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="start()">
+            Iniciar partida
+          </button>
+        }
+        @if (current.phase === 'ENTRE_RODADAS') {
+          <button
+            type="button"
+            class="btn btn-neutral"
+            [class.btn-ready]="isCurrentPlayerReady(current)"
+            [disabled]="pending() || isCurrentPlayerReady(current)"
+            [attr.aria-pressed]="isCurrentPlayerReady(current)"
+            (click)="readyForNextRound()"
+          >
+            {{ isCurrentPlayerReady(current) ? 'PRONTO ✓' : 'PRONTO' }}
+          </button>
+          <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="buyTrophy()">
+            Comprar troféu
+          </button>
+        }
+        @if (current.phase !== 'FINALIZADO' && current.phase !== 'CANCELADO') {
+          <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="cancel()">
+            Cancelar partida
+          </button>
+        }
         <a class="btn btn-ghost" href="/lobby">Voltar ao lobby</a>
       </footer>
     </div>
