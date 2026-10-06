@@ -7,9 +7,10 @@
         <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
       </div>
       <nav class="lobby-nav" aria-label="Navegação principal">
-        <button type="button" (click)="go('/lobby')">Início</button>
-        <button type="button" aria-current="page">Perfil</button>
-        <button type="button" (click)="go('/ranking')">Ranking</button>
+        <button type="button" (click)="go($event, '/lobby')">Início</button>
+        <button type="button" (click)="go($event, '/perfil')">Perfil</button>
+        <button type="button" (click)="go($event, '/ranking')">Ranking</button>
+        <button type="button" (click)="go($event, '/book')">Catálogo</button>
       </nav>
     </header>
 

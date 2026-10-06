@@ -7,16 +7,17 @@
 				<span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
 			</div>
 			<nav class="lobby-nav" aria-label="Navegação principal">
+				<button type="button" (click)="navigate.emit('/lobby')">Início</button>
 				<button type="button" (click)="navigate.emit('/perfil')">Perfil</button>
 				<button type="button" (click)="navigate.emit('/ranking')">Ranking</button>
-				<button type="button" (click)="navigate.emit('/book')">Cartas</button>
+				<button type="button" (click)="navigate.emit('/book')">Catálogo</button>
 			</nav>
 		</header>
 
 		<section class="lobby-intro" aria-labelledby="lobby-title">
 			<p class="eyebrow">SUA PRÓXIMA RODADA COMEÇA AQUI</p>
 			<h1 id="lobby-title">Lobby principal</h1>
-			<p>Crie uma mesa para até 4 jogadores ou entre em uma partida com seu código.</p>
+			<p>Crie uma mesa para até 6 jogadores ou entre em uma partida com seu código.</p>
 		</section>
 
 		<section class="table-scene" aria-label="Mesa de jogo TRUNO">
