@@ -7,7 +7,7 @@ import { EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-book',
-  styleUrl: './book.css',
+  styleUrls: ['./book.css', '../lobby/lobby.css'],
   templateUrl: './book.html',
   imports: [AsyncPipe],
 })
