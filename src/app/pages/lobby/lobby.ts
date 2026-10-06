@@ -23,10 +23,10 @@ export class Lobby {
 
     name: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(20)],
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(20)],
     }),
 
-    maxPlayers: new FormControl('', {
+    maxPlayers: new FormControl<number | null>(null, {
       nonNullable: true,
       validators: [
         Validators.required,
@@ -35,7 +35,7 @@ export class Lobby {
       ],
     }),
 
-    initialCards: new FormControl('', {
+    initialCards: new FormControl<number | null>(null, {
       nonNullable: true,
       validators: [
         Validators.required,
@@ -44,7 +44,7 @@ export class Lobby {
       ],
     }),
 
-    roundReward: new FormControl('', {
+    roundReward: new FormControl<number | null>(null, {
       nonNullable: true,
       validators: [
         Validators.required,
@@ -53,7 +53,7 @@ export class Lobby {
       ],
     }),
 
-    emptyHandReward: new FormControl('', {
+    emptyHandReward: new FormControl<number | null>(null, {
       nonNullable: true,
       validators: [
         Validators.required,
@@ -62,7 +62,7 @@ export class Lobby {
       ],
     }),
 
-    trophyPrice: new FormControl('', {
+    trophyPrice: new FormControl<number | null>(null, {
       nonNullable: true,
       validators: [
         Validators.required,
@@ -74,18 +74,28 @@ export class Lobby {
 
   });
 
-  protected createGame(name: string): void {
+  protected createGame(): void {
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
+
+    const value = this.form.getRawValue();
     const input: CreateGameInput = {
-      name: name.trim(),
-      maxPlayers: 6,
-      initialCards: 3,
-      roundReward: 10,
-      emptyHandReward: 5,
-      trophyPrice: 20,
+      name: value.name.trim(),
+      maxPlayers: Number(value.maxPlayers),
+      initialCards: Number(value.initialCards),
+      roundReward: Number(value.roundReward),
+      emptyHandReward: Number(value.emptyHandReward),
+      trophyPrice: Number(value.trophyPrice),
     };
 
     if (input.name.length < 3) {
       this.errorMessage.set('Digite um nome com pelo menos 3 caracteres.');
+      return;
+    }
+
+    const numbers = [input.maxPlayers, input.initialCards, input.roundReward, input.emptyHandReward, input.trophyPrice];
+    if (!numbers.every(Number.isInteger)) {
+      this.errorMessage.set('Use apenas números inteiros nos parâmetros da partida.');
       return;
     }
 
@@ -131,6 +141,7 @@ export class Lobby {
     switch (field) {
       case 'name':
         if (errors['required']) return 'Informe o nome.';
+        if (errors['minlength']) return `Use pelo menos ${errors['minlength'].requiredLength} caracteres.`;
         if (errors['maxlength']) return `Use até ${errors['maxlength'].requiredLength} caracteres.`;
         break;
 

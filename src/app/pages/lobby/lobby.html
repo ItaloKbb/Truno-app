@@ -49,7 +49,7 @@
 					</div>
 				</div>
 
-				<form class="fieldset w-full" [formGroup]="form" (ngSubmit)="createGame(form.controls.name.value)" novalidate>
+				<form class="fieldset w-full" [formGroup]="form" (ngSubmit)="createGame()" novalidate>
 					<label for="game-name">Nome da partida</label>
 					<input
 						id="game-name"
