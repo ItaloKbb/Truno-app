@@ -47,11 +47,109 @@
 						<h2>Criar partida</h2>
 					</div>
 				</div>
-			<label for="game-name">Nome da partida</label>
-			<input #gameName id="game-name" type="text" minlength="3" placeholder="Ex.: Mesa de sexta" autocomplete="off" />
-			<button class="action-button create-button" type="button" [disabled]="pending()" (click)="createGame(gameName.value)">
-				<span aria-hidden="true">＋</span>{{ pending() ? 'Aguarde...' : 'Criar sala' }}
-			</button>
+
+				<form class="fieldset w-full" [formGroup]="form" (ngSubmit)="createGame(form.controls.name.value)" novalidate>
+					<label for="game-name">Nome da partida</label>
+					<input
+						id="game-name"
+						type="text"
+						formControlName="name"
+						autocomplete="off"
+						placeholder="Ex.: Mesa de sexta"
+						minlength="3"
+						maxlength="20"
+						required
+						[attr.aria-invalid]="fieldError('name') ? true : null"
+						[attr.aria-describedby]="fieldError('name') ? 'game-name-error' : null"
+					/>
+					@if (fieldError('name'); as nameError) {
+						<p id="game-name-error" class="text-error text-sm" role="alert">{{ nameError }}</p>
+					}
+
+					<label for="max-players">Número máximo de jogadores</label>
+					<input
+						id="max-players"
+						type="number"
+						formControlName="maxPlayers"
+						min="2"
+						max="6"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('maxPlayers') ? true : null"
+						[attr.aria-describedby]="fieldError('maxPlayers') ? 'max-players-error' : null"
+					/>
+					@if (fieldError('maxPlayers'); as maxPlayersError) {
+						<p id="max-players-error" class="text-error text-sm" role="alert">{{ maxPlayersError }}</p>
+					}
+
+					<label for="initial-cards">Cartas iniciais por jogador</label>
+					<input
+						id="initial-cards"
+						type="number"
+						formControlName="initialCards"
+						min="3"
+						max="5"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('initialCards') ? true : null"
+						[attr.aria-describedby]="fieldError('initialCards') ? 'initial-cards-error' : null"
+					/>
+					@if (fieldError('initialCards'); as initialCardsError) {
+						<p id="initial-cards-error" class="text-error text-sm" role="alert">{{ initialCardsError }}</p>
+					}
+
+					<label for="round-reward">Recompensa por rodada</label>
+					<input
+						id="round-reward"
+						type="number"
+						formControlName="roundReward"
+						min="1"
+						max="5"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('roundReward') ? true : null"
+						[attr.aria-describedby]="fieldError('roundReward') ? 'round-reward-error' : null"
+					/>
+					@if (fieldError('roundReward'); as roundRewardError) {
+						<p id="round-reward-error" class="text-error text-sm" role="alert">{{ roundRewardError }}</p>
+					}
+
+					<label for="empty-hand-reward">Recompensa por mão vazia</label>
+					<input
+						id="empty-hand-reward"
+						type="number"
+						formControlName="emptyHandReward"
+						min="6"
+						max="10"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('emptyHandReward') ? true : null"
+						[attr.aria-describedby]="fieldError('emptyHandReward') ? 'empty-hand-reward-error' : null"
+					/>
+					@if (fieldError('emptyHandReward'); as emptyHandRewardError) {
+						<p id="empty-hand-reward-error" class="text-error text-sm" role="alert">{{ emptyHandRewardError }}</p>
+					}
+
+					<label for="trophy-price">Preço do troféu</label>
+					<input
+						id="trophy-price"
+						type="number"
+						formControlName="trophyPrice"
+						min="20"
+						max="40"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('trophyPrice') ? true : null"
+						[attr.aria-describedby]="fieldError('trophyPrice') ? 'trophy-price-error' : null"
+					/>
+					@if (fieldError('trophyPrice'); as trophyPriceError) {
+						<p id="trophy-price-error" class="text-error text-sm" role="alert">{{ trophyPriceError }}</p>
+					}
+
+					<button class="action-button create-button" type="submit" [disabled]="form.invalid || pending()">
+						<span aria-hidden="true">＋</span>{{ pending() ? 'Aguarde...' : 'Criar sala' }}
+					</button>
+				</form>
 			</article>
 
 			<article class="action-panel join-panel">

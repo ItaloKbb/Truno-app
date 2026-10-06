@@ -1,66 +1,163 @@
-<!--
-  BASE DA TELA — o guia está em src/app/pages/guias/partida.md.
-  Tudo abaixo é texto de exemplo. Cada bloco marca o passo do guia que o liga ao GameService.
--->
-<main class="container mx-auto px-4 py-6 space-y-4">
-  <!-- Passo 3: carregando / erro -->
-  <p>Carregando a partida...</p>
-  <p role="alert" class="text-error">Mensagem de erro fica aqui.</p>
+<main class="match-page">
+  @if (errorMessage(); as message) {
+    <p class="status-banner status-error" role="alert">{{ message }}</p>
+  } @else if (game(); as current) {
+    <div class="match-shell">
+      <header class="match-header">
+        <div>
+          <p class="eyebrow">PARTIDA EM ANDAMENTO</p>
+          <h1>{{ current.name }}</h1>
+        </div>
+        <span class="match-badge">{{ current.code }}</span>
+      </header>
 
-  <!-- Passo 4: cabeçalho da partida -->
-  <header class="card bg-base-200 p-4">
-    <h1 class="text-2xl font-bold">Nome da partida</h1>
-    <p>Código: <strong>ABC123</strong> · Fase: AGUARDANDO_JOGADORES</p>
-    <p>Rodada 0 · Direção: HORARIO</p>
-    <p>Vencedor: —</p>
-  </header>
+      <section class="stat-row" aria-label="Dados da partida">
+        <div class="stat-card">
+          <span class="label">Fase</span>
+          <strong>{{ current.phase }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Rodada</span>
+          <strong>{{ current.roundNumber }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Direção</span>
+          <strong>{{ current.direction }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Vencedor</span>
+          <strong>{{ winnerName(current) }}</strong>
+        </div>
+      </section>
 
-  <!-- Passo 4: jogadores -->
-  <section class="card bg-base-200 p-4">
-    <h2 class="text-xl font-bold">Jogadores</h2>
-    <table class="table">
-      <thead>
-        <tr><th></th><th>Jogador</th><th>Moedas</th><th>Troféus</th><th>Cartas</th><th>Pronto</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>▶</td><td>apelido (host)</td><td>0</td><td>0</td><td>3</td><td>não</td></tr>
-      </tbody>
-    </table>
-  </section>
+      <section class="match-panel">
+        <div class="panel-heading">
+          <h2>Jogadores</h2>
+          <span>Turno: {{ currentPlayerName(current) }}</span>
+        </div>
 
-  <!-- Passo 4: vira e jogadas na mesa -->
-  <section class="card bg-base-200 p-4">
-    <h2 class="text-xl font-bold">Mesa</h2>
-    <p>Vira: <img class="inline w-16" src="/assets/cards/reverso.png" alt="Vira" /></p>
-    <ul>
-      <li>1ª jogada — apelido jogou uma carta</li>
-    </ul>
-  </section>
+        <div class="table-wrap">
+          <table class="players-table">
+            <thead>
+              <tr>
+                <th>Jogador</th>
+                <th>Moedas</th>
+                <th>Troféus</th>
+                <th>Cartas</th>
+                <th>Pronto</th>
+                <th>Host</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (player of current.players; track player.id) {
+                <tr [class.is-current]="player.id === current.currentPlayerId">
+                  <td>
+                    <div class="player-cell">
+                      <span class="player-indicator" aria-hidden="true">{{ player.id === current.currentPlayerId ? '▶' : '•' }}</span>
+                      <span>{{ player.nickname }}</span>
+                    </div>
+                  </td>
+                  <td>{{ player.matchCoins }}</td>
+                  <td>{{ player.trophies }}</td>
+                  <td>{{ player.handSize }}</td>
+                  <td>{{ player.ready ? 'Sim' : 'Não' }}</td>
+                  <td>{{ player.host ? 'Sim' : 'Não' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6">Aguardando jogadores.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-  <!-- Passo 6: pergunta pendente (só aparece quando existir um puzzle) -->
-  <section class="card bg-base-200 p-4">
-    <h2 class="text-xl font-bold">Pergunta</h2>
-    <p>Texto da pergunta.</p>
-    <label class="label"><input type="radio" name="alternative" /> Alternativa</label>
-    <button type="button" class="btn btn-neutral">Responder</button>
-  </section>
+      <section class="match-panel">
+        <div class="panel-heading">
+          <h2>Mesa</h2>
+        </div>
 
-  <!-- Passo 5: sua mão -->
-  <section class="card bg-base-200 p-4">
-    <h2 class="text-xl font-bold">Sua mão</h2>
-    <div class="flex gap-2">
-      <button type="button" class="w-24">
-        <img src="/assets/cards/reverso.png" alt="Carta da mão" />
-      </button>
+        <div class="table-scene">
+          <div class="table-card">
+            <span class="label">Vira</span>
+            @if (current.vira) {
+              <img [src]="cardImage(current.vira)" [alt]="'Carta virada: ' + current.vira.valor + ' de ' + current.vira.naipe" />
+            } @else {
+              <img src="/assets/cards/reverso.png" alt="Carta virada ainda não definida" />
+            }
+          </div>
+
+          @if (current.plays.length > 0) {
+            <ul class="play-list">
+              @for (play of current.plays; track play.order) {
+                <li>
+                  <strong>{{ play.nickname }}</strong>
+                  <span>jogou {{ play.card.valor }} de {{ play.card.naipe }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">Ainda não houve jogadas nesta rodada.</p>
+          }
+        </div>
+      </section>
+
+      @if (current.pendingPuzzle; as puzzle) {
+        <section class="match-panel question-panel">
+          <div class="panel-heading">
+            <h2>Pergunta pendente</h2>
+          </div>
+
+          <p class="question-text">{{ puzzle.question }}</p>
+
+          <div class="alternative-list">
+            @for (alternative of puzzle.alternatives; track alternative; let index = $index) {
+              <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
+                {{ alternative }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <section class="match-panel">
+        <div class="panel-heading">
+          <h2>Sua mão</h2>
+          <span>{{ current.hand.length }} carta(s)</span>
+        </div>
+
+        @if (current.hand.length > 0) {
+          <div class="hand-grid">
+            @for (card of current.hand; track card.handCardId) {
+              <button type="button" class="hand-card" [disabled]="pending()" (click)="play(card.handCardId)">
+                <img [src]="cardImage(card)" [alt]="card.valor + ' de ' + card.naipe" />
+                <span>{{ card.valor }} de {{ card.naipe }}</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="muted">Sua mão está vazia.</p>
+        }
+      </section>
+
+      <footer class="action-bar">
+        <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="start()">
+          Iniciar partida
+        </button>
+        <button type="button" class="btn btn-neutral" [disabled]="pending()" (click)="readyForNextRound()">
+          Próxima rodada
+        </button>
+        <button type="button" class="btn btn-neutral" [disabled]="pending()" (click)="buyTrophy()">
+          Comprar troféu
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="cancel()">
+          Cancelar partida
+        </button>
+        <a class="btn btn-ghost" href="/lobby">Voltar ao lobby</a>
+      </footer>
     </div>
-  </section>
-
-  <!-- Passo 7: ações -->
-  <footer class="flex flex-wrap gap-2">
-    <button type="button" class="btn btn-neutral">Iniciar partida</button>
-    <button type="button" class="btn btn-neutral">Próxima rodada</button>
-    <button type="button" class="btn btn-neutral">Comprar troféu</button>
-    <button type="button" class="btn btn-error">Cancelar partida</button>
-    <a class="btn" href="/lobby">Voltar ao lobby</a>
-  </footer>
+  } @else if (loading()) {
+    <p class="status-banner">Carregando a partida...</p>
+  }
 </main>

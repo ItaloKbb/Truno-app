@@ -2,12 +2,13 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import type { CreateGameInput, GameState } from '../../domain/truno-api';
 import { GameService } from '../../services/modules/game.service';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 type FormFields = 'name' | 'maxPlayers' | 'initialCards' | 'roundReward' | 'emptyHandReward' | 'trophyPrice';
 
 @Component({
   selector: 'app-lobby',
+  imports: [ReactiveFormsModule],
   styleUrl: './lobby.css',
   templateUrl: './lobby.html',
 })
@@ -169,7 +170,6 @@ export class Lobby {
 
 
 }
-
 
 
 
