@@ -49,6 +49,33 @@ export const SKILL_TYPES = [
 ] as const;
 export type SkillType = (typeof SKILL_TYPES)[number];
 
+export const SKILL_ICON: Record<SkillType, string> = {
+  BLOCK: '⛔',
+  THEFT: '🫳',
+  INVERTS: '🔄',
+  BUY: '➕',
+  BURN: '🔥',
+  SURPRISE: '🎁',
+  PUZZLE: '❓',
+  CHANGEOFHANDS: '🤝',
+  BOMB: '💣',
+  SHIELD: '🛡️',
+};
+
+/** Rótulo de reserva quando o catálogo de `GET /skills` não carregou. */
+export const SKILL_LABEL: Record<SkillType, string> = {
+  BLOCK: 'Bloqueio',
+  THEFT: 'Roubo',
+  INVERTS: 'Inverter',
+  BUY: 'Compra',
+  BURN: 'Queimar',
+  SURPRISE: 'Surpresa',
+  PUZZLE: 'Pergunta',
+  CHANGEOFHANDS: 'Troca de mãos',
+  BOMB: 'Bomba',
+  SHIELD: 'Escudo',
+};
+
 /** Ordem de força para exibição da sequência: 4, 5, 6, 7, Q, J, K, A, 2, 3. */
 export const CARD_GAME_ORDER: readonly CardValue[] = [
   'QUATRO',
@@ -171,6 +198,13 @@ export interface PendingPuzzle {
   alternatives: string[];
 }
 
+/** Rodada encerrada; `playerId`/`nickname` nulos quando houve empate. */
+export interface RoundWinner {
+  roundNumber: number;
+  playerId: number | null;
+  nickname: string | null;
+}
+
 export interface GameState {
   id: number;
   code: string;
@@ -188,6 +222,8 @@ export interface GameState {
   hand: GameCard[];
   pendingPuzzle: PendingPuzzle | null;
   winnerPlayerId: number | null;
+  /** Opcional: versões antigas da API não enviam o histórico de rodadas. */
+  roundWinners?: RoundWinner[];
 }
 
 /** `GET /cards` */

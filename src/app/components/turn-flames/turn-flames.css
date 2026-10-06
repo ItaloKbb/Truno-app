@@ -1,0 +1,179 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  animation: flame-glow 1.6s ease-in-out infinite alternate;
+}
+
+.flame-edge {
+  position: absolute;
+  filter: blur(2px);
+  mix-blend-mode: screen;
+}
+
+.flame-edge::before,
+.flame-edge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.flame-top,
+.flame-bottom {
+  left: 0;
+  right: 0;
+  height: 40px;
+}
+
+.flame-top {
+  top: 0;
+  transform: scaleY(-1);
+}
+
+.flame-bottom {
+  bottom: 0;
+}
+
+.flame-top::before,
+.flame-bottom::before {
+  background: radial-gradient(
+      ellipse 12px 34px at 50% 100%,
+      rgba(255, 244, 180, 0.9) 0%,
+      rgba(255, 170, 40, 0.8) 30%,
+      rgba(240, 70, 10, 0.5) 60%,
+      transparent 75%
+    )
+    repeat-x;
+  background-size: 28px 100%;
+  transform-origin: bottom;
+  animation: flame-dance-x 0.9s ease-in-out infinite alternate;
+}
+
+.flame-top::after,
+.flame-bottom::after {
+  background: radial-gradient(
+      ellipse 16px 26px at 50% 100%,
+      rgba(255, 200, 80, 0.75) 0%,
+      rgba(255, 90, 0, 0.55) 45%,
+      transparent 72%
+    )
+    repeat-x;
+  background-size: 40px 100%;
+  background-position: 14px 0;
+  transform-origin: bottom;
+  animation: flame-dance-x 1.3s ease-in-out infinite alternate-reverse;
+}
+
+.flame-left,
+.flame-right {
+  top: 0;
+  bottom: 0;
+  width: 36px;
+}
+
+.flame-left {
+  left: 0;
+}
+
+.flame-right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.flame-left::before,
+.flame-right::before {
+  background: radial-gradient(
+      ellipse 34px 12px at 0% 50%,
+      rgba(255, 244, 180, 0.9) 0%,
+      rgba(255, 170, 40, 0.8) 30%,
+      rgba(240, 70, 10, 0.5) 60%,
+      transparent 75%
+    )
+    repeat-y;
+  background-size: 100% 28px;
+  transform-origin: left;
+  animation: flame-dance-y 0.9s ease-in-out infinite alternate;
+}
+
+.flame-left::after,
+.flame-right::after {
+  background: radial-gradient(
+      ellipse 26px 16px at 0% 50%,
+      rgba(255, 200, 80, 0.75) 0%,
+      rgba(255, 90, 0, 0.55) 45%,
+      transparent 72%
+    )
+    repeat-y;
+  background-size: 100% 40px;
+  background-position: 0 14px;
+  transform-origin: left;
+  animation: flame-dance-y 1.3s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes flame-glow {
+  from {
+    box-shadow:
+      inset 0 0 18px rgba(255, 120, 20, 0.45),
+      inset 0 0 40px rgba(220, 40, 0, 0.2);
+  }
+  to {
+    box-shadow:
+      inset 0 0 26px rgba(255, 170, 40, 0.6),
+      inset 0 0 60px rgba(240, 60, 0, 0.28);
+  }
+}
+
+@keyframes flame-dance-x {
+  0% {
+    transform: scaleY(0.75);
+    background-position-x: 0;
+    opacity: 0.85;
+  }
+  50% {
+    transform: scaleY(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.9);
+    background-position-x: 10px;
+    opacity: 0.9;
+  }
+}
+
+@keyframes flame-dance-y {
+  0% {
+    transform: scaleX(0.75);
+    background-position-y: 0;
+    opacity: 0.85;
+  }
+  50% {
+    transform: scaleX(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.9);
+    background-position-y: 10px;
+    opacity: 0.9;
+  }
+}
+
+@media (max-width: 640px) {
+  .flame-top,
+  .flame-bottom {
+    height: 28px;
+  }
+
+  .flame-left,
+  .flame-right {
+    width: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  .flame-edge::before,
+  .flame-edge::after {
+    animation: none;
+  }
+}

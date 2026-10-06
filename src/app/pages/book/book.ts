@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Observable, catchError, forkJoin, map, of } from 'rxjs';
-import { cardLabel, type CatalogCard, type SkillDefinition, type SkillType } from '../../domain/truno-api';
+import { SKILL_ICON, cardLabel, type CatalogCard, type SkillDefinition, type SkillType } from '../../domain/truno-api';
 import { CardService } from '../../services/modules/card.service';
 import { SkillService } from '../../services/modules/skill.service';
 
@@ -16,19 +16,6 @@ interface BookView {
   /** Falha só das habilidades: as cartas continuam visíveis. */
   skillsError: string;
 }
-
-const SKILL_ICON: Record<SkillType, string> = {
-  BLOCK: '⛔',
-  THEFT: '🫳',
-  INVERTS: '🔄',
-  BUY: '➕',
-  BURN: '🔥',
-  SURPRISE: '🎁',
-  PUZZLE: '❓',
-  CHANGEOFHANDS: '🤝',
-  BOMB: '💣',
-  SHIELD: '🛡️',
-};
 
 @Component({
   selector: 'app-book',
