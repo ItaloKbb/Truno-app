@@ -1,5 +1,5 @@
-<main class="lobby-page">
-  <div class="lobby-shell">
+﻿<main class="lobby-page profile-page">
+  <div class="lobby-shell profile-shell">
     <header class="lobby-header">
       <div class="lobby-brand">
         <span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
@@ -7,101 +7,141 @@
         <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
       </div>
       <nav class="lobby-nav" aria-label="Navegação principal">
-        <button type="button" (click)="go($event, '/lobby')">Início</button>
-        <button type="button" (click)="go($event, '/perfil')">Perfil</button>
-        <button type="button" (click)="go($event, '/ranking')">Ranking</button>
+        <button type="button" (click)="go('/lobby')">Início</button>
+        <button type="button" aria-current="page">Perfil</button>
+        <button type="button" (click)="go('/ranking')">Ranking</button>
       </nav>
     </header>
-    @if (profile$ | async; as profile) {
-    <div class="card bg-base-100 shadow">
-      <div class="card-body flex-row items-center gap-4">
-        <app-avatar [name]="profile.displayName" [avatarUrl]="profile.avatarUrl" size="lg" />
-        <div class="flex-1">
-          <h1 class="card-title">{{ profile.displayName }}</h1>
-          <p class="opacity-70">&#64;{{ profile.username }}</p>
-          <p>{{ profile.bio }}</p>
-          <div class="mt-2 flex gap-2">
-            <span class="badge badge-primary">Nível {{ profile.level }}</span>
-            <span class="badge badge-outline">{{ profile.coins }} moedas</span>
-            <span class="badge badge-outline">{{ profile.gems }} gemas</span>
+
+    <div class="profile-heading">
+      <div>
+        <p class="eyebrow">SUA JORNADA NA MESA</p>
+        <h1>Meu perfil</h1>
+        <p>Suas cartas, conquistas e partidas em um só lugar.</p>
+      </div>
+      @if (state().status === 'ready') {
+        <button type="button" class="profile-refresh" (click)="reload()">Atualizar dados</button>
+      }
+    </div>
+
+    @switch (state().status) {
+      @case ('loading') {
+        <div class="profile-feedback" role="status">
+          <span class="loading loading-dots loading-md" aria-hidden="true"></span>
+          <span>Carregando seu perfil...</span>
+        </div>
+      }
+      @case ('error') {
+        <div class="profile-feedback profile-feedback-error" role="alert">
+          <span aria-hidden="true">♠</span>
+          <div>
+            <strong>Não foi possível carregar o perfil.</strong>
+            <p>{{ state().message }}</p>
           </div>
+          <button type="button" (click)="reload()">Tentar novamente</button>
         </div>
-      </div>
-    </div>
-    } @else {
-    <span class="loading loading-dots"></span>
-    }
+      }
+      @case ('ready') {
+        @let overview = state().overview;
+        <section class="profile-hero" aria-label="Identidade e progresso">
+          <div class="profile-identity">
+            <app-avatar [name]="overview.profile.displayName" [avatarUrl]="overview.profile.avatarUrl" size="lg" />
+            <div class="profile-identity-copy">
+              <span class="profile-kicker">JOGADOR TRUNO</span>
+              <h2>{{ overview.profile.displayName }}</h2>
+              <p class="profile-username">&#64;{{ overview.profile.username }}</p>
+              @if (overview.profile.bio) {
+                <p class="profile-bio">{{ overview.profile.bio }}</p>
+              }
+            </div>
+          </div>
+          <div class="profile-level">
+            <div class="profile-level-top">
+              <span class="level-badge">NÍVEL {{ overview.profile.level }}</span>
+              <strong>{{ experienceProgress(overview.profile) | number: '1.0-0' }}%</strong>
+            </div>
+            <progress class="profile-progress" [value]="experienceProgress(overview.profile)" max="100" [attr.aria-label]="'Progresso do nível ' + overview.profile.level"></progress>
+            <p>{{ overview.profile.experience | number }} / {{ overview.profile.experienceToNextLevel | number }} XP para o próximo nível</p>
+            <div class="profile-wallet" aria-label="Saldo">
+              <span><i aria-hidden="true">●</i><strong>{{ overview.profile.coins | number }}</strong> moedas</span>
+              <span><i aria-hidden="true">◆</i><strong>{{ overview.profile.gems | number }}</strong> gemas</span>
+            </div>
+          </div>
+        </section>
 
-    @if (stats$ | async; as stats) {
-    <div class="stats stats-vertical sm:stats-horizontal w-full shadow">
-      <div class="stat">
-        <div class="stat-title">Partidas</div>
-        <div class="stat-value">{{ stats.matchesPlayed }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Vitórias</div>
-        <div class="stat-value">{{ stats.wins }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Taxa de vitória</div>
-        <div class="stat-value">{{ stats.winRate * 100 }}%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Sequência atual</div>
-        <div class="stat-value">{{ stats.currentWinStreak }}</div>
-      </div>
-    </div>
-    }
+        <section class="profile-stats" aria-label="Estatísticas de jogo">
+          <div class="profile-stat"><span>PARTIDAS</span><strong>{{ overview.stats.matchesPlayed | number }}</strong><small>jogadas</small></div>
+          <div class="profile-stat"><span>VITÓRIAS</span><strong>{{ overview.stats.wins | number }}</strong><small>na mesa</small></div>
+          <div class="profile-stat"><span>APROVEITAMENTO</span><strong>{{ overview.stats.winRate | percent: '1.0-1' }}</strong><small>de vitórias</small></div>
+          <div class="profile-stat"><span>SEQUÊNCIA ATUAL</span><strong>{{ overview.stats.currentWinStreak | number }}</strong><small>vitórias seguidas</small></div>
+        </section>
 
-    @if (collection$ | async; as collection) {
-    <div class="card shadow">
-      <div class="card-body">
-        <h2 class="card-title">Coleção</h2>
-        <progress class="progress progress-primary" [value]="collection.obtained" [max]="collection.total"></progress>
-        <p>{{ collection.obtained }} de {{ collection.total }} cartas</p>
-      </div>
-    </div>
-    }
-
-    <div class="grid gap-6 md:grid-cols-2">
-      <div class="card shadow">
-        <div class="card-body">
-          <h2 class="card-title">Conquistas</h2>
-          <ul class="list">
-            @for (achievement of achievements$ | async; track achievement.id) {
-            <li class="list-row">
-              <div class="list-col-grow">
-                <div>{{ achievement.title }}</div>
-                <div class="text-xs opacity-60">{{ achievement.description }}</div>
+        <div class="profile-grid">
+          <section class="profile-panel" aria-labelledby="collection-title">
+            <div class="profile-panel-heading">
+              <div><p class="eyebrow">BARALHO PESSOAL</p><h2 id="collection-title">Coleção</h2></div>
+              <span class="profile-counter">{{ obtainedCount(overview.collection) }} / {{ overview.collection.length }}</span>
+            </div>
+            @if (overview.collection.length) {
+              <p class="profile-panel-subtitle">Cartas obtidas</p>
+              <progress class="profile-progress" [value]="obtainedCount(overview.collection)" [max]="overview.collection.length" aria-label="Cartas obtidas"></progress>
+              <div class="collection-list">
+                @for (card of overview.collection; track card.name) {
+                  <div class="collection-card" [class.is-missing]="!card.obtained">
+                    <span class="collection-symbol" aria-hidden="true">{{ card.obtained ? '♠' : '?' }}</span>
+                    <div>
+                      <strong>{{ card.obtained ? card.name : 'Carta desconhecida' }}</strong>
+                      <small>{{ card.obtained ? card.rarity + ' · Nível ' + card.level : 'Ainda não obtida' }}</small>
+                    </div>
+                  </div>
+                }
               </div>
-              <span class="badge">{{ achievement.progress }}/{{ achievement.goal }}</span>
-            </li>
-            } @empty {
-            <li class="list-row">Nenhuma conquista ainda.</li>
+            } @else {
+              <p class="profile-empty">Sua coleção ainda está vazia.</p>
             }
-          </ul>
-        </div>
-      </div>
+          </section>
 
-      <div class="card bg-base-100 shadow">
-        <div class="card-body">
-          <h2 class="card-title">Partidas recentes</h2>
-          <ul class="list">
-            @for (activity of activities$ | async; track activity.id) {
-            <li class="list-row">
-              <span class="badge" [class.badge-success]="activity.result === 'VITORIA'"
-                [class.badge-error]="activity.result === 'DERROTA'">
-                {{ activity.result === 'VITORIA' ? 'V' : 'D' }}
-              </span>
-              <div class="list-col-grow">contra &#64;{{ activity.opponentName }}</div>
-              <time class="text-xs opacity-60">{{ activity.playedAt | date: 'short' }}</time>
-            </li>
-            } @empty {
-            <li class="list-row">Nenhuma partida ainda.</li>
-            }
-          </ul>
+          <section class="profile-panel" aria-labelledby="achievements-title">
+            <div class="profile-panel-heading">
+              <div><p class="eyebrow">MARCOS DA JORNADA</p><h2 id="achievements-title">Conquistas</h2></div>
+              <span class="profile-counter">{{ unlockedCount(overview.achievements) }} / {{ overview.achievements.length }}</span>
+            </div>
+            <div class="achievement-list">
+              @for (achievement of overview.achievements; track achievement.id) {
+                <article class="achievement-item" [class.is-unlocked]="achievement.unlockedAt">
+                  <span class="achievement-icon" aria-hidden="true">{{ achievement.unlockedAt ? '★' : '☆' }}</span>
+                  <div class="achievement-content">
+                    <div class="achievement-title"><h3>{{ achievement.title }}</h3><span>{{ achievement.unlockedAt ? 'Concluída' : 'Em progresso' }}</span></div>
+                    <p>{{ achievement.description }}</p>
+                    <div class="achievement-meta"><span>{{ achievement.progress }} / {{ achievement.goal }}</span><span>Recompensa: {{ achievement.reward }}</span></div>
+                    <progress class="profile-progress" [value]="achievement.progress" [max]="achievement.goal || 1" [attr.aria-label]="'Progresso da conquista ' + achievement.title"></progress>
+                  </div>
+                </article>
+              } @empty {
+                <p class="profile-empty">Nenhuma conquista cadastrada.</p>
+              }
+            </div>
+          </section>
         </div>
-      </div>
-    </div>
+
+        <section class="profile-panel profile-history" aria-labelledby="history-title">
+          <div class="profile-panel-heading">
+            <div><p class="eyebrow">ÚLTIMOS CONFRONTOS</p><h2 id="history-title">Partidas recentes</h2></div>
+            <span class="profile-counter">{{ overview.activities.length }} registradas</span>
+          </div>
+          <div class="history-list">
+            @for (activity of overview.activities; track activity.id) {
+              <article class="history-item">
+                <span class="history-result" [class.is-win]="activity.result === 'VITORIA'" aria-hidden="true">{{ activity.result === 'VITORIA' ? 'V' : 'D' }}</span>
+                <div class="history-description"><strong>{{ activity.result === 'VITORIA' ? 'Vitória' : 'Derrota' }} contra &#64;{{ activity.opponentName }}</strong><small>Partida de Truno</small></div>
+                <time [attr.datetime]="activity.playedAt">{{ activity.playedAt | date: 'dd/MM/yyyy · HH:mm' }}</time>
+              </article>
+            } @empty {
+              <p class="profile-empty">Nenhuma partida registrada ainda.</p>
+            }
+          </div>
+        </section>
+      }
+    }
   </div>
 </main>
