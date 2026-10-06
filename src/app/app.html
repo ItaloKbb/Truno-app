@@ -3,7 +3,7 @@
 <app-home [auth]="auth" (loggedIn)="onLoggedIn()" />
 }
 @case ('book') {
-<app-book [service]="cardService" (navigate)="navigate($event)" />
+<app-book [service]="cardService" [skills]="skillService" (navigate)="navigate($event)" />
 }
 @case ('lobby') {
 <app-lobby [games]="gameService" (navigate)="navigate($event)" />
@@ -15,7 +15,7 @@
 <app-partida [service]="gameService" [partidaId]="partidaId()" />
 }
 @case ('ranking') {
-<app-ranking  (navigate)="navigate($event)"/>
+<app-ranking [ranking]="rankingService" [playerId]="auth.session()?.user?.id ?? null" (navigate)="navigate($event)" />
 }
 @case ('perfil') {
 <app-profile [profiles]="profileService" (navigate)="navigate($event)" />

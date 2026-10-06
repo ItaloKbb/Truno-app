@@ -15,6 +15,8 @@ import { GameService } from './services/modules/game.service';
 import { CardService } from './services/modules/card.service';
 import { ProfileService } from './services/modules/profile.service';
 import { PuzzleService } from './services/modules/puzzle.service';
+import { RankingService } from './services/modules/ranking.service';
+import { SkillService } from './services/modules/skill.service';
 
 /**
  * Raiz da aplicação: concentra o gerenciamento de rotas e a injeção de
@@ -34,6 +36,8 @@ export class App {
   protected readonly profileService = inject(ProfileService);
   protected readonly cardService = inject(CardService);
   protected readonly puzzleService = inject(PuzzleService);
+  protected readonly rankingService = inject(RankingService);
+  protected readonly skillService = inject(SkillService);
 
   protected readonly title = signal('Truno-app');
 
