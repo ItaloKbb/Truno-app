@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { cardAsset, type GameCard, type GameState } from '../../domain/truno-api';
 import { GameService } from '../../services/modules/game.service';
@@ -8,7 +8,7 @@ import { GameService } from '../../services/modules/game.service';
   styleUrl: './partida.css',
   templateUrl: './partida.html',
 })
-export class Partida implements OnInit {
+export class Partida implements OnChanges {
   @Input({ required: true }) partidaId!: number;
   @Input({ required: true }) service!: GameService;
 
@@ -17,10 +17,13 @@ export class Partida implements OnInit {
   public readonly pending = signal(false);
   public readonly errorMessage = signal('');
 
-  ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['partidaId']) return;
+
     if (!Number.isInteger(this.partidaId) || this.partidaId <= 0) {
       this.loading.set(false);
       this.errorMessage.set('Identificador de partida inválido.');
+      this.game.set(null);
       return;
     }
 
