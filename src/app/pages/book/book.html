@@ -1,26 +1,42 @@
 @if (loadError$(); as message) {
 <p role="alert">{{message}}</p>
 }@else if (cards$ | async; as cards) {
-<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-4 py-4">
-  @for (card of cards; track card.id) {
-  <div class="hover-3d">
-    <figure class="w-60 overflow-hidden rounded-2xl p-2">
-      <img class="block h-auto w-full" [src]="card.url" [alt]="card.valor + ' de ' + card.naipe.toLowerCase()" />
-    </figure>
-    <!-- 8 divs vazias são necessárias para o efeito 3D -->
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
+<main class="lobby-page">
+  <div class="lobby-shell">
+    <header class="lobby-header">
+      <div class="lobby-brand">
+        <span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
+        <span>TRUNOCRAZZY/CATÁLOGO</span>
+        <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
+      </div>
+      <nav class="lobby-nav" aria-label="Navegação principal">
+        <button type="button" (click)="navigate.emit('/perfil')">Perfil</button>
+        <button type="button" (click)="navigate.emit('/ranking')">Ranking</button>
+        <button type="button" (click)="navigate.emit('/lobby')">Início</button>
+      </nav>
+    </header>
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-4 py-4">
+      @for (card of cards; track card.id) {
+      <div class="hover-3d">
+        <figure class="w-60 overflow-hidden rounded-2xl p-2">
+          <img class="block h-auto w-full" [src]="card.url" [alt]="card.valor + ' de ' + card.naipe.toLowerCase()" />
+        </figure>
+        <!-- 8 divs vazias são necessárias para o efeito 3D -->
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      }@empty {
+      <p>Nenhuma carta encontrada.</p>
+      }
+    </section>
   </div>
-  }@empty {
-  <p>Nenhuma carta encontrada.</p>
-  }
-</section>
+</main>
 
 } @else {
 <p>
