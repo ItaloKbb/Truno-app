@@ -45,6 +45,7 @@ const BURST_STAGGER = 350;
 const MAX_BURSTS = 3;
 const AUTO_READY_SECONDS = 3;
 const ROUND_BANNER_DURATION = 4000;
+const PLAYER_POP_DURATION = 3500;
 
 @Component({
   selector: 'app-partida',
@@ -64,6 +65,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private readonly burstTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private autoReadyTimer?: ReturnType<typeof setInterval>;
   private roundBannerTimer?: ReturnType<typeof setTimeout>;
+  private playerPopTimer?: ReturnType<typeof setTimeout>;
   private nextBurstId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
@@ -78,6 +80,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   /** Segundos até o "pronto" automático; null quando não há contagem. */
   public readonly autoReadyIn = signal<number | null>(null);
   public readonly roundBanner = signal<RoundResult | null>(null);
+  public readonly selectedPlayerId = signal<number | null>(null);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -127,6 +130,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.burstTimers.clear();
     this.stopAutoReady();
     clearTimeout(this.roundBannerTimer);
+    clearTimeout(this.playerPopTimer);
   }
 
   public cardImage(card: GameCard | null): string {
@@ -211,7 +215,25 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public toggleMenu(): void {
+    this.closePlayer();
     this.menuOpen.update((open) => !open);
+  }
+
+  /** Balão do avatar no celular: toque abre/fecha, e some sozinho. */
+  public togglePlayer(playerId: number): void {
+    if (this.selectedPlayerId() === playerId) {
+      this.closePlayer();
+      return;
+    }
+    clearTimeout(this.playerPopTimer);
+    this.selectedPlayerId.set(playerId);
+    this.playerPopTimer = setTimeout(() => this.closePlayer(), PLAYER_POP_DURATION);
+  }
+
+  private closePlayer(): void {
+    clearTimeout(this.playerPopTimer);
+    this.playerPopTimer = undefined;
+    this.selectedPlayerId.set(null);
   }
 
   public dismissNotice(id: number): void {

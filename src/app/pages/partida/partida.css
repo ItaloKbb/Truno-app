@@ -39,7 +39,9 @@
 
 /* Barra, avatares e folha do menu só existem no layout de celular. */
 .mobile-bar,
-.player-avatars {
+.player-avatars,
+.menu-backdrop,
+.sheet-close {
   display: none;
 }
 
