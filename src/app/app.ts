@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { safeReturnUrl } from './guards/return-url';
 import { Book } from './pages/book/book';
+import { Admin } from './pages/admin/admin';
 import { Home } from './pages/home/home';
 import { Lobby } from './pages/lobby/lobby';
 import { Partida } from './pages/partida/partida';
@@ -24,7 +25,7 @@ import { SkillService } from './services/modules/skill.service';
  * navegação via @Output, sem conhecer Router nem routerLink.
  */
 @Component({
-  imports: [Home, Book, Lobby, Partida, Perguntas, Ranking, Profile],
+  imports: [Home, Book, Lobby, Partida, Perguntas, Ranking, Profile, Admin],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

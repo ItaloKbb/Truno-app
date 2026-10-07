@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Observable, catchError, forkJoin, map, of } from 'rxjs';
-import { SKILL_ICON, cardLabel, type CatalogCard, type SkillDefinition, type SkillType } from '../../domain/truno-api';
+import { SKILL_ICON, cardAsset, cardLabel, type CatalogCard, type SkillDefinition, type SkillType } from '../../domain/truno-api';
 import { CardService } from '../../services/modules/card.service';
 import { SkillService } from '../../services/modules/skill.service';
 
@@ -67,6 +67,10 @@ export class Book implements OnInit {
 
   icon(type: SkillType): string {
     return SKILL_ICON[type];
+  }
+
+  image(card: CatalogCard): string {
+    return cardAsset(card.valor, card.naipe);
   }
 
   toggleOnlyWithSkills(event: Event): void {

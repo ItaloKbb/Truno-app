@@ -12,7 +12,7 @@ import { AuthSessionStore } from '../services/modules/auth-session';
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const apiUrl = inject(API_BASE_URL);
-  if (!request.url.startsWith(apiUrl)) return next(request);
+  if (!request.url.startsWith(apiUrl) || request.url.startsWith(`${apiUrl}/admin/`)) return next(request);
 
   const store = inject(AuthSessionStore);
   const router = inject(Router);
