@@ -14,6 +14,7 @@
   /* Avatares | mesa (60% da altura) | mão | ações */
   .match-board {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 60dvh minmax(0, 1fr) auto;
     gap: 8px;
     height: 100%;
@@ -231,8 +232,11 @@
   .table-area {
     grid-row: 2;
     position: relative;
+    top: 0;
+    left: 0;
     box-sizing: border-box;
     width: 100%;
+    min-width: 0;
     height: 100%;
     min-height: 0;
     padding: 9px;
@@ -400,6 +404,11 @@
     left: auto;
     z-index: 46; /* menu-panel acima da folha de detalhes */
     grid-row: 4;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
     padding: 0;
     border: none;
     border-radius: 0;
@@ -410,7 +419,22 @@
   }
 
   .hud-actions .btn {
-    min-height: 40px;
+    min-height: 44px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .hud-actions .action-group {
+    min-width: 0;
+  }
+
+  .hud-actions .match-menu-control {
+    display: flex;
+    min-width: 96px;
+  }
+
+  .hud-actions .match-menu-control > .btn {
+    height: 100%;
   }
 
   /* Menu: gaveta que sobe da base com detalhes, jogadores e vencedores */
@@ -552,11 +576,14 @@
   }
 
   /* Ações do menu fixas no rodapé da gaveta */
-  .menu-panel {
+  .hud-actions .menu-panel {
     position: fixed;
     right: 0;
     bottom: 0;
     left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     grid-auto-columns: minmax(0, 1fr);
     grid-auto-flow: column;
     gap: 10px;
