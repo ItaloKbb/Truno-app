@@ -1,4 +1,4 @@
-<main class="match-page">
+<main class="match-page" (pointerdown)="sounds.activate()" (keydown)="sounds.activate()">
   @if (errorMessage(); as message) {
     <p class="status-banner status-error" role="alert">{{ message }}</p>
   } @else if (game(); as current) {
@@ -228,7 +228,7 @@
                 class="hand-card"
                 [style.--i]="i"
                 [style.--n]="n"
-                [disabled]="pending() || !isMyTurn(current)"
+                [disabled]="pending() || !isMyTurn(current) || !!current.pendingPuzzle"
                 (click)="play(card.handCardId)"
               >
                 <img [src]="cardImage(card)" [alt]="cardName(card)" />
@@ -288,6 +288,10 @@
                   <span class="btn-icon" aria-hidden="true">✕</span> Cancelar partida
                 </button>
               }
+              <button type="button" class="btn btn-ghost" [attr.aria-pressed]="sounds.enabled()" (click)="sounds.toggle()">
+                <span class="btn-icon" aria-hidden="true">{{ sounds.enabled() ? '🔊' : '🔇' }}</span>
+                Som {{ sounds.enabled() ? 'ligado' : 'desligado' }}
+              </button>
               <button type="button" class="btn btn-ghost menu-return-desktop" (click)="navigate.emit('/lobby')">
                 <span class="btn-icon" aria-hidden="true">←</span> Voltar ao lobby
               </button>
@@ -300,17 +304,27 @@
       </nav>
 
       @if (current.pendingPuzzle; as puzzle) {
-        <div class="puzzle-overlay">
+        <div class="puzzle-overlay" [class.is-waiting]="!canAnswerPuzzle(current)">
           <section class="puzzle-dialog" role="dialog" aria-modal="true" aria-labelledby="puzzle-title">
-            <h2 id="puzzle-title">❓ Pergunta pendente</h2>
+            <span class="puzzle-decoration" aria-hidden="true">?</span>
+            <p class="puzzle-kicker">Carta desafio · Rodada {{ current.roundNumber }}</p>
+            <h2 id="puzzle-title">{{ canAnswerPuzzle(current) ? 'O QUE É, O QUE É?' : 'DESAFIO EM ANDAMENTO' }}</h2>
+            <p class="puzzle-subtitle">
+              {{ canAnswerPuzzle(current) ? 'Escolha uma alternativa para seguir a rodada.' : currentPlayerName(current) + ' está respondendo. Aguarde a escolha.' }}
+            </p>
             <p class="question-text">{{ puzzle.question }}</p>
-            <div class="alternative-list">
-              @for (alternative of puzzle.alternatives; track alternative; let index = $index) {
-                <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
-                  {{ alternative }}
-                </button>
-              }
-            </div>
+            @if (canAnswerPuzzle(current)) {
+              <div class="alternative-list">
+                @for (alternative of puzzle.alternatives; track $index; let index = $index) {
+                  <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
+                    <span class="option-index" aria-hidden="true">{{ index + 1 }}</span>
+                    {{ alternative }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="puzzle-wait-message" role="status"><span aria-hidden="true">● ● ●</span> Esperando a resposta</p>
+            }
           </section>
         </div>
       }

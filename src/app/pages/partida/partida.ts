@@ -18,6 +18,7 @@ import {
 import { GameService } from '../../services/modules/game.service';
 import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
+import { MatchSoundService, type MatchSound } from '../../services/modules/match-sound.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
 import { SkillBurst } from '../../components/skill-burst/skill-burst';
 import { RoundBanner, type RoundResult } from '../../components/round-banner/round-banner';
@@ -49,7 +50,7 @@ const PLAYER_POP_DURATION = 3500;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.result.css', './partida.mobile.css'],
+  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.mobile.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
@@ -60,6 +61,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   private readonly authSession = inject(AuthSessionStore);
   private readonly skillService = inject(SkillService);
+  public readonly sounds = inject(MatchSoundService);
   private liveUpdates?: Subscription;
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextNoticeId = 0;
@@ -180,6 +182,10 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     return !!nickname && game.players.some((player) => player.id === game.currentPlayerId && player.nickname === nickname);
   }
 
+  public canAnswerPuzzle(game: GameState): boolean {
+    return !!game.pendingPuzzle && game.roundStatus === 'AGUARDANDO_PUZZLE' && this.isMyTurn(game);
+  }
+
   public winnerName(game: GameState): string {
     const winner = game.players.find((player) => player.id === game.winnerPlayerId);
     return winner ? winner.nickname : '—';
@@ -260,7 +266,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public play(handCardId: number | null): void {
     const game = this.game();
-    if (handCardId === null || !game || this.pending() || !this.isMyTurn(game)) return;
+    if (handCardId === null || !game || this.pending() || !this.isMyTurn(game) || !!game.pendingPuzzle) return;
     this.run(this.service.playCard(this.partidaId, handCardId));
   }
 
@@ -269,6 +275,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public answerPuzzle(challengeId: number, alternativeIndex: number): void {
+    const game = this.game();
+    if (!game || this.pending() || !this.canAnswerPuzzle(game) || game.pendingPuzzle?.challengeId !== challengeId) return;
     this.run(this.service.answerPuzzle(this.partidaId, challengeId, alternativeIndex));
   }
 
@@ -308,6 +316,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       // Erro de ação vira aviso: o tabuleiro continua na tela.
       error: (error: unknown) => {
         this.pending.set(false);
+        this.sounds.play('error');
         this.notifyError(
           '⚠️',
           'Ação não permitida',
@@ -348,11 +357,41 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.game.set(updated);
 
     if (previous) {
+      this.playStateSound(previous, updated);
       this.announceSkills(previous, updated);
       this.announceRoundWinners(previous, updated);
     }
     this.announceTurn(previous, updated);
     this.syncAutoReady(updated);
+  }
+
+  private playStateSound(previous: GameState, updated: GameState): void {
+    if (updated.stateVersion <= previous.stateVersion) return;
+
+    let effect: MatchSound | null = null;
+    if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
+      effect = this.didIWin(updated) ? 'victory' : 'round';
+    } else if (updated.phase === 'CANCELADO' && previous.phase !== 'CANCELADO') {
+      effect = 'cancel';
+    } else if (updated.players.some((player) => player.trophies > (previous.players.find((old) => old.id === player.id)?.trophies ?? 0))) {
+      effect = 'trophy';
+    } else if ((updated.roundWinners?.length ?? 0) > (previous.roundWinners?.length ?? 0)) {
+      effect = 'round';
+    } else if (!previous.pendingPuzzle && updated.pendingPuzzle) {
+      effect = 'puzzle';
+    } else if (previous.pendingPuzzle && !updated.pendingPuzzle) {
+      effect = 'answer';
+    } else if (updated.plays.some((play) => play.card.skill && !previous.plays.some((old) => old.order === play.order && previous.roundNumber === updated.roundNumber))) {
+      effect = 'skill';
+    } else if (updated.plays.length > previous.plays.length && updated.roundNumber === previous.roundNumber) {
+      effect = 'card';
+    } else if (updated.phase === 'EM_ANDAMENTO' && updated.currentPlayerId !== previous.currentPlayerId && this.isMyTurn(updated)) {
+      effect = 'turn';
+    } else if (updated.players.some((player) => player.ready && !previous.players.find((old) => old.id === player.id)?.ready)) {
+      effect = 'ready';
+    }
+
+    if (effect) this.sounds.play(effect);
   }
 
   /** Entre rodadas, marca "pronto" sozinho se o jogador não apertar a tempo. */
