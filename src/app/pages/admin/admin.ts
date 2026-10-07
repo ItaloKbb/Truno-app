@@ -111,6 +111,7 @@ export class Admin implements OnInit {
     this.skillDraft = this.emptySkill();
     this.selectedCardId = card?.id ?? null;
     this.skillFormOpen = true;
+    this.scrollToEditor('skill-editor-title');
   }
 
   protected editSkill(skill: SkillDefinition): void {
@@ -121,6 +122,7 @@ export class Admin implements OnInit {
       type: skill.type, naipe: skill.naipe, valor: skill.valor };
     this.selectedCardId = this.cards().find(card => card.valor === skill.valor && card.naipe === skill.naipe)?.id ?? null;
     this.skillFormOpen = true;
+    this.scrollToEditor('skill-editor-title');
   }
 
   protected saveSkill(): void {
@@ -157,6 +159,7 @@ export class Admin implements OnInit {
     this.editingPuzzleId = null;
     this.puzzleDraft = this.emptyPuzzle();
     this.puzzleFormOpen = true;
+    this.scrollToEditor('puzzle-editor-title');
   }
 
   protected editPuzzle(puzzle: AdminPuzzle): void {
@@ -166,6 +169,7 @@ export class Admin implements OnInit {
     this.puzzleDraft = { question: puzzle.question, alternativas: [...puzzle.alternativas],
       alternativaCorreta: puzzle.alternativaCorreta };
     this.puzzleFormOpen = true;
+    this.scrollToEditor('puzzle-editor-title');
   }
 
   protected addAlternative(): void { this.puzzleDraft.alternativas.push(''); }
@@ -211,5 +215,9 @@ export class Admin implements OnInit {
 
   private emptyPuzzle(): PuzzleInput {
     return { question: '', alternativas: ['', '', '', ''], alternativaCorreta: 0 };
+  }
+
+  private scrollToEditor(id: string): void {
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 }
