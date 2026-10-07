@@ -205,6 +205,7 @@
               (click)="readyForNextRound()"
             >
               <span class="btn-icon" aria-hidden="true">✓</span> {{ isCurrentPlayerReady(current) ? 'Pronto' : 'Estou pronto' }}
+              @if (autoReadyIn(); as seconds) { ({{ seconds }}) }
             </button>
             <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="buyTrophy()">
               <span class="btn-icon" aria-hidden="true">🏆</span> Troféu

@@ -42,6 +42,7 @@ const MAX_NOTICES = 4;
 const BURST_DURATION = 1800;
 const BURST_STAGGER = 350;
 const MAX_BURSTS = 3;
+const AUTO_READY_SECONDS = 3;
 
 @Component({
   selector: 'app-partida',
@@ -59,6 +60,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextNoticeId = 0;
   private readonly burstTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private autoReadyTimer?: ReturnType<typeof setInterval>;
   private nextBurstId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
@@ -70,6 +72,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly notices = signal<MatchNotice[]>([]);
   public readonly skillBursts = signal<SkillBurstItem[]>([]);
   public readonly menuOpen = signal(false);
+  /** Segundos até o "pronto" automático; null quando não há contagem. */
+  public readonly autoReadyIn = signal<number | null>(null);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -117,6 +121,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.noticeTimers.clear();
     this.burstTimers.forEach((handle) => clearTimeout(handle));
     this.burstTimers.clear();
+    this.stopAutoReady();
   }
 
   public cardImage(card: GameCard | null): string {
@@ -243,6 +248,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public readyForNextRound(): void {
+    this.stopAutoReady();
     this.run(this.service.readyForNextRound(this.partidaId));
   }
 
@@ -307,6 +313,35 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       this.announceRoundWinners(previous, updated);
     }
     this.announceTurn(previous, updated);
+    this.syncAutoReady(updated);
+  }
+
+  /** Entre rodadas, marca "pronto" sozinho se o jogador não apertar a tempo. */
+  private syncAutoReady(game: GameState): void {
+    const waiting = game.phase === 'ENTRE_RODADAS' && !!this.myPlayer(game) && !this.isCurrentPlayerReady(game);
+    if (!waiting) {
+      this.stopAutoReady();
+      return;
+    }
+    if (this.autoReadyTimer) return;
+
+    this.autoReadyIn.set(AUTO_READY_SECONDS);
+    this.autoReadyTimer = setInterval(() => {
+      const left = (this.autoReadyIn() ?? 1) - 1;
+      if (left > 0) {
+        this.autoReadyIn.set(left);
+        return;
+      }
+      // Outra ação em andamento: tenta de novo no próximo segundo.
+      if (this.pending()) return;
+      this.readyForNextRound();
+    }, 1000);
+  }
+
+  private stopAutoReady(): void {
+    clearInterval(this.autoReadyTimer);
+    this.autoReadyTimer = undefined;
+    this.autoReadyIn.set(null);
   }
 
   private announceSkills(previous: GameState, updated: GameState): void {
