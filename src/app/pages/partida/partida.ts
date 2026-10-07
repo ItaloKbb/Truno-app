@@ -236,6 +236,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.selectedPlayerId.set(null);
   }
 
+  /** Tempo de vida do aviso, para o CSS sincronizar o desbotamento com a remoção. */
+  public noticeLife(kind: NoticeKind): number {
+    return NOTICE_DURATION[kind];
+  }
+
   public dismissNotice(id: number): void {
     clearTimeout(this.noticeTimers.get(id));
     this.noticeTimers.delete(id);

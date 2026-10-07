@@ -6,57 +6,63 @@
     height: 100vh;
     height: 100dvh;
     min-height: 0;
-    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
+    /* 10px de respiro no topo (avatares) e na base (menu). */
+    padding: max(10px, env(safe-area-inset-top)) 8px max(10px, env(safe-area-inset-bottom));
     overflow: hidden;
   }
 
+  /* Avatares | mesa (60% da altura) | mão | ações */
   .match-board {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    gap: 6px;
+    grid-template-rows: auto 60dvh minmax(0, 1fr) auto;
+    gap: 8px;
     height: 100%;
     min-height: 0;
     padding-bottom: 0;
   }
 
+  /* Respingos no centro da mesa: topo + avatares (40px) + gap + meia mesa. */
   .notice-stack {
-    top: 44px;
+    top: calc(max(10px, env(safe-area-inset-top)) + 48px + 30dvh);
+    transform: translate(-50%, -50%);
+    width: min(320px, calc(100% - 56px));
   }
 
-  /* Barra do topo */
+  /* Rodada, direção e código "impressos" no feltro, como o logo de uma mesa de pôquer */
 
-  .mobile-bar {
-    grid-row: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 32px;
-    padding: 0 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--panel);
-    color: var(--gold-bright);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 1px;
+  .felt-print {
+    position: absolute;
+    bottom: 9%;
+    left: 50%;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    margin: 0;
+    color: #f3d99566;
+    font: 700 11px var(--heading);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: none;
   }
 
-  .mobile-bar-warning {
+  .felt-print-warning {
     color: #ffc3b9;
-    font-weight: 700;
+    font-family: 'Trebuchet MS', sans-serif;
     letter-spacing: 0;
+    text-transform: none;
   }
 
-  /* Avatares flutuando à esquerda */
+  /* Avatares centralizados no topo */
 
   .player-avatars {
-    position: absolute;
-    top: 42px;
-    left: 0;
+    grid-row: 1;
+    position: relative;
     z-index: 15;
-    display: grid;
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -100,11 +106,11 @@
     animation: avatar-pulse 1.4s ease-in-out infinite alternate;
   }
 
-  /* Balão com os dados do jogador, à direita do avatar */
+  /* Balão com os dados do jogador, abaixo do avatar (sobre a mesa) */
   .avatar-pop {
     position: absolute;
-    top: 50%;
-    left: calc(100% + 10px);
+    top: calc(100% + 10px);
+    left: 50%;
     z-index: 1;
     display: grid;
     gap: 3px;
@@ -117,21 +123,42 @@
     color: var(--text-soft);
     font-size: 12px;
     white-space: nowrap;
-    transform: translateY(-50%);
+    transform: translateX(-50%);
     animation: pop-in 0.18s ease-out;
   }
 
   .avatar-pop::before {
     position: absolute;
-    top: 50%;
-    left: -6px;
+    top: -6px;
+    left: calc(50% - 5px);
     width: 10px;
     height: 10px;
-    border-bottom: 1px solid #e5b75d77;
+    border-top: 1px solid #e5b75d77;
     border-left: 1px solid #e5b75d77;
     background: #101713;
-    transform: translateY(-50%) rotate(45deg);
+    transform: rotate(45deg);
     content: '';
+  }
+
+  /* Pontas da fileira: o balão cresce para dentro da tela, com a seta no avatar. */
+  .player-avatars li:first-child .avatar-pop {
+    left: 0;
+    transform: none;
+  }
+
+  .player-avatars li:first-child .avatar-pop::before {
+    left: 15px;
+  }
+
+  .player-avatars li:last-child:not(:first-child) .avatar-pop {
+    right: 0;
+    left: auto;
+    transform: none;
+  }
+
+  .player-avatars li:last-child:not(:first-child) .avatar-pop::before {
+    right: 15px;
+    left: auto;
   }
 
   .avatar-pop strong {
@@ -177,9 +204,17 @@
     color: #0b1f13;
   }
 
-  /* Muitos jogadores: avatares menores para caber na coluna. */
+  /* Muitos jogadores: avatares menores para caber na fileira. */
   .player-avatars:has(li:nth-child(6)) {
-    gap: 5px;
+    gap: 6px;
+  }
+
+  .player-avatars:has(li:nth-child(6)) li:first-child .avatar-pop::before {
+    left: 11px;
+  }
+
+  .player-avatars:has(li:nth-child(6)) li:last-child .avatar-pop::before {
+    right: 11px;
   }
 
   .player-avatars:has(li:nth-child(6)) .avatar-button {
@@ -191,31 +226,68 @@
     font-size: 14px;
   }
 
-  /* Mesa no topo */
+  /* Mesa de pôquer: pílula com borda de madeira, toda a largura e 60% da altura. */
 
-  /* Oval horizontal ocupando a largura toda e boa parte da altura livre. */
   .table-area {
     grid-row: 2;
-    align-self: start;
+    position: relative;
     box-sizing: border-box;
-    height: min(100%, 260px);
+    width: 100%;
+    height: 100%;
     min-height: 0;
-    margin-left: 50px;
-    padding: 7px;
-    border-radius: 96px / 50%;
+    padding: 9px;
+    border-radius: 9999px;
   }
 
   .table-felt {
     /* As cartas se medem pela própria mesa: maiores quando há espaço. */
     container-type: size;
-    --card: min(clamp(40px, calc(62cqh - 14px), 84px), 22cqw);
+    --card: min(clamp(44px, 26cqh, 96px), 24cqw);
+    position: relative;
     box-sizing: border-box;
+    flex-direction: column;
     flex-wrap: nowrap;
-    gap: 14px;
+    justify-content: center;
+    gap: 18px;
     height: 100%;
     min-height: 0;
-    padding: 14px 34px;
-    border-radius: 88px / 50%;
+    padding: 28px 22px 44px;
+    border-radius: 9999px;
+    /* Linha de aposta pintada no feltro */
+    background:
+      radial-gradient(ellipse 72% 78% at center, transparent 97%, #f3d99522 98% 99%, transparent 100%),
+      radial-gradient(ellipse at center, #167144 0%, var(--felt) 50%, var(--felt-deep) 100%);
+  }
+
+  .played-cards {
+    flex: 0 1 auto;
+  }
+
+  /* Celular deitado: pouca altura, então a mesa fica com o que sobrar
+     e vira horizontal, com a vira ao lado das jogadas. */
+  @media (orientation: landscape) {
+    .match-board {
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+    }
+
+    .notice-stack {
+      top: 40%;
+    }
+
+    /* Seletor mais forte que o .hand-card abaixo, que mede pela altura em pé. */
+    .hand-row .hand-card {
+      --w: min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), 18vh);
+    }
+
+    .table-felt {
+      --card: min(clamp(40px, calc(62cqh - 14px), 84px), 22cqw);
+      flex-direction: row;
+      padding: 14px 48px 30px;
+    }
+
+    .felt-print {
+      bottom: 6px;
+    }
   }
 
   .vira img {
@@ -290,8 +362,9 @@
   }
 
   .hand-card {
-    /* Largura total = w * (0.6n + 0.4): todas as cartas cabem na tela. */
-    --w: min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), 18vh);
+    /* Largura total = w * (0.6n + 0.4): todas as cartas cabem na tela.
+       Altura: o que sobra abaixo da mesa (40dvh - avatares, ações e folgas) / proporção da carta. */
+    --w: max(34px, min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), calc((40dvh - 160px) / 1.45)));
     --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
     width: var(--w);
     margin-left: calc(var(--w) * -0.4);
@@ -318,7 +391,7 @@
     top: -7px;
   }
 
-  /* Ações na última linha, sem ficar flutuando */
+  /* Ações soltas na base da tela, sem painel de fundo */
 
   .hud-actions {
     position: relative;
@@ -327,7 +400,11 @@
     left: auto;
     z-index: 46; /* menu-panel acima da folha de detalhes */
     grid-row: 4;
-    padding: 6px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
     /* backdrop-filter prenderia o .menu-panel (fixed) dentro deste painel. */
     backdrop-filter: none;
   }
@@ -501,10 +578,11 @@
   }
 }
 
+/* Usa `translate` (e não `transform`) para não brigar com o alinhamento do balão. */
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateY(-50%) translateX(-6px);
+    translate: 0 -6px;
   }
 }
 
