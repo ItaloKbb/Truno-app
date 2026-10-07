@@ -1,0 +1,68 @@
+name: Deploy no GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # O Pages só serve arquivos estáticos: troca o modo SSR por build estático
+      # e ajusta o base href para o caminho do repositório (/<repo>/).
+      - name: Build
+        run: >
+          npx ng build
+          --configuration production
+          --output-mode static
+          --base-href "/${{ github.event.repository.name }}/"
+
+      # Rotas renderizadas no cliente não têm arquivo próprio: index.html e
+      # 404.html recebem o shell da SPA para o Angular Router assumir a URL.
+      - name: Preparar fallback da SPA
+        working-directory: dist/Truno-app/browser
+        run: |
+          cp index.csr.html index.html
+          cp index.csr.html 404.html
+          touch .nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload do artefato
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/Truno-app/browser
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

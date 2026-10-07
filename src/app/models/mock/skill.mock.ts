@@ -1,0 +1,78 @@
+import type Skill from '../skill';
+
+export const mockSkills: Skill[] = [
+  {
+    id: 'skill-1',
+    name: 'Block',
+    description: 'Impede a próxima jogada do adversário.',
+    type: 'DEFESA',
+    effect: 'BLOCK',
+    naipe: 'OUROS',
+    valor: '12',
+  },
+  {
+    id: 'skill-2',
+    name: 'Bomb',
+    description: 'Remove uma carta aleatória da mão do adversário.',
+    type: 'ATAQUE',
+    effect: 'BOMB',
+    naipe: 'ESPADAS',
+    valor: '1',
+  },
+  {
+    id: 'skill-3',
+    name: 'Shield',
+    description: 'Protege o jogador do próximo efeito negativo.',
+    type: 'DEFESA',
+    effect: 'SHIELD',
+    naipe: 'COPAS',
+    valor: '10',
+  },
+  {
+    id: 'skill-4',
+    name: 'Steal',
+    description: 'Rouba uma carta aleatória da mão do adversário.',
+    type: 'ATAQUE',
+    effect: 'STEAL',
+    naipe: 'BASTOS',
+    valor: '11',
+  },
+  {
+    id: 'skill-5',
+    name: 'Draw',
+    description: 'Permite comprar duas cartas adicionais.',
+    type: 'SUPORTE',
+    effect: 'DRAW',
+    naipe: 'COPAS',
+    valor: '7',
+  },
+  {
+    id: 'skill-6',
+    name: 'Swap',
+    description: 'Troca uma carta da sua mão por uma do adversário.',
+    type: 'CONTROLE',
+    effect: 'SWAP',
+    naipe: 'OUROS',
+    valor: '6',
+  },
+  {
+    id: 'skill-7',
+    name: 'Reverse',
+    description: 'Inverte a ordem dos turnos da rodada.',
+    type: 'CONTROLE',
+    effect: 'REVERSE',
+    naipe: 'BASTOS',
+    valor: '5',
+  },
+  {
+    id: 'skill-8',
+    name: 'Double',
+    description: 'Duplica os pontos recebidos ao vencer a rodada.',
+    type: 'SUPORTE',
+    effect: 'DOUBLE',
+    naipe: 'ESPADAS',
+    valor: '7',
+  },
+];
+
+export const mockSkill: Skill = mockSkills[0];

@@ -1,0 +1,32 @@
+<main>
+  <h1>Perguntas</h1>
+  @if (loadError(); as message) {
+  <p role="alert">{{ message }}</p>
+  } @else if (puzzles$ | async; as puzzles) {
+  @for (puzzle of puzzles; track puzzle.id) {
+  <div class="card bg-base-100 image-full w-100 shadow-sm py-5">
+    <figure>
+      <img src="https://img.magnific.com/vetores-gratis/fundo-azul-de-design-plano-desenhado-a-mao_23-2149331825.jpg" />
+    </figure>
+    <div class="card-body">
+      <h2 class="card-title text-4xl drop-shadow-md" style="font-family: 'Luckiest Guy', cursive;">
+        O QUE É, O QUE É?
+      </h2>
+      <p class="text-2xl">{{ puzzle.question }}</p>
+      <div class="card-actions justify-center gap-2 py-2">
+        @for (alternative of puzzle.alternativas; track $index) {
+        <button
+          class="btn bg-white text-[#122f66] border-[2.5px] border-[#122f66] rounded-full px-4 py-1.5 text-sm font-extrabold whitespace-nowrap">O
+          {{ alternative }}
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+  } @empty {
+  <p>Nenhuma pergunta disponível.</p>
+  }
+  } @else {
+  <p>Carregando perguntas...</p>
+  }
+</main>

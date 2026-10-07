@@ -1,0 +1,64 @@
+<div
+  class="hero bg-base-200 min-h-screen flex justify-items-start"
+  style="
+    background-image: url(https://wallpaper.forfun.com/fetch/ef/efd5d2b7a0ca6a884a9a5c9acd50e50e.jpeg?w=1470&r=0.5625&f=webp);
+  "
+>
+  <div class="hero-content px-15">
+    <div class="card bg-base-500 w-full max-w-lg shrink-0 shadow-2xl">
+      <div class="card-body">
+        <div class="text-center">
+          <h1 class="text-7xl font-bold text-neutral">Truno Crazy</h1>
+          <p class="py-7">
+            Truno é um jogo que mistura Truco com UNO, misturando as regras de cada um.
+          </p>
+        </div>
+
+        <form class="fieldset w-full" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <label class="label" for="nickname">Apelido</label>
+          <input
+            id="nickname"
+            class="input w-full"
+            type="text"
+            formControlName="nickname"
+            autocomplete="username"
+            placeholder="Apelido"
+            [attr.maxlength]="nicknameMax"
+            [attr.aria-invalid]="fieldError('nickname') ? true : null"
+            [attr.aria-describedby]="fieldError('nickname') ? 'nickname-error' : null"
+          />
+          @if (fieldError('nickname'); as nicknameError) {
+            <p id="nickname-error" class="text-error text-sm" role="alert">{{ nicknameError }}</p>
+          }
+
+          <label class="label" for="code">Código</label>
+          <input
+            id="code"
+            class="input w-full"
+            type="password"
+            formControlName="code"
+            autocomplete="current-password"
+            placeholder="Código"
+            [attr.maxlength]="codeMax"
+            [attr.aria-invalid]="fieldError('code') ? true : null"
+            [attr.aria-describedby]="fieldError('code') ? 'code-error' : null"
+          />
+          @if (fieldError('code'); as codeError) {
+            <p id="code-error" class="text-error text-sm" role="alert">{{ codeError }}</p>
+          }
+
+          <button class="btn btn-neutral mt-4" type="submit" [disabled]="form.invalid || submitting()">
+            {{ submitting() ? 'Entrando...' : 'Login' }}
+          </button>
+          <p class="text-sm opacity-70">
+            O primeiro acesso cria a conta. Nos seguintes, use o mesmo código ({{ codeMin }} a {{ codeMax }} caracteres).
+          </p>
+
+          @if (errorMessage(); as error) {
+            <p class="text-error mt-3" role="alert">{{ error }}</p>
+          }
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,120 @@
+.book-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+
+.book-count {
+  margin: 0;
+  color: #bdc8c0;
+  font-size: 13px;
+}
+
+.book-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9ded8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d6a94922;
+  border-radius: 16px;
+  background: #08190f99;
+}
+
+.book-card.has-skill {
+  border-color: #d6a94966;
+  box-shadow: 0 0 22px #e5b75d1a;
+}
+
+.book-figure {
+  width: 100%;
+  max-width: 200px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.book-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.book-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.book-info h2 {
+  margin: 0;
+  color: #f4e4bb;
+  font: 700 17px Georgia, 'Times New Roman', serif;
+  text-align: center;
+}
+
+.book-skill {
+  padding: 8px 10px;
+  border: 1px solid #d6a94944;
+  border-radius: 10px;
+  background: #e5b75d12;
+}
+
+.book-skill-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-bright);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.book-skill p {
+  margin: 4px 0 0;
+  color: #c9d2cb;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.book-no-skill {
+  margin: 0;
+  color: #7d8d83;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .book-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .book-card {
+    padding: 8px;
+  }
+
+  .book-info h2 {
+    font-size: 14px;
+  }
+}

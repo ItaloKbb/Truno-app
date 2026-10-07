@@ -1,0 +1,211 @@
+<main class="match-page">
+  @if (errorMessage(); as message) {
+    <p class="status-banner status-error" role="alert">{{ message }}</p>
+  } @else if (game(); as current) {
+    @if (isMyTurn(current)) {
+      <app-turn-flames />
+    }
+
+    <div class="notice-stack" role="status" aria-live="polite">
+      @for (notice of notices(); track notice.id) {
+        <button type="button" class="notice" [attr.data-kind]="notice.kind" (click)="dismissNotice(notice.id)">
+          <span class="notice-icon" aria-hidden="true">{{ notice.icon }}</span>
+          <span class="notice-text">
+            <strong>{{ notice.title }}</strong>
+            <small>{{ notice.detail }}</small>
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="match-board">
+      <!-- HUD superior esquerdo: dados da partida -->
+      <section class="hud hud-info" aria-label="Dados da partida">
+        <p class="eyebrow">{{ phaseLabel(current.phase) }}</p>
+        <h1>{{ current.name }}</h1>
+        <span class="match-badge">{{ current.code }}</span>
+        <dl class="hud-stats">
+          <div><dt>Rodada</dt><dd>{{ current.roundNumber }}</dd></div>
+          <div><dt>Direção</dt><dd>{{ directionLabel(current.direction) }}</dd></div>
+          <div><dt>Vencedor</dt><dd>{{ winnerName(current) }}</dd></div>
+        </dl>
+        @if (liveUpdateError(); as message) {
+          <p class="hud-warning" role="status">Reconectando: {{ message }}</p>
+        }
+      </section>
+
+      <!-- HUD superior direito: jogadores e vencedores das rodadas -->
+      <aside class="hud hud-players" aria-label="Jogadores">
+        <div class="hud-heading">
+          <h2>Jogadores</h2>
+          <span>Turno: <strong>{{ currentPlayerName(current) }}</strong></span>
+        </div>
+        <ul class="player-list">
+          @for (player of current.players; track player.id) {
+            <li [class.is-current]="player.id === current.currentPlayerId">
+              <span class="player-name">
+                <span class="player-indicator" aria-hidden="true">{{ player.id === current.currentPlayerId ? '▶' : '•' }}</span>
+                {{ player.nickname }}
+                @if (player.host) { <small class="tag">host</small> }
+                @if (current.phase === 'ENTRE_RODADAS' && player.ready) { <small class="tag tag-ready">pronto</small> }
+              </span>
+              <span class="player-meta">
+                <span title="Moedas">🪙 {{ player.matchCoins }}</span>
+                <span title="Troféus">🏆 {{ player.trophies }}</span>
+                <span title="Cartas na mão">🂠 {{ player.handSize }}</span>
+                <span title="Rodadas vencidas">⭐ {{ roundWins(current, player.id) }}</span>
+              </span>
+            </li>
+          } @empty {
+            <li>Aguardando jogadores.</li>
+          }
+        </ul>
+
+        <div class="hud-heading">
+          <h2>Vencedores das rodadas</h2>
+        </div>
+        @if (roundHistory(current); as history) {
+          @if (history.length > 0) {
+            <ol class="round-list">
+              @for (round of history; track round.roundNumber) {
+                <li>
+                  <span class="round-number">R{{ round.roundNumber }}</span>
+                  @if (round.nickname) {
+                    <strong>🏆 {{ round.nickname }}</strong>
+                  } @else {
+                    <span class="muted">Empate</span>
+                  }
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="muted small">Nenhuma rodada encerrada ainda.</p>
+          }
+        }
+      </aside>
+
+      <!-- Centro: mesa -->
+      <section class="table-area" aria-label="Mesa">
+        <div class="table-felt">
+          <div class="vira">
+            <span class="label">Vira</span>
+            @if (current.vira) {
+              <img [src]="cardImage(current.vira)" [alt]="'Carta virada: ' + cardName(current.vira)" />
+            } @else {
+              <img src="assets/cards/reverso.png" alt="Carta virada ainda não definida" />
+            }
+          </div>
+
+          <div class="played-cards">
+            @for (play of current.plays; track play.order) {
+              <figure class="played-card" [class.is-winner]="isRoundWinnerPlay(current, play)">
+                <img [src]="cardImage(play.card)" [alt]="play.nickname + ' jogou ' + cardName(play.card)" />
+                @if (play.card.skill) {
+                  <span class="skill-chip" [title]="skillName(play.card)">
+                    {{ skillIcon(play.card.skill) }} {{ skillName(play.card) }}
+                  </span>
+                }
+                <figcaption>
+                  @if (isRoundWinnerPlay(current, play)) { 🏆 }
+                  {{ play.nickname }}
+                </figcaption>
+              </figure>
+            } @empty {
+              <p class="muted">Ainda não houve jogadas nesta rodada.</p>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Inferior: mão do jogador -->
+      <section class="hand-area" [class.is-my-turn]="isMyTurn(current)" aria-label="Sua mão">
+        <div class="hud-heading">
+          <h2>Sua mão</h2>
+          <span>{{ current.hand.length }} carta(s)</span>
+        </div>
+        @if (current.hand.length > 0) {
+          <div class="hand-row">
+            @for (card of current.hand; track card.handCardId) {
+              <button type="button" class="hand-card" [disabled]="pending()" (click)="play(card.handCardId)">
+                <img [src]="cardImage(card)" [alt]="cardName(card)" />
+                @if (card.skill) {
+                  <span class="skill-chip">{{ skillIcon(card.skill) }} {{ skillName(card) }}</span>
+                }
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="muted">Sua mão está vazia.</p>
+        }
+      </section>
+
+      <!-- HUD inferior direito: ações da fase e menu -->
+      <nav class="hud hud-actions" aria-label="Ações da partida">
+        @if (current.phase === 'AGUARDANDO_JOGADORES') {
+          <div class="action-group">
+            <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="start()">
+              <span class="btn-icon" aria-hidden="true">▶</span> Iniciar partida
+            </button>
+          </div>
+        }
+        @if (current.phase === 'ENTRE_RODADAS') {
+          <div class="action-group action-group-split">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [class.btn-ready]="isCurrentPlayerReady(current)"
+              [disabled]="pending() || isCurrentPlayerReady(current)"
+              [attr.aria-pressed]="isCurrentPlayerReady(current)"
+              (click)="readyForNextRound()"
+            >
+              <span class="btn-icon" aria-hidden="true">✓</span> {{ isCurrentPlayerReady(current) ? 'Pronto' : 'Estou pronto' }}
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="buyTrophy()">
+              <span class="btn-icon" aria-hidden="true">🏆</span> Troféu
+            </button>
+          </div>
+        }
+
+        <div class="menu">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [attr.aria-expanded]="menuOpen()"
+            aria-controls="match-menu"
+            (click)="toggleMenu()"
+          >
+            <span class="btn-icon" aria-hidden="true">☰</span> Menu
+          </button>
+          @if (menuOpen()) {
+            <div id="match-menu" class="menu-panel">
+              @if (current.phase !== 'FINALIZADO' && current.phase !== 'CANCELADO') {
+                <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="cancel()">
+                  <span class="btn-icon" aria-hidden="true">✕</span> Cancelar partida
+                </button>
+              }
+              <a class="btn btn-ghost" href="lobby"><span class="btn-icon" aria-hidden="true">←</span> Voltar ao lobby</a>
+            </div>
+          }
+        </div>
+      </nav>
+
+      @if (current.pendingPuzzle; as puzzle) {
+        <div class="puzzle-overlay">
+          <section class="puzzle-dialog" role="dialog" aria-modal="true" aria-labelledby="puzzle-title">
+            <h2 id="puzzle-title">❓ Pergunta pendente</h2>
+            <p class="question-text">{{ puzzle.question }}</p>
+            <div class="alternative-list">
+              @for (alternative of puzzle.alternatives; track alternative; let index = $index) {
+                <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
+                  {{ alternative }}
+                </button>
+              }
+            </div>
+          </section>
+        </div>
+      }
+    </div>
+  } @else if (loading()) {
+    <p class="status-banner">Carregando a partida...</p>
+  }
+</main>

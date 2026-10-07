@@ -1,0 +1,184 @@
+<main class="lobby-page">
+	<div class="lobby-shell">
+		<header class="lobby-header">
+			<div class="lobby-brand">
+				<span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
+				<span>TRUNO</span>
+				<span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
+			</div>
+			<nav class="lobby-nav" aria-label="Navegação principal">
+				<button type="button" (click)="navigate.emit('/lobby')">Início</button>
+				<button type="button" (click)="navigate.emit('/perfil')">Perfil</button>
+				<button type="button" (click)="navigate.emit('/ranking')">Ranking</button>
+				<button type="button" (click)="navigate.emit('/book')">Catálogo</button>
+			</nav>
+		</header>
+
+		<section class="lobby-intro" aria-labelledby="lobby-title">
+			<p class="eyebrow">SUA PRÓXIMA RODADA COMEÇA AQUI</p>
+			<h1 id="lobby-title">Lobby principal</h1>
+			<p>Crie uma mesa para até 6 jogadores ou entre em uma partida com seu código.</p>
+		</section>
+
+		<section class="table-scene" aria-label="Mesa de jogo TRUNO">
+			<div class="table-rim">
+				<div class="table-felt">
+					<div class="table-inlay" aria-hidden="true"></div>
+					<div class="felt-wordmark" aria-hidden="true">TRUNO</div>
+					<div class="deck-stack" aria-hidden="true">
+						<div class="deck-card deck-card-back"></div>
+						<div class="deck-card deck-card-front">
+							<span class="deck-corner">T <i>♠</i></span>
+							<span class="deck-emblem">♛</span>
+							<strong>TRUNO</strong>
+							<span class="deck-corner deck-corner-bottom">T <i>♠</i></span>
+						</div>
+					</div>
+					<p class="table-caption">Escolha como quer jogar</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="lobby-actions" aria-label="Ações do lobby">
+			<article class="action-panel create-panel">
+				<div class="panel-heading">
+					<span class="panel-icon" aria-hidden="true">♛</span>
+					<div>
+						<p class="eyebrow">ABRA SUA MESA</p>
+						<h2>Criar partida</h2>
+					</div>
+				</div>
+
+				<form class="fieldset w-full" [formGroup]="form" (ngSubmit)="createGame()" novalidate>
+					<label for="game-name">Nome da partida</label>
+					<input
+						id="game-name"
+						type="text"
+						formControlName="name"
+						autocomplete="off"
+						placeholder="Ex.: Mesa de sexta"
+						minlength="3"
+						maxlength="20"
+						required
+						[attr.aria-invalid]="fieldError('name') ? true : null"
+						[attr.aria-describedby]="fieldError('name') ? 'game-name-error' : null"
+					/>
+					@if (fieldError('name'); as nameError) {
+						<p id="game-name-error" class="text-error text-sm" role="alert">{{ nameError }}</p>
+					}
+
+					<label for="max-players">Número máximo de jogadores</label>
+					<input
+						id="max-players"
+						type="number"
+						formControlName="maxPlayers"
+						min="2"
+						max="6"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('maxPlayers') ? true : null"
+						[attr.aria-describedby]="fieldError('maxPlayers') ? 'max-players-error' : null"
+					/>
+					@if (fieldError('maxPlayers'); as maxPlayersError) {
+						<p id="max-players-error" class="text-error text-sm" role="alert">{{ maxPlayersError }}</p>
+					}
+
+					<label for="initial-cards">Cartas iniciais por jogador</label>
+					<input
+						id="initial-cards"
+						type="number"
+						formControlName="initialCards"
+						min="3"
+						max="5"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('initialCards') ? true : null"
+						[attr.aria-describedby]="fieldError('initialCards') ? 'initial-cards-error' : null"
+					/>
+					@if (fieldError('initialCards'); as initialCardsError) {
+						<p id="initial-cards-error" class="text-error text-sm" role="alert">{{ initialCardsError }}</p>
+					}
+
+					<label for="round-reward">Recompensa por rodada</label>
+					<input
+						id="round-reward"
+						type="number"
+						formControlName="roundReward"
+						min="1"
+						max="5"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('roundReward') ? true : null"
+						[attr.aria-describedby]="fieldError('roundReward') ? 'round-reward-error' : null"
+					/>
+					@if (fieldError('roundReward'); as roundRewardError) {
+						<p id="round-reward-error" class="text-error text-sm" role="alert">{{ roundRewardError }}</p>
+					}
+
+					<label for="empty-hand-reward">Recompensa por mão vazia</label>
+					<input
+						id="empty-hand-reward"
+						type="number"
+						formControlName="emptyHandReward"
+						min="6"
+						max="10"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('emptyHandReward') ? true : null"
+						[attr.aria-describedby]="fieldError('emptyHandReward') ? 'empty-hand-reward-error' : null"
+					/>
+					@if (fieldError('emptyHandReward'); as emptyHandRewardError) {
+						<p id="empty-hand-reward-error" class="text-error text-sm" role="alert">{{ emptyHandRewardError }}</p>
+					}
+
+					<label for="trophy-price">Preço do troféu</label>
+					<input
+						id="trophy-price"
+						type="number"
+						formControlName="trophyPrice"
+						min="20"
+						max="40"
+						step="1"
+						required
+						[attr.aria-invalid]="fieldError('trophyPrice') ? true : null"
+						[attr.aria-describedby]="fieldError('trophyPrice') ? 'trophy-price-error' : null"
+					/>
+					@if (fieldError('trophyPrice'); as trophyPriceError) {
+						<p id="trophy-price-error" class="text-error text-sm" role="alert">{{ trophyPriceError }}</p>
+					}
+
+					<button class="action-button create-button" type="submit" [disabled]="form.invalid || pending()">
+						<span aria-hidden="true">＋</span>{{ pending() ? 'Aguarde...' : 'Criar sala' }}
+					</button>
+				</form>
+			</article>
+
+			<article class="action-panel join-panel">
+				<div class="panel-heading">
+					<span class="panel-icon" aria-hidden="true">⌑</span>
+					<div>
+						<p class="eyebrow">JÁ TEM UM CONVITE?</p>
+						<h2>Entrar com código</h2>
+					</div>
+				</div>
+			<label for="game-code">Código da partida</label>
+			<input #gameCode id="game-code" type="text" placeholder="Digite o código" autocomplete="off" />
+			<button class="action-button join-button" type="button" [disabled]="pending()" (click)="accessGame(gameCode.value)">
+				<span aria-hidden="true">↗</span>{{ pending() ? 'Aguarde...' : 'Entrar na sala' }}
+			</button>
+			</article>
+		</section>
+
+		@if (pending()) {
+			<p class="lobby-status" role="status">Conectando à mesa...</p>
+		}
+		@if (errorMessage(); as message) {
+			<p class="lobby-error" role="alert">{{ message }}</p>
+		}
+
+		<footer class="lobby-footer">
+			<span>TRUNO · Lobby principal</span>
+			<span>Mesas novas para até 6 jogadores</span>
+		</footer>
+	</div>
+</main>

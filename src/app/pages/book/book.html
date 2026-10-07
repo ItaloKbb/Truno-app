@@ -1,0 +1,77 @@
+<main class="lobby-page">
+  <div class="lobby-shell">
+    <header class="lobby-header">
+      <div class="lobby-brand">
+        <span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
+        <span>TRUNOCRAZZY/CATÁLOGO</span>
+        <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
+      </div>
+      <nav class="lobby-nav" aria-label="Navegação principal">
+        <button type="button" (click)="navigate.emit('/lobby')">Início</button>
+        <button type="button" (click)="navigate.emit('/perfil')">Perfil</button>
+        <button type="button" (click)="navigate.emit('/ranking')">Ranking</button>
+        <button type="button" (click)="navigate.emit('/book')">Catálogo</button>
+
+      </nav>
+    </header>
+
+    @if (loadError(); as message) {
+    <p class="lobby-error" role="alert">{{ message }}</p>
+    } @else if (book$ | async; as book) {
+    <div class="book-toolbar">
+      <p class="book-count">
+        {{ book.cards.length }} cartas · {{ skilledCount(book.cards) }} com habilidade
+      </p>
+      <label class="book-filter">
+        <input type="checkbox" class="toggle toggle-sm toggle-warning" [checked]="onlyWithSkills()"
+          (change)="toggleOnlyWithSkills($event)" />
+        Só cartas com habilidade
+      </label>
+    </div>
+
+    @if (book.skillsError) {
+    <p class="lobby-error" role="alert">{{ book.skillsError }} As cartas aparecem sem as habilidades.</p>
+    }
+
+    <section class="book-grid">
+      @for (card of visible(book.cards); track card.id) {
+      <article class="book-card" [class.has-skill]="card.skills.length > 0">
+        <div class="hover-3d">
+          <figure class="book-figure">
+            <img [src]="card.url" [alt]="card.label" />
+          </figure>
+          <!-- 8 divs vazias são necessárias para o efeito 3D -->
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+
+        <div class="book-info">
+          <h2>{{ card.label }}</h2>
+          @for (skill of card.skills; track skill.id) {
+          <div class="book-skill">
+            <span class="book-skill-name">
+              <span aria-hidden="true">{{ icon(skill.type) }}</span>
+              {{ skill.name }}
+            </span>
+            <p>{{ skill.description }}</p>
+          </div>
+          } @empty {
+          <p class="book-no-skill">Sem habilidade</p>
+          }
+        </div>
+      </article>
+      } @empty {
+      <p class="lobby-status">Nenhuma carta encontrada.</p>
+      }
+    </section>
+    } @else {
+    <p class="lobby-status" role="status">Carregando cartas...</p>
+    }
+  </div>
+</main>

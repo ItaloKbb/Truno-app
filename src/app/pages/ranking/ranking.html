@@ -1,0 +1,140 @@
+<main class="lobby-page">
+  <div class="lobby-shell">
+    <header class="lobby-header">
+      <div class="lobby-brand">
+        <span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
+        <span>TRUNOCRAZZY/RANKING</span>
+        <span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
+      </div>
+      <nav class="lobby-nav" aria-label="Navegação principal">
+        <button type="button" (click)="go($event, '/lobby')">Início</button>
+        <button type="button" (click)="go($event, '/perfil')">Perfil</button>
+        <button type="button" (click)="go($event, '/ranking')">Ranking</button>
+        <button type="button" (click)="go($event, '/book')">Catálogo</button>
+      </nav>
+    </header>
+
+    <section class="lobby-intro">
+      <p class="eyebrow">CLASSIFICAÇÃO GERAL</p>
+      <h1>Ranking</h1>
+      <p>Os melhores jogadores da mesa, ordenados pelos pontos de ranking.</p>
+    </section>
+
+    @switch (state().status) {
+    @case ('loading') {
+    <p class="lobby-status" role="status">
+      <span class="loading loading-dots loading-sm"></span>
+      Carregando ranking...
+    </p>
+    }
+    @case ('error') {
+    <div class="lobby-error ranking-error" role="alert">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="ranking-retry" (click)="reload()">Tentar de novo</button>
+    </div>
+    }
+    @case ('ready') {
+    @if (rows().length === 0) {
+    <div class="ranking-empty">
+      <span aria-hidden="true">🃏</span>
+      <p>Nenhum jogador no ranking.</p>
+      <small>Jogue uma partida para ser o primeiro da lista.</small>
+    </div>
+    } @else {
+    <section class="ranking-podium" aria-label="Pódio">
+      @for (row of podium(); track row.id) {
+      <article class="podium-place" [class]="'podium-place podium-' + row.position" [class.is-me]="row.id === playerId">
+        <span class="podium-medal" aria-hidden="true">{{ medal(row.position) }}</span>
+        <span class="podium-avatar" aria-hidden="true">{{ initials(row.nickname) }}</span>
+        <strong class="podium-name" [title]="row.nickname">{{ row.nickname }}</strong>
+        <span class="podium-points">{{ row.rankingPoints | number }} pts</span>
+        <div class="podium-step">
+          <span>{{ row.position }}º</span>
+        </div>
+      </article>
+      }
+    </section>
+
+    <section class="ranking-summary" aria-label="Resumo">
+      <div class="summary-item">
+        <span class="summary-label">Jogadores</span>
+        <strong>{{ rows().length | number }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Pontos em jogo</span>
+        <strong>{{ totalPoints() | number }}</strong>
+      </div>
+      @if (me(); as me) {
+      <div class="summary-item summary-me">
+        <span class="summary-label">Sua posição</span>
+        <strong>{{ me.position }}º</strong>
+        <small>
+          @if (gapToNext(); as gap) {
+          {{ gap | number }} pts para o {{ me.position - 1 }}º
+          } @else if (me.position === 1) {
+          Você lidera o ranking!
+          } @else {
+          Empatado com o {{ me.position - 1 }}º
+          }
+        </small>
+      </div>
+      } @else {
+      <div class="summary-item">
+        <span class="summary-label">Sua posição</span>
+        <strong>—</strong>
+        <small>Você ainda não está classificado</small>
+      </div>
+      }
+    </section>
+
+    <section class="ranking-board">
+      <div class="ranking-toolbar">
+        <label class="ranking-search">
+          <span class="sr-only">Buscar jogador</span>
+          <input type="search" placeholder="Buscar jogador..." [value]="query()" (input)="onSearch($event)" />
+        </label>
+        <button type="button" class="ranking-refresh" (click)="reload()">Atualizar</button>
+      </div>
+
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Jogador</th>
+            <th scope="col" class="col-points">Pontos</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filtered(); track row.id) {
+          <tr [class.is-me]="row.id === playerId" [class.is-top]="row.position <= 3"
+            [attr.aria-current]="row.id === playerId ? 'true' : null">
+            <td class="col-position">
+              <span class="position-badge">{{ medal(row.position) || row.position + 'º' }}</span>
+            </td>
+            <td>
+              <div class="player-cell">
+                <span class="player-avatar" aria-hidden="true">{{ initials(row.nickname) }}</span>
+                <span class="player-name">{{ row.nickname }}</span>
+                @if (row.id === playerId) {
+                <span class="me-badge">você</span>
+                }
+              </div>
+            </td>
+            <td class="col-points">{{ row.rankingPoints | number }}</td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="3" class="ranking-no-match">
+              Nenhum jogador encontrado para "{{ query() }}".
+              <button type="button" (click)="clearSearch()">Limpar busca</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+    }
+    }
+  </div>
+</main>
