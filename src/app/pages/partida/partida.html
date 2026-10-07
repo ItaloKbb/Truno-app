@@ -20,6 +20,7 @@
           type="button"
           class="notice"
           [attr.data-kind]="notice.kind"
+          [style.--life.ms]="noticeLife(notice.kind)"
           [attr.role]="notice.kind === 'error' ? 'alert' : null"
           (click)="dismissNotice(notice.id)"
         >
@@ -33,15 +34,7 @@
     </div>
 
     <div class="match-board" [class.menu-open]="menuOpen()">
-      <!-- Só no celular: barra fina com o essencial da partida -->
-      <header class="mobile-bar">
-        <span>R{{ current.roundNumber }} · {{ directionLabel(current.direction) }} · {{ current.code }}</span>
-        @if (liveUpdateError()) {
-          <span class="mobile-bar-warning" role="status">Reconectando…</span>
-        }
-      </header>
-
-      <!-- Só no celular: jogadores como avatares flutuando à esquerda -->
+      <!-- Só no celular: jogadores como avatares centralizados no topo -->
       <ul class="player-avatars" aria-label="Jogadores">
         @for (player of current.players; track player.id) {
           <li [class.is-current]="player.id === current.currentPlayerId" [class.is-me]="isMe(player)">
@@ -146,6 +139,14 @@
       <!-- Centro: mesa -->
       <section class="table-area" aria-label="Mesa">
         <div class="table-felt">
+          <!-- Só no celular: o essencial da partida "impresso" no feltro -->
+          <p class="felt-print">
+            <span>R{{ current.roundNumber }} · {{ directionLabel(current.direction) }} · {{ current.code }}</span>
+            @if (liveUpdateError()) {
+              <span class="felt-print-warning" role="status">Reconectando…</span>
+            }
+          </p>
+
           <div class="vira">
             <span class="label">Vira</span>
             @if (current.vira) {

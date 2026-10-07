@@ -38,7 +38,7 @@
 }
 
 /* Barra, avatares e folha do menu só existem no layout de celular. */
-.mobile-bar,
+.felt-print,
 .player-avatars,
 .menu-backdrop,
 .sheet-close {
@@ -620,72 +620,124 @@
   cursor: wait;
 }
 
-/* ---------- Avisos (turno, skill, vencedor da rodada) ---------- */
+/* ---------- Avisos (turno, skill, erro): respingos de tinta sobre a mesa ---------- */
 
+/* Centro da mesa no desktop (ela fica a 44% da altura do tabuleiro). */
 .notice-stack {
   position: fixed;
-  top: 16px;
+  top: calc(16px + (100vh - 32px) * 0.44);
   left: 50%;
   z-index: 60;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: grid;
-  gap: 8px;
-  width: min(420px, calc(100% - 32px));
+  justify-items: center;
+  gap: 14px;
+  width: min(360px, calc(100% - 48px));
   pointer-events: none;
 }
 
 .notice {
+  --paint: #c98a2a;
+  --life: 3000ms;
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-left-width: 4px;
-  border-radius: 10px;
-  background: #101713f2;
-  color: var(--text);
+  gap: 10px;
+  max-width: 100%;
+  padding: 16px 26px;
+  border: none;
+  background: none;
+  color: #fff6df;
   font: inherit;
   text-align: left;
   cursor: pointer;
   pointer-events: auto;
-  box-shadow: 0 12px 26px #0009;
-  animation: notice-in 0.3s ease-out;
+  /* Entra espirrando e, perto do fim da vida, some absorvido pelo feltro. */
+  animation:
+    notice-splat 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both,
+    notice-soak 0.7s ease-in calc(var(--life) - 700ms) forwards;
+}
+
+/* Mancha principal, de contorno irregular. */
+.notice::before,
+.notice::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  pointer-events: none;
+}
+
+.notice::before {
+  inset: 0;
+  border-radius: 46% 54% 41% 59% / 58% 44% 56% 42%;
+  background:
+    radial-gradient(ellipse at 30% 30%, #ffffff2e, transparent 55%),
+    radial-gradient(ellipse at center, var(--paint) 58%, color-mix(in srgb, var(--paint) 70%, transparent) 100%);
+  box-shadow:
+    inset 0 -6px 14px #0000003d,
+    0 0 0 3px color-mix(in srgb, var(--paint) 35%, transparent);
+  filter: blur(0.4px);
+  opacity: 0.88;
+  transform: rotate(-3deg);
+}
+
+/* Gotas que espirraram ao redor. */
+.notice::after {
+  inset: -16px -22px;
+  background:
+    radial-gradient(circle at 4% 38%, var(--paint) 0 6px, transparent 7px),
+    radial-gradient(circle at 10% 82%, var(--paint) 0 3px, transparent 4px),
+    radial-gradient(circle at 17% 6%, var(--paint) 0 4px, transparent 5px),
+    radial-gradient(circle at 78% 4%, var(--paint) 0 3px, transparent 4px),
+    radial-gradient(circle at 96% 58%, var(--paint) 0 7px, transparent 8px),
+    radial-gradient(circle at 89% 94%, var(--paint) 0 4px, transparent 5px),
+    radial-gradient(circle at 52% 98%, var(--paint) 0 2px, transparent 3px);
+  opacity: 0.8;
 }
 
 .notice[data-kind='turn'] {
-  border-left-color: #f0ca70;
+  --paint: #c98a2a;
 }
 
 .notice[data-kind='skill'] {
-  border-left-color: var(--teal);
+  --paint: #2f8582;
 }
 
 .notice[data-kind='error'] {
-  border-left-color: #e0645c;
+  --paint: #a8352d;
   animation:
-    notice-in 0.3s ease-out,
-    notice-shake 0.4s ease-in-out 0.3s;
+    notice-splat 0.42s cubic-bezier(0.2, 1.6, 0.4, 1) both,
+    notice-shake 0.4s ease-in-out 0.42s,
+    notice-soak 0.7s ease-in calc(var(--life) - 700ms) forwards;
+}
+
+.notice:focus-visible {
+  outline: 2px solid #fff1c7;
+  outline-offset: 4px;
 }
 
 .notice-icon {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
+  filter: drop-shadow(0 2px 2px #0006);
 }
 
 .notice-text {
   display: grid;
-  gap: 2px;
+  gap: 1px;
+  text-shadow: 0 1px 2px #0008;
 }
 
 .notice-text strong {
-  color: #f3e7c7;
-  font-size: 14px;
+  color: #fff6df;
+  font: 700 17px/1.1 var(--heading);
 }
 
 .notice-text small {
-  color: var(--text-soft);
+  color: #fff6dfd9;
   font-size: 12px;
+  font-weight: 700;
 }
 
 /* ---------- Estados de carregamento/erro ---------- */
@@ -725,6 +777,12 @@
     transform: none;
     width: auto;
     max-height: none;
+  }
+
+  /* Mesa no fluxo da página: os respingos caem no topo da tela. */
+  .notice-stack {
+    top: 16px;
+    transform: translateX(-50%);
   }
 
   .hud-info { order: 1; }
@@ -801,14 +859,30 @@
   }
 }
 
-@keyframes notice-in {
+@keyframes notice-splat {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    filter: blur(6px);
+    scale: 0.25;
+    rotate: -14deg;
+  }
+  60% {
+    opacity: 1;
   }
   to {
     opacity: 1;
-    transform: none;
+    filter: none;
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+
+/* Tinta sendo absorvida: perde cor, borra e espalha um pouco. */
+@keyframes notice-soak {
+  to {
+    opacity: 0;
+    filter: blur(5px) saturate(0.4);
+    scale: 1.12;
   }
 }
 
@@ -824,9 +898,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .played-card,
+  .played-card {
+    animation: none;
+  }
+
+  /* Sem respingo nem tremida: só aparece e desbota. */
   .notice,
   .notice[data-kind='error'] {
-    animation: none;
+    animation: notice-soak 0.4s linear calc(var(--life) - 400ms) forwards;
   }
 }
