@@ -9,7 +9,7 @@ const STORAGE_KEY = 'truno.match.sound';
 
 const MELODIES: Record<MatchSound, readonly Note[]> = {
   card: [[290, 0.07, 0], [200, 0.08, 0.055]],
-  turn: [[520, 0.1, 0], [700, 0.15, 0.1]],
+  turn: [[330, 0.09, 0], [470, 0.09, 0.09], [660, 0.18, 0.18]],
   skill: [[360, 0.1, 0], [610, 0.12, 0.09], [860, 0.18, 0.18]],
   puzzle: [[440, 0.1, 0], [554, 0.1, 0.11], [440, 0.18, 0.22]],
   answer: [[520, 0.1, 0], [660, 0.18, 0.1]],
@@ -54,18 +54,18 @@ export class MatchSoundService {
     }
   }
 
-  play(effect: MatchSound): void {
+  play(effect: MatchSound, startDelay = 0): void {
     if (!this.enabled()) return;
     this.activate();
     const context = this.context;
     if (!context || context.state !== 'running') return;
 
-    const start = context.currentTime;
-    for (const [frequency, duration, delay] of MELODIES[effect]) {
+    const start = context.currentTime + startDelay;
+    for (const [frequency, duration, noteDelay] of MELODIES[effect]) {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      const at = start + delay;
-      oscillator.type = effect === 'card' || effect === 'error' ? 'triangle' : 'sine';
+      const at = start + noteDelay;
+      oscillator.type = effect === 'card' || effect === 'turn' || effect === 'error' ? 'triangle' : 'sine';
       oscillator.frequency.setValueAtTime(frequency, at);
       gain.gain.setValueAtTime(0.0001, at);
       gain.gain.exponentialRampToValueAtTime(0.075, at + 0.012);

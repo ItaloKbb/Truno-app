@@ -1,0 +1,53 @@
+@property --turn-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.turn-rim-effect {
+  --turn-angle: 0deg;
+  position: absolute;
+  inset: -6px;
+  z-index: 3;
+  padding: 6px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--turn-angle),
+    transparent 0 72%,
+    #41d8ce 81%,
+    #f8df88 89%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 8px #70e9d9);
+  pointer-events: none;
+  animation: turn-rim-sweep 1.25s ease-out both;
+}
+
+@keyframes turn-rim-sweep {
+  0% { --turn-angle: 0deg; opacity: 0; }
+  12% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { --turn-angle: 360deg; opacity: 0; }
+}
+
+@media (max-width: 1100px) {
+  .table-area {
+    position: relative;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-rim-effect {
+    animation: turn-rim-flash 0.7s ease-out both;
+  }
+
+  @keyframes turn-rim-flash {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}

@@ -175,6 +175,9 @@
 
       <!-- Centro: mesa -->
       <section class="table-area" aria-label="Mesa">
+        @for (effect of turnEffects(); track effect) {
+          <span class="turn-rim-effect" aria-hidden="true"></span>
+        }
         <div class="table-felt">
           <!-- Só no celular: o essencial da partida "impresso" no feltro -->
           <p class="felt-print">

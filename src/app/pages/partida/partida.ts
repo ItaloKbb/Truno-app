@@ -47,10 +47,11 @@ const MAX_BURSTS = 3;
 const AUTO_READY_SECONDS = 3;
 const ROUND_BANNER_DURATION = 4000;
 const PLAYER_POP_DURATION = 3500;
+const TURN_RIM_DURATION = 1250;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.mobile.css'],
+  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.turn.css', './partida.mobile.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
@@ -69,7 +70,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private autoReadyTimer?: ReturnType<typeof setInterval>;
   private roundBannerTimer?: ReturnType<typeof setTimeout>;
   private playerPopTimer?: ReturnType<typeof setTimeout>;
+  private turnRimTimer?: ReturnType<typeof setTimeout>;
   private nextBurstId = 0;
+  private nextTurnEffectId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
   public readonly game = signal<GameState | null>(null);
@@ -84,6 +87,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly autoReadyIn = signal<number | null>(null);
   public readonly roundBanner = signal<RoundResult | null>(null);
   public readonly selectedPlayerId = signal<number | null>(null);
+  public readonly turnEffects = signal<number[]>([]);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -108,6 +112,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public load(): void {
+    clearTimeout(this.turnRimTimer);
+    this.turnEffects.set([]);
     this.loading.set(true);
     this.errorMessage.set('');
     this.game.set(null);
@@ -134,6 +140,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.stopAutoReady();
     clearTimeout(this.roundBannerTimer);
     clearTimeout(this.playerPopTimer);
+    clearTimeout(this.turnRimTimer);
   }
 
   public cardImage(card: GameCard | null): string {
@@ -368,6 +375,12 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private playStateSound(previous: GameState, updated: GameState): void {
     if (updated.stateVersion <= previous.stateVersion) return;
 
+    const turnChanged =
+      updated.phase === 'EM_ANDAMENTO' &&
+      updated.currentPlayerId !== null &&
+      (previous.phase !== 'EM_ANDAMENTO' || updated.currentPlayerId !== previous.currentPlayerId);
+    if (turnChanged) this.showTurnRim();
+
     let effect: MatchSound | null = null;
     if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
       effect = this.didIWin(updated) ? 'victory' : 'round';
@@ -385,13 +398,18 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       effect = 'skill';
     } else if (updated.plays.length > previous.plays.length && updated.roundNumber === previous.roundNumber) {
       effect = 'card';
-    } else if (updated.phase === 'EM_ANDAMENTO' && updated.currentPlayerId !== previous.currentPlayerId && this.isMyTurn(updated)) {
-      effect = 'turn';
     } else if (updated.players.some((player) => player.ready && !previous.players.find((old) => old.id === player.id)?.ready)) {
       effect = 'ready';
     }
 
     if (effect) this.sounds.play(effect);
+    if (turnChanged) this.sounds.play('turn', effect ? 0.22 : 0);
+  }
+
+  private showTurnRim(): void {
+    clearTimeout(this.turnRimTimer);
+    this.turnEffects.set([++this.nextTurnEffectId]);
+    this.turnRimTimer = setTimeout(() => this.turnEffects.set([]), TURN_RIM_DURATION);
   }
 
   /** Entre rodadas, marca "pronto" sozinho se o jogador não apertar a tempo. */
