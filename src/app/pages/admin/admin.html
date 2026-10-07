@@ -1,0 +1,164 @@
+<main class="admin-page">
+  <div class="admin-shell">
+    <header class="admin-header">
+      <a class="admin-brand" routerLink="/admin">TRUNO <span>ADMIN</span></a>
+      @if (session.token()) {
+        <nav aria-label="Administração">
+          <a routerLink="/admin/cartas" [class.active]="section === 'cartas'">Cartas</a>
+          <a routerLink="/admin/skills" [class.active]="section === 'skills'">Skills</a>
+          <a routerLink="/admin/puzzles" [class.active]="section === 'puzzles'">Puzzles</a>
+        </nav>
+        <button class="admin-quiet" type="button" (click)="logout()">Sair</button>
+      }
+    </header>
+
+    @if (!session.token()) {
+      <section class="admin-login" aria-labelledby="admin-login-title">
+        <p class="admin-eyebrow">Área restrita</p>
+        <h1 id="admin-login-title">Entrar no admin</h1>
+        <p>Gerencie as cartas, habilidades e perguntas do jogo.</p>
+        <form (ngSubmit)="login()">
+          <label for="admin-user">Usuário</label>
+          <input id="admin-user" name="username" type="text" autocomplete="username" required [(ngModel)]="username" />
+          <label for="admin-password">Senha</label>
+          <input id="admin-password" name="password" type="password" autocomplete="current-password" required [(ngModel)]="password" />
+          <button class="admin-primary" type="submit" [disabled]="saving() || !username || !password">{{ saving() ? 'Entrando...' : 'Entrar' }}</button>
+        </form>
+      </section>
+    } @else {
+      @if (section === 'home') {
+        <section class="admin-intro">
+          <p class="admin-eyebrow">Painel de controle</p>
+          <h1>Administração do jogo</h1>
+          <p>Escolha o catálogo que deseja gerenciar.</p>
+          <div class="admin-shortcuts">
+            <a routerLink="/admin/cartas"><strong>Cartas</strong><span>Veja as 40 cartas e suas skills</span></a>
+            <a routerLink="/admin/skills"><strong>Skills</strong><span>Crie e edite habilidades</span></a>
+            <a routerLink="/admin/puzzles"><strong>Puzzles</strong><span>Gerencie perguntas e respostas</span></a>
+          </div>
+        </section>
+      } @else {
+        <div class="admin-heading">
+          <div>
+            <p class="admin-eyebrow">Catálogo / {{ section }}</p>
+            <h1>{{ section === 'cartas' ? 'Cartas' : section === 'skills' ? 'Skills' : 'Puzzles' }}</h1>
+            <p>
+              @if (section === 'cartas') {As cartas são fixas; associe uma skill a cada carta.}
+              @if (section === 'skills') {Crie, edite e exclua habilidades do baralho.}
+              @if (section === 'puzzles') {Edite perguntas, alternativas e a resposta correta.}
+            </p>
+          </div>
+          @if (section === 'skills') {<button class="admin-primary" type="button" (click)="newSkill()">Nova skill</button>}
+          @if (section === 'puzzles') {<button class="admin-primary" type="button" (click)="newPuzzle()">Novo puzzle</button>}
+        </div>
+      }
+
+      @if (error()) { <p class="admin-message admin-error" role="alert">{{ error() }}</p> }
+      @if (success()) { <p class="admin-message admin-success" role="status">{{ success() }}</p> }
+      @if (loading()) { <p class="admin-status" role="status">Carregando catálogo...</p> }
+
+      @if (!loading() && section === 'cartas') {
+        <p class="admin-count">{{ cards().length }} cartas · {{ skills().length }} skills ativas</p>
+        <div class="admin-card-grid">
+          @for (card of cards(); track card.id) {
+            <article class="admin-card">
+              <img [src]="cardImage(card)" [alt]="cardName(card)" />
+              <div>
+                <h2>{{ cardName(card) }}</h2>
+                @if (cardSkill(card); as skill) {
+                  <p class="admin-card-skill">{{ skill.name }} <span>· {{ skill.type }}</span></p>
+                  <div class="admin-actions">
+                    <button type="button" (click)="editSkill(skill)">Editar skill</button>
+                    <button class="danger" type="button" (click)="deleteSkill(skill)">Remover</button>
+                  </div>
+                } @else {
+                  <p class="admin-muted">Sem skill</p>
+                  <button type="button" (click)="newSkill(card)">Adicionar skill</button>
+                }
+              </div>
+            </article>
+          } @empty { <p class="admin-status">Nenhuma carta encontrada.</p> }
+        </div>
+      }
+
+      @if (!loading() && section === 'skills') {
+        <p class="admin-count">{{ skills().length }} skills ativas</p>
+        <div class="admin-list">
+          @for (skill of skills(); track skill.id) {
+            <article class="admin-row">
+              <div><h2>{{ skill.name }} <span class="admin-badge">{{ skill.type }}</span></h2>
+                <p>{{ skill.description }}</p><small>{{ skill.valor }} · {{ skill.naipe }}</small></div>
+              <div class="admin-actions">
+                <button type="button" (click)="editSkill(skill)">Editar</button>
+                <button class="danger" type="button" (click)="deleteSkill(skill)">Excluir</button>
+              </div>
+            </article>
+          } @empty { <p class="admin-status">Nenhuma skill ativa.</p> }
+        </div>
+      }
+
+      @if (!loading() && section === 'puzzles') {
+        <p class="admin-count">{{ puzzles().length }} puzzles ativos</p>
+        <div class="admin-list">
+          @for (puzzle of puzzles(); track puzzle.id) {
+            <article class="admin-row">
+              <div><h2>{{ puzzle.question }}</h2>
+                <ol class="admin-alternatives">
+                  @for (alternative of puzzle.alternativas; track $index) {
+                    <li [class.correct]="$index === puzzle.alternativaCorreta">{{ alternative }} @if ($index === puzzle.alternativaCorreta) {<span>✓ Correta</span>}</li>
+                  }
+                </ol>
+              </div>
+              <div class="admin-actions">
+                <button type="button" (click)="editPuzzle(puzzle)">Editar</button>
+                <button class="danger" type="button" (click)="deletePuzzle(puzzle)">Excluir</button>
+              </div>
+            </article>
+          } @empty { <p class="admin-status">Nenhum puzzle ativo.</p> }
+        </div>
+      }
+
+      @if (skillFormOpen && (section === 'cartas' || section === 'skills')) {
+        <section class="admin-editor" aria-labelledby="skill-editor-title">
+          <div class="admin-editor-header"><h2 id="skill-editor-title">{{ editingSkillId ? 'Editar skill' : 'Nova skill' }}</h2>
+            <button class="admin-quiet" type="button" (click)="skillFormOpen = false">Fechar</button></div>
+          <form (ngSubmit)="saveSkill()">
+            <div class="admin-form-grid">
+              <label>Nome<input name="skillName" type="text" maxlength="100" required [(ngModel)]="skillDraft.name" /></label>
+              <label>Tipo<select name="skillType" required [(ngModel)]="skillDraft.type">
+                @for (type of types; track type) { <option [ngValue]="type">{{ type }}</option> }
+              </select></label>
+              <label class="admin-wide">Descrição<textarea name="skillDescription" rows="3" maxlength="255" required [(ngModel)]="skillDraft.description"></textarea></label>
+              <label class="admin-wide">Carta<select name="skillCard" required [(ngModel)]="selectedCardId">
+                <option [ngValue]="null">Selecione uma carta</option>
+                @for (card of cards(); track card.id) { <option [ngValue]="card.id">{{ cardName(card) }}</option> }
+              </select></label>
+            </div>
+            <div class="admin-actions"><button class="admin-primary" type="submit" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar skill' }}</button></div>
+          </form>
+        </section>
+      }
+
+      @if (puzzleFormOpen && section === 'puzzles') {
+        <section class="admin-editor" aria-labelledby="puzzle-editor-title">
+          <div class="admin-editor-header"><h2 id="puzzle-editor-title">{{ editingPuzzleId ? 'Editar puzzle' : 'Novo puzzle' }}</h2>
+            <button class="admin-quiet" type="button" (click)="puzzleFormOpen = false">Fechar</button></div>
+          <form (ngSubmit)="savePuzzle()">
+            <label>Pergunta<textarea name="question" rows="2" maxlength="255" required [(ngModel)]="puzzleDraft.question"></textarea></label>
+            <fieldset class="admin-options"><legend>Alternativas <small>Marque a resposta correta</small></legend>
+              @for (alternative of puzzleDraft.alternativas; track $index) {
+                <div class="admin-option">
+                  <input type="radio" name="correct" [checked]="puzzleDraft.alternativaCorreta === $index" (change)="puzzleDraft.alternativaCorreta = $index" [attr.aria-label]="'Resposta correta: alternativa ' + ($index + 1)" />
+                  <input type="text" [name]="'alternative-' + $index" [placeholder]="'Alternativa ' + ($index + 1)" required [(ngModel)]="puzzleDraft.alternativas[$index]" />
+                  <button class="admin-quiet" type="button" [disabled]="puzzleDraft.alternativas.length <= 2" (click)="removeAlternative($index)" [attr.aria-label]="'Remover alternativa ' + ($index + 1)">×</button>
+                </div>
+              }
+              <button type="button" (click)="addAlternative()">+ Alternativa</button>
+            </fieldset>
+            <div class="admin-actions"><button class="admin-primary" type="submit" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar puzzle' }}</button></div>
+          </form>
+        </section>
+      }
+    }
+  </div>
+</main>

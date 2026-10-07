@@ -229,7 +229,6 @@ export interface GameState {
 /** `GET /cards` */
 export interface CatalogCard {
   id: number;
-  url: string;
   valor: CardValue;
   naipe: CardSuit;
 }
@@ -249,7 +248,6 @@ export interface PuzzleDefinition {
   id: number;
   question: string;
   alternativas: string[];
-  alternativaCorreta: string;
 }
 
 /** `GET /users/ranking` */

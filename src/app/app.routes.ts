@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
 
 /**
  * As rotas só controlam URL e acesso; quem renderiza a tela é o App,
@@ -14,5 +15,9 @@ export const routes: Routes = [
   { path: 'partida/:id', canActivate: [authGuard], children: [] },
   { path: 'ranking', canActivate: [authGuard], children: [] },
   { path: 'perfil', canActivate: [authGuard], children: [] },
+  { path: 'admin', children: [] },
+  { path: 'admin/cartas', canActivate: [adminGuard], children: [] },
+  { path: 'admin/skills', canActivate: [adminGuard], children: [] },
+  { path: 'admin/puzzles', canActivate: [adminGuard], children: [] },
   { path: '**', redirectTo: 'home' },
 ];

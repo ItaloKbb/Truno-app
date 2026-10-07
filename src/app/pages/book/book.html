@@ -38,7 +38,7 @@
       <article class="book-card" [class.has-skill]="card.skills.length > 0">
         <div class="hover-3d">
           <figure class="book-figure">
-            <img [src]="card.url" [alt]="card.label" />
+            <img [src]="image(card)" [alt]="card.label" />
           </figure>
           <!-- 8 divs vazias são necessárias para o efeito 3D -->
           <div></div>

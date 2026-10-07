@@ -20,4 +20,8 @@
 @case ('perfil') {
 <app-profile [profiles]="profileService" (navigate)="navigate($event)" />
 }
+@case ('admin') { <app-admin section="home" /> }
+@case ('admin/cartas') { <app-admin section="cartas" /> }
+@case ('admin/skills') { <app-admin section="skills" /> }
+@case ('admin/puzzles') { <app-admin section="puzzles" /> }
 }
