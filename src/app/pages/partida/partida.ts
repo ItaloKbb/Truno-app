@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
+  BUY_POWER,
   SKILL_ICON,
   SKILL_LABEL,
   SURPRISE_POWER,
@@ -42,6 +43,7 @@ interface SkillBurstItem {
   power: number;
   roll: number | null;
   coinDelta: number | null;
+  cardsDrawn: number | null;
 }
 
 const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, error: 3500 };
@@ -397,6 +399,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         typeof play.surpriseRoll === 'number' &&
         (updated.roundNumber !== previous.roundNumber || !previous.plays.some((old) => old.order === play.order)),
     );
+    const buy = updated.plays.find(
+      (play) =>
+        play.card.skill === 'BUY' &&
+        (updated.roundNumber !== previous.roundNumber || !previous.plays.some((old) => old.order === play.order)),
+    );
 
     let effect: MatchSound | null = null;
     if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
@@ -420,8 +427,10 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     }
 
     if (surprise) this.sounds.playSurprise(SURPRISE_POWER[surprise.card.naipe], (surprise.surpriseRoll ?? 0) > 0);
-    if (effect && (!surprise || effect !== 'skill')) this.sounds.play(effect, surprise ? 0.6 : 0);
-    if (turnChanged) this.sounds.play('turn', surprise ? 0.9 : effect ? 0.22 : 0);
+    if (buy) this.sounds.playBuy(BUY_POWER[buy.card.naipe], buy.buyCardsDrawn ?? BUY_POWER[buy.card.naipe], surprise ? 0.55 : 0);
+    const specialSkill = !!surprise || !!buy;
+    if (effect && (!specialSkill || effect !== 'skill')) this.sounds.play(effect, specialSkill ? 0.7 : 0);
+    if (turnChanged) this.sounds.play('turn', specialSkill ? 1 : effect ? 0.22 : 0);
   }
 
   private showTurnRim(): void {
@@ -478,13 +487,19 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       const surpriseDetail = surpriseResult
         ? `${surpriseResult} · ${play.card.naipe.toLowerCase()} (força ${SURPRISE_POWER[play.card.naipe]})`
         : null;
+      const buyCardsDrawn = play.card.skill === 'BUY' ? play.buyCardsDrawn : null;
+      const buyDetail = buyCardsDrawn !== null && buyCardsDrawn !== undefined
+        ? `${buyCardsDrawn > 0 ? `O próximo jogador comprou ${buyCardsDrawn} ${buyCardsDrawn === 1 ? 'carta' : 'cartas'}` : 'Nenhuma carta comprada'} · força ${BUY_POWER[play.card.naipe]}`
+        : null;
       this.pushNotice({
         kind: 'skill',
         icon: SKILL_ICON[play.card.skill],
         title: surpriseResult
           ? `${this.displayName(play.nickname)} teve uma surpresa ${typeof surpriseRoll === 'number' && surpriseRoll > 0 ? 'boa' : 'ruim'}!`
+          : buyDetail
+            ? `${this.displayName(play.nickname)} usou Compra!`
           : `${this.displayName(play.nickname)} usou ${definition?.name ?? SKILL_LABEL[play.card.skill]}`,
-        detail: surpriseDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
+        detail: surpriseDetail ?? buyDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
       });
       this.pushBurst(play.card.skill, play);
     }
@@ -495,12 +510,13 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     const id = ++this.nextBurstId;
     // Habilidades do mesmo poll entram escalonadas; o tempo de vida cobre o atraso.
     const delay = this.skillBursts().length * BURST_STAGGER;
-    const power = type === 'SURPRISE' ? SURPRISE_POWER[play.card.naipe] : 1;
-    const duration = type === 'SURPRISE' ? 1500 + power * 240 : BURST_DURATION;
+    const power = type === 'SURPRISE' ? SURPRISE_POWER[play.card.naipe] : type === 'BUY' ? BUY_POWER[play.card.naipe] : 1;
+    const duration = type === 'SURPRISE' ? 1500 + power * 240 : type === 'BUY' ? 1500 + power * 230 : BURST_DURATION;
     this.skillBursts.update((list) => [...list, {
       id, type, delay, duration, power,
       roll: type === 'SURPRISE' ? (play.surpriseRoll ?? null) : null,
       coinDelta: type === 'SURPRISE' ? (play.surpriseCoinDelta ?? null) : null,
+      cardsDrawn: type === 'BUY' ? (play.buyCardsDrawn ?? null) : null,
     }]);
     this.burstTimers.set(
       id,

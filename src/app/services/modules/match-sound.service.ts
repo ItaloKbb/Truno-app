@@ -74,6 +74,23 @@ export class MatchSoundService {
     this.playNotes(notes, positive ? 'sine' : 'sawtooth', 0.035 + strength * 0.012);
   }
 
+  /** Cada carta comprada acrescenta uma batida; naipes mais fortes terminam com acento mais alto. */
+  playBuy(power: number, cardsDrawn: number, startDelay = 0): void {
+    const strength = Math.max(2, Math.min(4, power));
+    const count = Math.max(0, Math.min(strength, cardsDrawn));
+    if (count === 0) {
+      this.playNotes([[190, 0.18, 0]], 'triangle', 0.045, startDelay);
+      return;
+    }
+    const notes: Note[] = Array.from({ length: count }, (_, index) => [
+      290 + strength * 35 + index * 55,
+      0.11,
+      index * 0.11,
+    ]);
+    notes.push([620 + strength * 65, 0.2, count * 0.11]);
+    this.playNotes(notes, 'triangle', 0.038 + strength * 0.012, startDelay);
+  }
+
   private playNotes(notes: readonly Note[], wave: OscillatorType, volume: number, startDelay = 0): void {
     if (!this.enabled()) return;
     this.activate();

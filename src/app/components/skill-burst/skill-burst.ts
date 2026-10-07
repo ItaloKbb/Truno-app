@@ -26,6 +26,7 @@ const SKILL_GLOW: Record<SkillType, string> = {
     '[style.--burst-size.px]': 'burstSize',
     '[style.--particle-distance.px]': 'particleDistance',
     '[class.is-surprise]': 'isSurprise',
+    '[class.is-buy]': 'isBuy',
     '[class.is-bad]': 'isBad',
   },
 })
@@ -33,6 +34,7 @@ export class SkillBurst {
   @Input({ required: true }) type!: SkillType;
   @Input() roll: number | null = null;
   @Input() coinDelta: number | null = null;
+  @Input() cardsDrawn: number | null = null;
 
   private _power = 1;
   particles: number[] = [];
@@ -48,6 +50,20 @@ export class SkillBurst {
 
   get isSurprise(): boolean {
     return this.type === 'SURPRISE';
+  }
+
+  get isBuy(): boolean {
+    return this.type === 'BUY';
+  }
+
+  get buyCards(): number[] {
+    const count = Math.max(0, Math.min(this.power, this.cardsDrawn ?? this.power));
+    return Array.from({ length: count }, (_, index) => index);
+  }
+
+  get buyOutcomeText(): string {
+    const count = this.cardsDrawn ?? this.power;
+    return `${count > 0 ? '+' : ''}${count} 🂠`;
   }
 
   get isBad(): boolean {

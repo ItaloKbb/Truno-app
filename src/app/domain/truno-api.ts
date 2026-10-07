@@ -42,6 +42,13 @@ export const SURPRISE_POWER: Record<CardSuit, 1 | 2 | 3 | 4> = {
   PAUS: 4,
 };
 
+export const BUY_POWER: Record<CardSuit, 2 | 3 | 4> = {
+  OUROS: 2,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 4,
+};
+
 export const SKILL_TYPES = [
   'BLOCK',
   'THEFT',
@@ -201,6 +208,8 @@ export interface GamePlay {
   surpriseRoll?: number | null;
   /** Moedas efetivamente ganhas/perdidas, limitado a zero no resultado ruim. */
   surpriseCoinDelta?: number | null;
+  /** Cartas efetivamente compradas por Buy; zero quando bloqueada ou sem cartas disponíveis. */
+  buyCardsDrawn?: number | null;
 }
 
 export interface PendingPuzzle {

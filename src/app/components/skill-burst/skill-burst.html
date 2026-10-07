@@ -10,4 +10,19 @@
       <span class="surprise-outcome">{{ outcomeText }}</span>
     }
   }
+  @if (isBuy) {
+    <span class="buy-cards">
+      @for (buyCard of buyCards; track buyCard) {
+        <img
+          class="buy-card"
+          src="assets/cards/reverso.png"
+          alt=""
+          [style.--buy-x]="((buyCard - (buyCards.length - 1) / 2) * (50 + power * 10)) + 'px'"
+          [style.--buy-y]="(-65 - power * 12) + 'px'"
+          [style.--buy-angle]="((buyCard - (buyCards.length - 1) / 2) * 22) + 'deg'"
+        />
+      }
+    </span>
+    <span class="buy-outcome">{{ buyOutcomeText }}</span>
+  }
 </span>

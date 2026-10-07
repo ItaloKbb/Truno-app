@@ -60,6 +60,54 @@
   font-size: min(var(--burst-size), 55vw);
 }
 
+:host(.is-buy) .burst::after {
+  inset: -65%;
+  opacity: 0.68;
+}
+
+:host(.is-buy) .emoji {
+  font-size: min(var(--burst-size), 50vw);
+}
+
+.buy-cards {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.buy-card {
+  position: absolute;
+  width: clamp(46px, 13vw, 74px);
+  border: 2px solid #c5edff;
+  border-radius: 7px;
+  box-shadow: 0 0 16px #62cfff, 0 10px 18px #0009;
+  opacity: 0;
+  animation: buy-card-fan var(--burst-duration) ease-out var(--delay) both;
+}
+
+.buy-outcome {
+  position: absolute;
+  right: -28px;
+  bottom: -12px;
+  padding: 8px 16px;
+  border: 3px solid #b7edff;
+  border-radius: 999px;
+  background: #174c75;
+  box-shadow: 0 5px 22px #0008, 0 0 22px var(--glow);
+  color: #ecfbff;
+  font: 900 clamp(24px, 6vw, 42px)/1 var(--heading, Georgia, serif);
+  white-space: nowrap;
+  transform: rotate(8deg);
+}
+
+@keyframes buy-card-fan {
+  0%, 25% { opacity: 0; transform: translate(0, 30px) rotate(0) scale(0.25); }
+  55%, 77% { opacity: 1; transform: translate(var(--buy-x), var(--buy-y)) rotate(var(--buy-angle)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--buy-x), calc(var(--buy-y) - 40px)) rotate(var(--buy-angle)) scale(0.8); }
+}
+
 .surprise-particles {
   position: absolute;
   inset: 0;
@@ -162,5 +210,11 @@
 
   .surprise-particle {
     display: none;
+  }
+
+  .buy-card {
+    animation: none;
+    opacity: 1;
+    transform: translate(var(--buy-x), var(--buy-y)) rotate(var(--buy-angle));
   }
 }
