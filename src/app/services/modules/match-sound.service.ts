@@ -55,20 +55,40 @@ export class MatchSoundService {
   }
 
   play(effect: MatchSound, startDelay = 0): void {
+    this.playNotes(
+      MELODIES[effect],
+      effect === 'card' || effect === 'turn' || effect === 'error' ? 'triangle' : 'sine',
+      0.075,
+      startDelay,
+    );
+  }
+
+  /** Mais notas, alcance e volume conforme o naipe; subida para ganho, descida para perda. */
+  playSurprise(power: number, positive: boolean): void {
+    const strength = Math.max(1, Math.min(4, power));
+    const notes: Note[] = Array.from({ length: strength + 2 }, (_, index) => [
+      positive ? 370 + index * 115 : 640 - index * 95,
+      0.12 + strength * 0.015,
+      index * 0.085,
+    ]);
+    this.playNotes(notes, positive ? 'sine' : 'sawtooth', 0.035 + strength * 0.012);
+  }
+
+  private playNotes(notes: readonly Note[], wave: OscillatorType, volume: number, startDelay = 0): void {
     if (!this.enabled()) return;
     this.activate();
     const context = this.context;
     if (!context || context.state !== 'running') return;
 
     const start = context.currentTime + startDelay;
-    for (const [frequency, duration, noteDelay] of MELODIES[effect]) {
+    for (const [frequency, duration, noteDelay] of notes) {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       const at = start + noteDelay;
-      oscillator.type = effect === 'card' || effect === 'turn' || effect === 'error' ? 'triangle' : 'sine';
+      oscillator.type = wave;
       oscillator.frequency.setValueAtTime(frequency, at);
       gain.gain.setValueAtTime(0.0001, at);
-      gain.gain.exponentialRampToValueAtTime(0.075, at + 0.012);
+      gain.gain.exponentialRampToValueAtTime(volume, at + 0.012);
       gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
       oscillator.connect(gain).connect(context.destination);
       oscillator.start(at);

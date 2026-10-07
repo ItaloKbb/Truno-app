@@ -4,6 +4,7 @@ import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
   SKILL_ICON,
   SKILL_LABEL,
+  SURPRISE_POWER,
   cardAsset,
   cardLabel,
   type GameCard,
@@ -37,6 +38,10 @@ interface SkillBurstItem {
   id: number;
   type: SkillType;
   delay: number;
+  duration: number;
+  power: number;
+  roll: number | null;
+  coinDelta: number | null;
 }
 
 const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, error: 3500 };
@@ -158,6 +163,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public skillName(card: GameCard): string {
     return card.skill ? (this.skillFor(card)?.name ?? SKILL_LABEL[card.skill]) : '';
+  }
+
+  public surpriseDeltaLabel(play: GamePlay): string {
+    const change = play.surpriseCoinDelta ?? play.surpriseRoll ?? 0;
+    return `${change > 0 ? '+' : change < 0 ? '−' : ''}${Math.abs(change)} 🪙`;
   }
 
   public phaseLabel(phase: GamePhase): string {
@@ -381,6 +391,13 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       (previous.phase !== 'EM_ANDAMENTO' || updated.currentPlayerId !== previous.currentPlayerId);
     if (turnChanged) this.showTurnRim();
 
+    const surprise = updated.plays.find(
+      (play) =>
+        play.card.skill === 'SURPRISE' &&
+        typeof play.surpriseRoll === 'number' &&
+        (updated.roundNumber !== previous.roundNumber || !previous.plays.some((old) => old.order === play.order)),
+    );
+
     let effect: MatchSound | null = null;
     if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
       effect = this.didIWin(updated) ? 'victory' : 'round';
@@ -402,8 +419,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       effect = 'ready';
     }
 
-    if (effect) this.sounds.play(effect);
-    if (turnChanged) this.sounds.play('turn', effect ? 0.22 : 0);
+    if (surprise) this.sounds.playSurprise(SURPRISE_POWER[surprise.card.naipe], (surprise.surpriseRoll ?? 0) > 0);
+    if (effect && (!surprise || effect !== 'skill')) this.sounds.play(effect, surprise ? 0.6 : 0);
+    if (turnChanged) this.sounds.play('turn', surprise ? 0.9 : effect ? 0.22 : 0);
   }
 
   private showTurnRim(): void {
@@ -446,28 +464,50 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     for (const play of updated.plays) {
       if (seen.has(play.order) || !play.card.skill) continue;
       const definition = this.skillFor(play.card);
+      const surpriseRoll = play.card.skill === 'SURPRISE' ? play.surpriseRoll : null;
+      const surpriseChange = play.surpriseCoinDelta ?? surpriseRoll ?? 0;
+      const coinCount = Math.abs(surpriseChange);
+      const coinLabel = `${coinCount} ${coinCount === 1 ? 'moeda' : 'moedas'}`;
+      const surpriseResult = surpriseRoll !== null && surpriseRoll !== undefined
+        ? surpriseRoll > 0
+          ? `Ganhou ${coinLabel}`
+          : surpriseChange < 0
+            ? `Perdeu ${coinLabel}`
+            : 'Sem moedas para perder'
+        : null;
+      const surpriseDetail = surpriseResult
+        ? `${surpriseResult} · ${play.card.naipe.toLowerCase()} (força ${SURPRISE_POWER[play.card.naipe]})`
+        : null;
       this.pushNotice({
         kind: 'skill',
         icon: SKILL_ICON[play.card.skill],
-        title: `${this.displayName(play.nickname)} usou ${definition?.name ?? SKILL_LABEL[play.card.skill]}`,
-        detail: definition?.description ?? `Carta ${this.cardName(play.card)}`,
+        title: surpriseResult
+          ? `${this.displayName(play.nickname)} teve uma surpresa ${typeof surpriseRoll === 'number' && surpriseRoll > 0 ? 'boa' : 'ruim'}!`
+          : `${this.displayName(play.nickname)} usou ${definition?.name ?? SKILL_LABEL[play.card.skill]}`,
+        detail: surpriseDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
       });
-      this.pushBurst(play.card.skill);
+      this.pushBurst(play.card.skill, play);
     }
   }
 
-  private pushBurst(type: SkillType): void {
+  private pushBurst(type: SkillType, play: GamePlay): void {
     if (this.skillBursts().length >= MAX_BURSTS) return;
     const id = ++this.nextBurstId;
     // Habilidades do mesmo poll entram escalonadas; o tempo de vida cobre o atraso.
     const delay = this.skillBursts().length * BURST_STAGGER;
-    this.skillBursts.update((list) => [...list, { id, type, delay }]);
+    const power = type === 'SURPRISE' ? SURPRISE_POWER[play.card.naipe] : 1;
+    const duration = type === 'SURPRISE' ? 1500 + power * 240 : BURST_DURATION;
+    this.skillBursts.update((list) => [...list, {
+      id, type, delay, duration, power,
+      roll: type === 'SURPRISE' ? (play.surpriseRoll ?? null) : null,
+      coinDelta: type === 'SURPRISE' ? (play.surpriseCoinDelta ?? null) : null,
+    }]);
     this.burstTimers.set(
       id,
       setTimeout(() => {
         this.burstTimers.delete(id);
         this.skillBursts.update((list) => list.filter((burst) => burst.id !== id));
-      }, BURST_DURATION + delay),
+      }, duration + delay),
     );
   }
 

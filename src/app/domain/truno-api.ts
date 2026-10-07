@@ -35,6 +35,13 @@ export type CardValue = (typeof CARD_VALUES)[number];
 export const CARD_SUITS = ['OUROS', 'ESPADAS', 'COPAS', 'PAUS'] as const;
 export type CardSuit = (typeof CARD_SUITS)[number];
 
+export const SURPRISE_POWER: Record<CardSuit, 1 | 2 | 3 | 4> = {
+  OUROS: 1,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 4,
+};
+
 export const SKILL_TYPES = [
   'BLOCK',
   'THEFT',
@@ -190,6 +197,10 @@ export interface GamePlay {
   nickname: string;
   card: GameCard;
   order: number;
+  /** Sorteio nominal da Surpresa: sinal define boa/ruim; módulo segue o naipe. */
+  surpriseRoll?: number | null;
+  /** Moedas efetivamente ganhas/perdidas, limitado a zero no resultado ruim. */
+  surpriseCoinDelta?: number | null;
 }
 
 export interface PendingPuzzle {
