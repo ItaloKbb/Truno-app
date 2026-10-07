@@ -35,6 +35,39 @@ export type CardValue = (typeof CARD_VALUES)[number];
 export const CARD_SUITS = ['OUROS', 'ESPADAS', 'COPAS', 'PAUS'] as const;
 export type CardSuit = (typeof CARD_SUITS)[number];
 
+export const SURPRISE_POWER: Record<CardSuit, 1 | 2 | 3 | 4> = {
+  OUROS: 1,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 4,
+};
+
+export const BUY_POWER: Record<CardSuit, 2 | 3 | 4> = {
+  OUROS: 2,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 4,
+};
+
+/** Máximo levado pelo Roubo; o tipo (carta ou moeda) é sorteado pela API. */
+export const THEFT_POWER: Record<CardSuit, 2 | 3> = {
+  OUROS: 2,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 3,
+};
+
+export const THEFT_KINDS = ['CARD', 'COIN'] as const;
+export type TheftKind = (typeof THEFT_KINDS)[number];
+
+/** Acerto ganha e erro compra essa quantidade. */
+export const PUZZLE_POWER: Record<CardSuit, 1 | 2 | 3 | 4> = {
+  OUROS: 1,
+  ESPADAS: 2,
+  COPAS: 3,
+  PAUS: 4,
+};
+
 export const SKILL_TYPES = [
   'BLOCK',
   'THEFT',
@@ -190,6 +223,21 @@ export interface GamePlay {
   nickname: string;
   card: GameCard;
   order: number;
+  /** Sorteio nominal da Surpresa: sinal define boa/ruim; módulo segue o naipe. */
+  surpriseRoll?: number | null;
+  /** Moedas efetivamente ganhas/perdidas, limitado a zero no resultado ruim. */
+  surpriseCoinDelta?: number | null;
+  /** Cartas efetivamente compradas por Buy; zero quando bloqueada ou sem cartas disponíveis. */
+  buyCardsDrawn?: number | null;
+  theftKind?: TheftKind | null;
+  /** Itens efetivamente levados; zero com escudo ou alvo sem cartas/moedas. */
+  theftAmount?: number | null;
+  theftBlocked?: boolean | null;
+  theftTargetPlayerId?: number | null;
+  /** Nulo enquanto o puzzle aguarda resposta. */
+  puzzleCorrect?: boolean | null;
+  /** Moedas ganhas no acerto ou cartas efetivamente compradas no erro. */
+  puzzleAmount?: number | null;
 }
 
 export interface PendingPuzzle {

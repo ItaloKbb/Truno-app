@@ -1,3 +1,43 @@
 <span class="burst">
   <span class="emoji">{{ icon }}</span>
+  @if (isSurprise || isPuzzle || isTheft) {
+    <span class="surprise-particles">
+      @for (particle of particles; track particle) {
+        <i class="surprise-particle" [style.--angle]="(particle / particles.length * 360) + 'deg'"></i>
+      }
+    </span>
+    @if (isSurprise && roll !== null) {
+      <span class="surprise-outcome">{{ outcomeText }}</span>
+    }
+  }
+  @if (isPuzzleResult) {
+    <span class="surprise-outcome puzzle-outcome">{{ puzzleOutcomeText }}</span>
+  }
+  @if (isTheft && theftKind) {
+    <span class="theft-items">
+      @for (item of theftItems; track item) {
+        @if (theftKind === 'COIN') {
+          <i class="theft-item theft-coin" [style.--item-delay]="item * 90 + 'ms'" [style.--item-y]="((item - (theftItems.length - 1) / 2) * 34) + 'px'">🪙</i>
+        } @else {
+          <img class="theft-item theft-card" src="assets/cards/reverso.png" alt="" [style.--item-delay]="item * 90 + 'ms'" [style.--item-y]="((item - (theftItems.length - 1) / 2) * 34) + 'px'" />
+        }
+      }
+    </span>
+    <span class="surprise-outcome theft-outcome" [class.is-blocked]="theftBlocked">{{ theftOutcomeText }}</span>
+  }
+  @if (isBuy) {
+    <span class="buy-cards">
+      @for (buyCard of buyCards; track buyCard) {
+        <img
+          class="buy-card"
+          src="assets/cards/reverso.png"
+          alt=""
+          [style.--buy-x]="((buyCard - (buyCards.length - 1) / 2) * (50 + power * 10)) + 'px'"
+          [style.--buy-y]="(-65 - power * 12) + 'px'"
+          [style.--buy-angle]="((buyCard - (buyCards.length - 1) / 2) * 22) + 'deg'"
+        />
+      }
+    </span>
+    <span class="buy-outcome">{{ buyOutcomeText }}</span>
+  }
 </span>

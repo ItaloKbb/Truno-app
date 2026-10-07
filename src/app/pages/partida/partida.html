@@ -44,7 +44,20 @@
     }
 
     @for (burst of skillBursts(); track burst.id) {
-      <app-skill-burst [type]="burst.type" [style.--delay.ms]="burst.delay" />
+      <app-skill-burst
+        [type]="burst.type"
+        [power]="burst.power"
+        [roll]="burst.roll"
+        [coinDelta]="burst.coinDelta"
+        [cardsDrawn]="burst.cardsDrawn"
+        [puzzleCorrect]="burst.puzzleCorrect"
+        [puzzleAmount]="burst.puzzleAmount"
+        [theftKind]="burst.theftKind"
+        [theftAmount]="burst.theftAmount"
+        [theftBlocked]="burst.theftBlocked"
+        [style.--delay.ms]="burst.delay"
+        [style.--burst-duration.ms]="burst.duration"
+      />
     }
 
     @if (roundBanner(); as result) {
@@ -204,6 +217,12 @@
                   <span class="skill-chip" [title]="skillName(play.card)">
                     {{ skillIcon(play.card.skill) }} {{ skillName(play.card) }}
                   </span>
+                }
+                @if (play.card.skill === 'SURPRISE' && play.surpriseRoll != null) {
+                  <span class="surprise-chip" [class.is-bad]="play.surpriseRoll < 0">{{ surpriseDeltaLabel(play) }}</span>
+                }
+                @if (play.card.skill === 'BUY' && play.buyCardsDrawn != null) {
+                  <span class="buy-chip">{{ play.buyCardsDrawn > 0 ? '+' : '' }}{{ play.buyCardsDrawn }} 🂠</span>
                 }
                 <figcaption>
                   @if (isRoundWinnerPlay(current, play)) { 🏆 }
