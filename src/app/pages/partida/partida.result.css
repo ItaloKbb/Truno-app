@@ -1,0 +1,118 @@
+/* ---------- Resultado da partida ---------- */
+
+.match-result {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: calc(100dvh - 32px);
+  padding: 24px 0;
+}
+
+.result-card {
+  width: min(480px, 100%);
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel);
+  box-shadow: 0 24px 60px #0009, inset 0 1px #ffffff12;
+  text-align: center;
+}
+
+.result-card.is-victory {
+  border-color: #e5b75d99;
+  box-shadow: 0 24px 60px #0009, 0 0 42px #d99b3733, inset 0 1px #ffffff20;
+}
+
+.result-eyebrow {
+  margin: 0;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.result-emblem {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: 22px auto 12px;
+  border: 2px solid #e5b75d88;
+  border-radius: 50%;
+  background: radial-gradient(circle, #d99b3733, #d99b3708 70%);
+  font-size: 43px;
+}
+
+.result-card h1 {
+  margin: 0;
+  color: var(--gold-bright);
+  font: 700 clamp(32px, 7vw, 48px)/1.1 var(--heading);
+}
+
+.result-lead {
+  margin: 10px 0 0;
+  color: var(--text-soft);
+  font-size: 15px;
+}
+
+.result-standings {
+  margin: 28px 0;
+  text-align: left;
+}
+
+.result-standings h2 {
+  margin: 0 0 10px;
+  color: #f3e7c7;
+  font: 700 18px var(--heading);
+}
+
+.result-standings ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-standings li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #ffffff14;
+  border-radius: 8px;
+  background: #ffffff08;
+}
+
+.result-standings li.is-winner {
+  border-color: #e5b75d88;
+  background: #e5b75d18;
+}
+
+.result-standings li strong {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.result-standings li small {
+  color: var(--teal-bright);
+  font-size: 11px;
+}
+
+.result-standings li > span:last-child {
+  white-space: nowrap;
+}
+
+.result-place {
+  color: var(--gold-bright);
+  font-weight: 900;
+}
+
+.result-action {
+  max-width: 260px;
+}
+

@@ -440,7 +440,7 @@
 
 .hand-card:disabled {
   opacity: 0.65;
-  cursor: wait;
+  cursor: default;
 }
 
 /* ---------- Botões: mesmo padrão dos botões de ação do lobby ---------- */
@@ -553,6 +553,10 @@
   border-radius: 10px;
   background: #101713;
   box-shadow: 0 16px 28px #000a;
+}
+
+.menu-return-mobile {
+  display: none;
 }
 
 /* ---------- Pergunta (skill PUZZLE) ---------- */

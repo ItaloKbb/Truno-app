@@ -11,6 +11,26 @@
     overflow: hidden;
   }
 
+  .match-result {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow-y: auto;
+  }
+
+  .result-card {
+    margin: auto;
+  }
+
+  .menu-return-desktop {
+    display: none;
+  }
+
+  .menu-return-mobile {
+    display: inline-flex;
+  }
+
   /* Avatares | mesa (60% da altura) | mão | ações */
   .match-board {
     display: grid;

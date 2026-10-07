@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
@@ -49,13 +49,14 @@ const PLAYER_POP_DURATION = 3500;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.mobile.css'],
+  styleUrls: ['./partida.css', './partida.result.css', './partida.mobile.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
 export class Partida implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) partidaId!: number;
   @Input({ required: true }) service!: GameService;
+  @Output() navigate = new EventEmitter<string>();
 
   private readonly authSession = inject(AuthSessionStore);
   private readonly skillService = inject(SkillService);
@@ -184,6 +185,16 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     return winner ? winner.nickname : '—';
   }
 
+  public didIWin(game: GameState): boolean {
+    return game.winnerPlayerId !== null && this.myPlayer(game)?.id === game.winnerPlayerId;
+  }
+
+  public finalStandings(game: GameState): GamePlayer[] {
+    return [...game.players].sort(
+      (a, b) => Number(b.id === game.winnerPlayerId) - Number(a.id === game.winnerPlayerId) || b.trophies - a.trophies,
+    );
+  }
+
   public currentPlayerName(game: GameState): string {
     const current = game.players.find((player) => player.id === game.currentPlayerId);
     return current ? current.nickname : '—';
@@ -248,12 +259,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public play(handCardId: number | null): void {
-    if (handCardId === null) return;
     const game = this.game();
-    if (game && !this.isMyTurn(game)) {
-      this.notifyError('⏳', 'Não é sua vez', `Aguarde a vez de ${this.currentPlayerName(game)}.`);
-      return;
-    }
+    if (handCardId === null || !game || this.pending() || !this.isMyTurn(game)) return;
     this.run(this.service.playCard(this.partidaId, handCardId));
   }
 
