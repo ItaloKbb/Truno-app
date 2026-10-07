@@ -1,0 +1,36 @@
+<button
+  type="button"
+  class="banner"
+  [class.is-tie]="!result.nickname"
+  [class.is-me]="result.isMe"
+  role="alert"
+  (click)="dismissed.emit()"
+>
+  <span class="eyebrow">Rodada {{ result.roundNumber }}</span>
+  <span class="crest" aria-hidden="true">
+    @if (result.nickname) {
+      <span class="crown">👑</span>
+      <span class="initial">{{ initial }}</span>
+    } @else {
+      <span class="initial">🤝</span>
+    }
+  </span>
+  <strong class="title">{{ title }}</strong>
+  @if (result.nickname) {
+    <span class="rewards">
+      @if (result.coins > 0) {
+        <span class="reward">🪙 +{{ result.coins }} moeda{{ result.coins === 1 ? '' : 's' }}</span>
+      }
+      @if (result.trophies > 0) {
+        <span class="reward"
+          >🏆 +{{ result.trophies }} troféu{{ result.trophies === 1 ? '' : 's' }}</span
+        >
+      }
+      @if (result.coins <= 0 && result.trophies <= 0) {
+        <span class="reward reward-none">Sem recompensa nesta rodada</span>
+      }
+    </span>
+  } @else {
+    <span class="rewards"><span class="reward reward-none">Ninguém levou a recompensa</span></span>
+  }
+</button>

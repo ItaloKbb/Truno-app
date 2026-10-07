@@ -659,10 +659,6 @@
   border-left-color: var(--teal);
 }
 
-.notice[data-kind='round'] {
-  border-left-color: #53b77b;
-}
-
 .notice[data-kind='error'] {
   border-left-color: #e0645c;
   animation:

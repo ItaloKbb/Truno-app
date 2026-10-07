@@ -20,8 +20,9 @@ import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
 import { SkillBurst } from '../../components/skill-burst/skill-burst';
+import { RoundBanner, type RoundResult } from '../../components/round-banner/round-banner';
 
-type NoticeKind = 'turn' | 'skill' | 'round' | 'error';
+type NoticeKind = 'turn' | 'skill' | 'error';
 
 interface MatchNotice {
   id: number;
@@ -37,18 +38,19 @@ interface SkillBurstItem {
   delay: number;
 }
 
-const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, round: 5000, error: 3500 };
+const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, error: 3500 };
 const MAX_NOTICES = 4;
 const BURST_DURATION = 1800;
 const BURST_STAGGER = 350;
 const MAX_BURSTS = 3;
 const AUTO_READY_SECONDS = 3;
+const ROUND_BANNER_DURATION = 4000;
 
 @Component({
   selector: 'app-partida',
   styleUrls: ['./partida.css', './partida.mobile.css'],
   templateUrl: './partida.html',
-  imports: [TurnFlames, SkillBurst],
+  imports: [TurnFlames, SkillBurst, RoundBanner],
 })
 export class Partida implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) partidaId!: number;
@@ -61,6 +63,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private nextNoticeId = 0;
   private readonly burstTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private autoReadyTimer?: ReturnType<typeof setInterval>;
+  private roundBannerTimer?: ReturnType<typeof setTimeout>;
   private nextBurstId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
@@ -74,6 +77,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly menuOpen = signal(false);
   /** Segundos até o "pronto" automático; null quando não há contagem. */
   public readonly autoReadyIn = signal<number | null>(null);
+  public readonly roundBanner = signal<RoundResult | null>(null);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -122,6 +126,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.burstTimers.forEach((handle) => clearTimeout(handle));
     this.burstTimers.clear();
     this.stopAutoReady();
+    clearTimeout(this.roundBannerTimer);
   }
 
   public cardImage(card: GameCard | null): string {
@@ -386,24 +391,40 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private announceRoundWinners(previous: GameState, updated: GameState): void {
     const lastSeen = Math.max(0, ...(previous.roundWinners ?? []).map((round) => round.roundNumber));
 
-    for (const round of updated.roundWinners ?? []) {
-      if (round.roundNumber <= lastSeen) continue;
-      this.pushNotice(
-        round.nickname
-          ? {
-              kind: 'round',
-              icon: '🏆',
-              title: `${this.displayName(round.nickname)} venceu a rodada ${round.roundNumber}`,
-              detail: `+${updated.settings.roundReward} moeda(s)`,
-            }
-          : {
-              kind: 'round',
-              icon: '🤝',
-              title: `Rodada ${round.roundNumber} empatada`,
-              detail: 'Ninguém levou a recompensa.',
-            },
+    // Se mais de uma rodada fechou entre duas atualizações, anuncia só a mais recente.
+    const round = (updated.roundWinners ?? [])
+      .filter((winner) => winner.roundNumber > lastSeen)
+      .reduce<RoundWinner | null>(
+        (latest, winner) => (!latest || winner.roundNumber > latest.roundNumber ? winner : latest),
+        null,
       );
-    }
+    if (!round) return;
+
+    // O ganho vem da diferença no placar do vencedor; sem diferença visível, usa a regra da partida.
+    const before = previous.players.find((player) => player.id === round.playerId);
+    const after = updated.players.find((player) => player.id === round.playerId);
+    const coinDiff = before && after ? after.matchCoins - before.matchCoins : 0;
+    const trophyDiff = before && after ? after.trophies - before.trophies : 0;
+
+    this.showRoundBanner({
+      roundNumber: round.roundNumber,
+      nickname: round.nickname,
+      isMe: !!round.nickname && round.nickname === this.myNickname(),
+      coins: round.nickname ? (coinDiff > 0 ? coinDiff : updated.settings.roundReward) : 0,
+      trophies: Math.max(0, trophyDiff),
+    });
+  }
+
+  private showRoundBanner(result: RoundResult): void {
+    clearTimeout(this.roundBannerTimer);
+    this.roundBanner.set(result);
+    this.roundBannerTimer = setTimeout(() => this.dismissRoundBanner(), ROUND_BANNER_DURATION);
+  }
+
+  public dismissRoundBanner(): void {
+    clearTimeout(this.roundBannerTimer);
+    this.roundBannerTimer = undefined;
+    this.roundBanner.set(null);
   }
 
   private announceTurn(previous: GameState | null, updated: GameState): void {

@@ -10,6 +10,10 @@
       <app-skill-burst [type]="burst.type" [style.--delay.ms]="burst.delay" />
     }
 
+    @if (roundBanner(); as result) {
+      <app-round-banner [result]="result" (dismissed)="dismissRoundBanner()" />
+    }
+
     <div class="notice-stack" role="status" aria-live="polite">
       @for (notice of notices(); track notice.id) {
         <button
