@@ -10,6 +10,10 @@
       <app-skill-burst [type]="burst.type" [style.--delay.ms]="burst.delay" />
     }
 
+    @if (roundBanner(); as result) {
+      <app-round-banner [result]="result" (dismissed)="dismissRoundBanner()" />
+    }
+
     <div class="notice-stack" role="status" aria-live="polite">
       @for (notice of notices(); track notice.id) {
         <button
@@ -40,23 +44,39 @@
       <!-- Só no celular: jogadores como avatares flutuando à esquerda -->
       <ul class="player-avatars" aria-label="Jogadores">
         @for (player of current.players; track player.id) {
-          <li
-            [class.is-current]="player.id === current.currentPlayerId"
-            [class.is-me]="isMe(player)"
-            [attr.aria-label]="player.nickname + ': ' + player.handSize + ' cartas, ' + player.matchCoins + ' moedas'"
-            [title]="player.nickname"
-          >
-            <span class="avatar-initial" aria-hidden="true">{{ initial(player.nickname) }}</span>
-            <span class="avatar-badge" aria-hidden="true">{{ player.handSize }}</span>
-            @if (current.phase === 'ENTRE_RODADAS' && player.ready) {
-              <span class="avatar-ready" aria-hidden="true">✓</span>
+          <li [class.is-current]="player.id === current.currentPlayerId" [class.is-me]="isMe(player)">
+            <button
+              type="button"
+              class="avatar-button"
+              [attr.aria-label]="'Ver ' + player.nickname"
+              [attr.aria-expanded]="selectedPlayerId() === player.id"
+              (click)="togglePlayer(player.id)"
+            >
+              <span class="avatar-initial" aria-hidden="true">{{ initial(player.nickname) }}</span>
+              <span class="avatar-badge" aria-hidden="true">{{ player.handSize }}</span>
+              @if (current.phase === 'ENTRE_RODADAS' && player.ready) {
+                <span class="avatar-ready" aria-hidden="true">✓</span>
+              }
+            </button>
+            @if (selectedPlayerId() === player.id) {
+              <div class="avatar-pop" role="status">
+                <strong>{{ player.nickname }}@if (isMe(player)) { <small>(você)</small> }</strong>
+                <span>🏆 {{ player.trophies }} troféu{{ player.trophies === 1 ? '' : 's' }}</span>
+                <span>🂠 {{ player.handSize }} carta{{ player.handSize === 1 ? '' : 's' }} na mão</span>
+              </div>
             }
           </li>
         }
       </ul>
 
-      <!-- No desktop é transparente (display: contents); no celular vira a folha do Menu -->
+      <!-- Só no celular: fundo escuro atrás da gaveta do Menu -->
+      @if (menuOpen()) {
+        <div class="menu-backdrop" aria-hidden="true" (click)="toggleMenu()"></div>
+      }
+
+      <!-- No desktop é transparente (display: contents); no celular vira a gaveta do Menu -->
       <div class="hud-sheet">
+        <button type="button" class="sheet-close" aria-label="Fechar menu" (click)="toggleMenu()">✕</button>
         <!-- HUD superior esquerdo: dados da partida -->
         <section class="hud hud-info" aria-label="Dados da partida">
           <p class="eyebrow">{{ phaseLabel(current.phase) }}</p>

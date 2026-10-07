@@ -39,7 +39,9 @@
 
 /* Barra, avatares e folha do menu só existem no layout de celular. */
 .mobile-bar,
-.player-avatars {
+.player-avatars,
+.menu-backdrop,
+.sheet-close {
   display: none;
 }
 
@@ -657,10 +659,6 @@
 
 .notice[data-kind='skill'] {
   border-left-color: var(--teal);
-}
-
-.notice[data-kind='round'] {
-  border-left-color: #53b77b;
 }
 
 .notice[data-kind='error'] {

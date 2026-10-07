@@ -1,0 +1,160 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(circle, #0009 0%, #0000 70%);
+  pointer-events: none;
+  animation: backdrop-in 0.3s ease-out;
+}
+
+.banner {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(360px, 100%);
+  padding: 22px 20px 20px;
+  border: 1px solid #e5b75d88;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #24382b, #101713 75%);
+  box-shadow:
+    0 24px 50px #000c,
+    0 0 40px #e5b75d33,
+    inset 0 1px #ffffff12;
+  color: #f5efe1;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: banner-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.banner.is-me {
+  border-color: #f3d995;
+  box-shadow:
+    0 24px 50px #000c,
+    0 0 60px #e5b75d77,
+    inset 0 1px #ffffff12;
+}
+
+.banner.is-tie {
+  border-color: #65b9bb77;
+  box-shadow:
+    0 24px 50px #000c,
+    inset 0 1px #ffffff12;
+}
+
+.eyebrow {
+  color: #e5b75d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.crest {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 3px solid #e5b75d;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #2f6f62, #123029 75%);
+  box-shadow: 0 0 24px #e5b75d66;
+}
+
+.is-tie .crest {
+  border-color: #65b9bb;
+  box-shadow: none;
+}
+
+.crown {
+  position: absolute;
+  top: -22px;
+  font-size: 26px;
+  animation: crown-bob 1.2s ease-in-out infinite alternate;
+}
+
+.initial {
+  color: #f4e4bb;
+  font:
+    700 34px/1 Georgia,
+    'Times New Roman',
+    serif;
+}
+
+.title {
+  color: #f4e4bb;
+  font:
+    700 21px/1.2 Georgia,
+    'Times New Roman',
+    serif;
+  overflow-wrap: anywhere;
+}
+
+.rewards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.reward {
+  padding: 5px 12px;
+  border: 1px solid #e5b75d66;
+  border-radius: 999px;
+  background: #e5b75d1a;
+  color: #f3d995;
+  font-size: 14px;
+  font-weight: 800;
+  animation: reward-in 0.4s ease-out 0.25s both;
+}
+
+.reward + .reward {
+  animation-delay: 0.4s;
+}
+
+.reward-none {
+  border-color: #ffffff22;
+  background: #ffffff0a;
+  color: #c3cdc5;
+  font-weight: 600;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes banner-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(20px);
+  }
+}
+
+@keyframes reward-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+}
+
+@keyframes crown-bob {
+  to {
+    transform: translateY(-4px) rotate(-6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  .banner,
+  .reward,
+  .crown {
+    animation: none;
+  }
+}
