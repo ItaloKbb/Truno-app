@@ -1,6 +1,6 @@
 <span class="burst">
   <span class="emoji">{{ icon }}</span>
-  @if (isSurprise || isPuzzle) {
+  @if (isSurprise || isPuzzle || isTheft) {
     <span class="surprise-particles">
       @for (particle of particles; track particle) {
         <i class="surprise-particle" [style.--angle]="(particle / particles.length * 360) + 'deg'"></i>
@@ -12,6 +12,18 @@
   }
   @if (isPuzzleResult) {
     <span class="surprise-outcome puzzle-outcome">{{ puzzleOutcomeText }}</span>
+  }
+  @if (isTheft && theftKind) {
+    <span class="theft-items">
+      @for (item of theftItems; track item) {
+        @if (theftKind === 'COIN') {
+          <i class="theft-item theft-coin" [style.--item-delay]="item * 90 + 'ms'" [style.--item-y]="((item - (theftItems.length - 1) / 2) * 34) + 'px'">🪙</i>
+        } @else {
+          <img class="theft-item theft-card" src="assets/cards/reverso.png" alt="" [style.--item-delay]="item * 90 + 'ms'" [style.--item-y]="((item - (theftItems.length - 1) / 2) * 34) + 'px'" />
+        }
+      }
+    </span>
+    <span class="surprise-outcome theft-outcome" [class.is-blocked]="theftBlocked">{{ theftOutcomeText }}</span>
   }
   @if (isBuy) {
     <span class="buy-cards">

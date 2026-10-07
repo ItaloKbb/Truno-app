@@ -70,7 +70,8 @@
 }
 
 /* Força 3+ sacode o emoji no auge do efeito. */
-:host(.is-puzzle.is-strong) .emoji {
+:host(.is-puzzle.is-strong) .emoji,
+:host(.is-theft.is-strong) .emoji {
   animation:
     skill-spin var(--burst-duration) ease-in-out var(--delay) both,
     puzzle-shake 0.12s linear calc(var(--delay) + var(--burst-duration) * 0.45) 4;
@@ -80,6 +81,62 @@
   border-color: #c9ffd9;
   background: #1d5a34;
   color: #effff3;
+}
+
+:host(.is-theft) .burst::after {
+  inset: calc(-40% - var(--particle-distance) * 0.15);
+  opacity: 0.66;
+}
+
+:host(.is-theft) .emoji {
+  font-size: min(var(--burst-size), 50vw);
+}
+
+.theft-items {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.theft-item {
+  position: absolute;
+  opacity: 0;
+  animation: theft-grab calc(var(--burst-duration) * 0.55) cubic-bezier(0.5, 0, 0.3, 1)
+    calc(var(--delay) + var(--burst-duration) * 0.3 + var(--item-delay)) both;
+}
+
+.theft-coin {
+  font-size: clamp(34px, 9vw, 54px);
+  font-style: normal;
+  filter: drop-shadow(0 0 10px #ffd84a);
+}
+
+.theft-card {
+  width: clamp(40px, 11vw, 62px);
+  border: 2px solid #c9ffd9;
+  border-radius: 7px;
+  box-shadow: 0 0 14px #4fd17a, 0 8px 16px #0009;
+}
+
+.theft-outcome {
+  border-color: #c9ffd9;
+  background: #1d5a34;
+  color: #effff3;
+}
+
+.theft-outcome.is-blocked {
+  border-color: #cddcff;
+  background: #24386b;
+  color: #eef3ff;
+}
+
+@keyframes theft-grab {
+  0% { opacity: 0; transform: translate(calc(var(--particle-distance) * 2.2), var(--item-y)) rotate(25deg) scale(0.6); }
+  20% { opacity: 1; }
+  70% { opacity: 1; transform: translate(calc(var(--particle-distance) * -1.2), calc(var(--item-y) * 0.5)) rotate(-15deg) scale(1.1); }
+  100% { opacity: 0; transform: translate(calc(var(--particle-distance) * -1.6), 0) rotate(-20deg) scale(0.4); }
 }
 
 :host(.is-buy) .burst::after {
@@ -233,11 +290,13 @@
   }
 
   .emoji,
-  :host(.is-puzzle.is-strong) .emoji {
+  :host(.is-puzzle.is-strong) .emoji,
+  :host(.is-theft.is-strong) .emoji {
     animation: none;
   }
 
-  .surprise-particle {
+  .surprise-particle,
+  .theft-item {
     display: none;
   }
 

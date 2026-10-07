@@ -91,6 +91,25 @@ export class MatchSoundService {
     this.playNotes(notes, 'triangle', 0.038 + strength * 0.012, startDelay);
   }
 
+  /** Puxão rápido e um "tlim" por item levado: moedas soam agudas, cartas raspam; escudo encerra em batida seca. */
+  playTheft(power: number, coins: boolean, amount: number, blocked: boolean, startDelay = 0): void {
+    const strength = Math.max(2, Math.min(3, power));
+    const notes: Note[] = [[700 + strength * 60, 0.06, 0], [420, 0.08, 0.05]];
+    if (blocked) {
+      notes.push([170, 0.22, 0.16]);
+      this.playNotes(notes, 'triangle', 0.05, startDelay);
+      return;
+    }
+    const count = Math.max(0, Math.min(strength, amount));
+    for (let index = 0; index < count; index++) {
+      const at = 0.16 + index * 0.1;
+      notes.push(coins ? [1200 + index * 160, 0.09, at] : [520 + index * 70, 0.07, at]);
+    }
+    // Força 3 fecha com uma risada de vilão em duas notas.
+    if (strength === 3) notes.push([300, 0.12, 0.2 + count * 0.1], [240, 0.18, 0.32 + count * 0.1]);
+    this.playNotes(notes, coins ? 'square' : 'triangle', 0.028 + strength * 0.01, startDelay);
+  }
+
   /** Suspense do desafio: o motivo de pergunta repete e sobe um degrau por ponto de força. */
   playPuzzle(power: number, startDelay = 0): void {
     const strength = Math.max(1, Math.min(4, power));

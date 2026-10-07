@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { SKILL_ICON, type SkillType } from '../../domain/truno-api';
+import { SKILL_ICON, type SkillType, type TheftKind } from '../../domain/truno-api';
 
 /** Cor do brilho de cada habilidade no efeito de giro. */
 const SKILL_GLOW: Record<SkillType, string> = {
@@ -28,6 +28,7 @@ const SKILL_GLOW: Record<SkillType, string> = {
     '[class.is-surprise]': 'isSurprise',
     '[class.is-buy]': 'isBuy',
     '[class.is-puzzle]': 'isPuzzle',
+    '[class.is-theft]': 'isTheft',
     '[class.is-bad]': 'isBad',
     '[class.is-strong]': 'power >= 3',
   },
@@ -37,6 +38,9 @@ export class SkillBurst {
   @Input() roll: number | null = null;
   @Input() coinDelta: number | null = null;
   @Input() cardsDrawn: number | null = null;
+  @Input() theftKind: TheftKind | null = null;
+  @Input() theftAmount: number | null = null;
+  @Input() theftBlocked = false;
   /** Nulo na abertura do desafio; definido no efeito da resposta. */
   @Input() puzzleCorrect: boolean | null = null;
   @Input() puzzleAmount: number | null = null;
@@ -59,6 +63,23 @@ export class SkillBurst {
 
   get isBuy(): boolean {
     return this.type === 'BUY';
+  }
+
+  get isTheft(): boolean {
+    return this.type === 'THEFT';
+  }
+
+  /** Itens que voam do alvo (direita) para quem roubou (esquerda). */
+  get theftItems(): number[] {
+    if (this.theftBlocked) return [];
+    const count = Math.max(0, Math.min(this.power, this.theftAmount ?? this.power));
+    return Array.from({ length: count }, (_, index) => index);
+  }
+
+  get theftOutcomeText(): string {
+    if (this.theftBlocked) return '🛡️ Bloqueado';
+    const amount = this.theftAmount ?? 0;
+    return `+${amount} ${this.theftKind === 'COIN' ? '🪙' : '🂠'}`;
   }
 
   get isPuzzle(): boolean {
@@ -109,6 +130,7 @@ export class SkillBurst {
   get glow(): string {
     if (this.isSurprise && this.roll !== null) return this.isBad ? '#ff5e78' : '#ffe080';
     if (this.isPuzzleResult) return this.puzzleCorrect ? '#6dffa0' : '#ff5e78';
+    if (this.isTheft && this.theftKind) return this.theftBlocked ? '#8fb4ff' : this.theftKind === 'COIN' ? '#ffd84a' : '#4fd17a';
     return SKILL_GLOW[this.type];
   }
 }
