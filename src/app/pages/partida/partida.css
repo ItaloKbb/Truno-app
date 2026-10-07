@@ -37,6 +37,16 @@
   min-height: calc(100vh - 32px);
 }
 
+/* Barra, avatares e folha do menu só existem no layout de celular. */
+.mobile-bar,
+.player-avatars {
+  display: none;
+}
+
+.hud-sheet {
+  display: contents;
+}
+
 .hud,
 .hand-area,
 .status-banner {
