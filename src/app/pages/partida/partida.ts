@@ -104,7 +104,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public cardImage(card: GameCard | null): string {
-    if (!card) return '/assets/cards/reverso.png';
+    if (!card) return 'assets/cards/reverso.png';
     return cardAsset(card.valor, card.naipe);
   }
 

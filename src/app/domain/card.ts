@@ -88,5 +88,5 @@ export function cardId(suit: Suit, rank: Rank): string {
 }
 
 export function cardImageUrl(suit: Suit, rank: Rank): string {
-  return `/assets/cards/${RANK_ASSET[rank]}-${SUIT_ASSET[suit]}.png`;
+  return `assets/cards/${RANK_ASSET[rank]}-${SUIT_ASSET[suit]}.png`;
 }

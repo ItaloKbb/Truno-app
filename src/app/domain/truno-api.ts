@@ -136,7 +136,7 @@ export function cardLabel(valor: CardValue, naipe: CardSuit): string {
 }
 
 export function cardAsset(valor: CardValue, naipe: CardSuit): string {
-  return `/assets/cards/${VALUE_ASSET[valor]}-${SUIT_ASSET[naipe]}.png`;
+  return `assets/cards/${VALUE_ASSET[valor]}-${SUIT_ASSET[naipe]}.png`;
 }
 
 /** `POST /auth/sessions` */
