@@ -1,7 +1,44 @@
-<main class="match-page">
+<main class="match-page" (pointerdown)="sounds.activate()" (keydown)="sounds.activate()">
   @if (errorMessage(); as message) {
     <p class="status-banner status-error" role="alert">{{ message }}</p>
   } @else if (game(); as current) {
+    @if (current.phase === 'FINALIZADO') {
+      <section class="match-result" aria-labelledby="match-result-title">
+        <div class="result-card" [class.is-victory]="didIWin(current)">
+          <p class="result-eyebrow">Partida finalizada · {{ current.name }}</p>
+          <div class="result-emblem" aria-hidden="true">🏆</div>
+          <h1 id="match-result-title">{{ didIWin(current) ? 'Vitória!' : 'Fim de partida' }}</h1>
+          @if (current.winnerPlayerId !== null) {
+            <p class="result-lead">
+              @if (didIWin(current)) {
+                Você venceu a partida!
+              } @else {
+                {{ winnerName(current) }} venceu a partida.
+              }
+            </p>
+          } @else {
+            <p class="result-lead">A partida terminou sem vencedor.</p>
+          }
+
+          <div class="result-standings">
+            <h2>Resultado final</h2>
+            <ol>
+              @for (player of finalStandings(current); track player.id) {
+                <li [class.is-winner]="player.id === current.winnerPlayerId" [class.is-me]="isMe(player)">
+                  <span class="result-place">{{ $index + 1 }}º</span>
+                  <strong>{{ player.nickname }}@if (isMe(player)) { <small>(você)</small> }</strong>
+                  <span>🏆 {{ player.trophies }}</span>
+                </li>
+              }
+            </ol>
+          </div>
+
+          <button type="button" class="btn btn-primary result-action" (click)="navigate.emit('/lobby')">
+            Voltar ao lobby
+          </button>
+        </div>
+      </section>
+    } @else {
     @if (isMyTurn(current)) {
       <app-turn-flames />
     }
@@ -138,6 +175,9 @@
 
       <!-- Centro: mesa -->
       <section class="table-area" aria-label="Mesa">
+        @for (effect of turnEffects(); track effect) {
+          <span class="turn-rim-effect" aria-hidden="true"></span>
+        }
         <div class="table-felt">
           <!-- Só no celular: o essencial da partida "impresso" no feltro -->
           <p class="felt-print">
@@ -191,7 +231,7 @@
                 class="hand-card"
                 [style.--i]="i"
                 [style.--n]="n"
-                [disabled]="pending()"
+                [disabled]="pending() || !isMyTurn(current) || !!current.pendingPuzzle"
                 (click)="play(card.handCardId)"
               >
                 <img [src]="cardImage(card)" [alt]="cardName(card)" />
@@ -246,33 +286,53 @@
           </button>
           @if (menuOpen()) {
             <div id="match-menu" class="menu-panel">
-              @if (current.phase !== 'FINALIZADO' && current.phase !== 'CANCELADO') {
+              @if (current.phase !== 'CANCELADO') {
                 <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="cancel()">
                   <span class="btn-icon" aria-hidden="true">✕</span> Cancelar partida
                 </button>
               }
-              <a class="btn btn-ghost" href="lobby"><span class="btn-icon" aria-hidden="true">←</span> Voltar ao lobby</a>
+              <button type="button" class="btn btn-ghost" [attr.aria-pressed]="sounds.enabled()" (click)="sounds.toggle()">
+                <span class="btn-icon" aria-hidden="true">{{ sounds.enabled() ? '🔊' : '🔇' }}</span>
+                Som {{ sounds.enabled() ? 'ligado' : 'desligado' }}
+              </button>
+              <button type="button" class="btn btn-ghost menu-return-desktop" (click)="navigate.emit('/lobby')">
+                <span class="btn-icon" aria-hidden="true">←</span> Voltar ao lobby
+              </button>
+              <button type="button" class="btn btn-ghost menu-return-mobile" (click)="toggleMenu()">
+                <span class="btn-icon" aria-hidden="true">▶</span> Retomar partida
+              </button>
             </div>
           }
         </div>
       </nav>
 
       @if (current.pendingPuzzle; as puzzle) {
-        <div class="puzzle-overlay">
+        <div class="puzzle-overlay" [class.is-waiting]="!canAnswerPuzzle(current)">
           <section class="puzzle-dialog" role="dialog" aria-modal="true" aria-labelledby="puzzle-title">
-            <h2 id="puzzle-title">❓ Pergunta pendente</h2>
+            <span class="puzzle-decoration" aria-hidden="true">?</span>
+            <p class="puzzle-kicker">Carta desafio · Rodada {{ current.roundNumber }}</p>
+            <h2 id="puzzle-title">{{ canAnswerPuzzle(current) ? 'O QUE É, O QUE É?' : 'DESAFIO EM ANDAMENTO' }}</h2>
+            <p class="puzzle-subtitle">
+              {{ canAnswerPuzzle(current) ? 'Escolha uma alternativa para seguir a rodada.' : currentPlayerName(current) + ' está respondendo. Aguarde a escolha.' }}
+            </p>
             <p class="question-text">{{ puzzle.question }}</p>
-            <div class="alternative-list">
-              @for (alternative of puzzle.alternatives; track alternative; let index = $index) {
-                <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
-                  {{ alternative }}
-                </button>
-              }
-            </div>
+            @if (canAnswerPuzzle(current)) {
+              <div class="alternative-list">
+                @for (alternative of puzzle.alternatives; track $index; let index = $index) {
+                  <button type="button" class="option-button" [disabled]="pending()" (click)="answerPuzzle(puzzle.challengeId, index)">
+                    <span class="option-index" aria-hidden="true">{{ index + 1 }}</span>
+                    {{ alternative }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="puzzle-wait-message" role="status"><span aria-hidden="true">● ● ●</span> Esperando a resposta</p>
+            }
           </section>
         </div>
       }
     </div>
+    }
   } @else if (loading()) {
     <p class="status-banner">Carregando a partida...</p>
   }

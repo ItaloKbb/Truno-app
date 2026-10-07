@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
@@ -18,6 +18,7 @@ import {
 import { GameService } from '../../services/modules/game.service';
 import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
+import { MatchSoundService, type MatchSound } from '../../services/modules/match-sound.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
 import { SkillBurst } from '../../components/skill-burst/skill-burst';
 import { RoundBanner, type RoundResult } from '../../components/round-banner/round-banner';
@@ -46,19 +47,22 @@ const MAX_BURSTS = 3;
 const AUTO_READY_SECONDS = 3;
 const ROUND_BANNER_DURATION = 4000;
 const PLAYER_POP_DURATION = 3500;
+const TURN_RIM_DURATION = 1250;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.mobile.css'],
+  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.turn.css', './partida.mobile.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
 export class Partida implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) partidaId!: number;
   @Input({ required: true }) service!: GameService;
+  @Output() navigate = new EventEmitter<string>();
 
   private readonly authSession = inject(AuthSessionStore);
   private readonly skillService = inject(SkillService);
+  public readonly sounds = inject(MatchSoundService);
   private liveUpdates?: Subscription;
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextNoticeId = 0;
@@ -66,7 +70,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private autoReadyTimer?: ReturnType<typeof setInterval>;
   private roundBannerTimer?: ReturnType<typeof setTimeout>;
   private playerPopTimer?: ReturnType<typeof setTimeout>;
+  private turnRimTimer?: ReturnType<typeof setTimeout>;
   private nextBurstId = 0;
+  private nextTurnEffectId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
   public readonly game = signal<GameState | null>(null);
@@ -81,6 +87,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly autoReadyIn = signal<number | null>(null);
   public readonly roundBanner = signal<RoundResult | null>(null);
   public readonly selectedPlayerId = signal<number | null>(null);
+  public readonly turnEffects = signal<number[]>([]);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -105,6 +112,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public load(): void {
+    clearTimeout(this.turnRimTimer);
+    this.turnEffects.set([]);
     this.loading.set(true);
     this.errorMessage.set('');
     this.game.set(null);
@@ -131,6 +140,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.stopAutoReady();
     clearTimeout(this.roundBannerTimer);
     clearTimeout(this.playerPopTimer);
+    clearTimeout(this.turnRimTimer);
   }
 
   public cardImage(card: GameCard | null): string {
@@ -179,9 +189,23 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     return !!nickname && game.players.some((player) => player.id === game.currentPlayerId && player.nickname === nickname);
   }
 
+  public canAnswerPuzzle(game: GameState): boolean {
+    return !!game.pendingPuzzle && game.roundStatus === 'AGUARDANDO_PUZZLE' && this.isMyTurn(game);
+  }
+
   public winnerName(game: GameState): string {
     const winner = game.players.find((player) => player.id === game.winnerPlayerId);
     return winner ? winner.nickname : '—';
+  }
+
+  public didIWin(game: GameState): boolean {
+    return game.winnerPlayerId !== null && this.myPlayer(game)?.id === game.winnerPlayerId;
+  }
+
+  public finalStandings(game: GameState): GamePlayer[] {
+    return [...game.players].sort(
+      (a, b) => Number(b.id === game.winnerPlayerId) - Number(a.id === game.winnerPlayerId) || b.trophies - a.trophies,
+    );
   }
 
   public currentPlayerName(game: GameState): string {
@@ -248,12 +272,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public play(handCardId: number | null): void {
-    if (handCardId === null) return;
     const game = this.game();
-    if (game && !this.isMyTurn(game)) {
-      this.notifyError('⏳', 'Não é sua vez', `Aguarde a vez de ${this.currentPlayerName(game)}.`);
-      return;
-    }
+    if (handCardId === null || !game || this.pending() || !this.isMyTurn(game) || !!game.pendingPuzzle) return;
     this.run(this.service.playCard(this.partidaId, handCardId));
   }
 
@@ -262,6 +282,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public answerPuzzle(challengeId: number, alternativeIndex: number): void {
+    const game = this.game();
+    if (!game || this.pending() || !this.canAnswerPuzzle(game) || game.pendingPuzzle?.challengeId !== challengeId) return;
     this.run(this.service.answerPuzzle(this.partidaId, challengeId, alternativeIndex));
   }
 
@@ -301,6 +323,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       // Erro de ação vira aviso: o tabuleiro continua na tela.
       error: (error: unknown) => {
         this.pending.set(false);
+        this.sounds.play('error');
         this.notifyError(
           '⚠️',
           'Ação não permitida',
@@ -341,11 +364,52 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.game.set(updated);
 
     if (previous) {
+      this.playStateSound(previous, updated);
       this.announceSkills(previous, updated);
       this.announceRoundWinners(previous, updated);
     }
     this.announceTurn(previous, updated);
     this.syncAutoReady(updated);
+  }
+
+  private playStateSound(previous: GameState, updated: GameState): void {
+    if (updated.stateVersion <= previous.stateVersion) return;
+
+    const turnChanged =
+      updated.phase === 'EM_ANDAMENTO' &&
+      updated.currentPlayerId !== null &&
+      (previous.phase !== 'EM_ANDAMENTO' || updated.currentPlayerId !== previous.currentPlayerId);
+    if (turnChanged) this.showTurnRim();
+
+    let effect: MatchSound | null = null;
+    if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
+      effect = this.didIWin(updated) ? 'victory' : 'round';
+    } else if (updated.phase === 'CANCELADO' && previous.phase !== 'CANCELADO') {
+      effect = 'cancel';
+    } else if (updated.players.some((player) => player.trophies > (previous.players.find((old) => old.id === player.id)?.trophies ?? 0))) {
+      effect = 'trophy';
+    } else if ((updated.roundWinners?.length ?? 0) > (previous.roundWinners?.length ?? 0)) {
+      effect = 'round';
+    } else if (!previous.pendingPuzzle && updated.pendingPuzzle) {
+      effect = 'puzzle';
+    } else if (previous.pendingPuzzle && !updated.pendingPuzzle) {
+      effect = 'answer';
+    } else if (updated.plays.some((play) => play.card.skill && !previous.plays.some((old) => old.order === play.order && previous.roundNumber === updated.roundNumber))) {
+      effect = 'skill';
+    } else if (updated.plays.length > previous.plays.length && updated.roundNumber === previous.roundNumber) {
+      effect = 'card';
+    } else if (updated.players.some((player) => player.ready && !previous.players.find((old) => old.id === player.id)?.ready)) {
+      effect = 'ready';
+    }
+
+    if (effect) this.sounds.play(effect);
+    if (turnChanged) this.sounds.play('turn', effect ? 0.22 : 0);
+  }
+
+  private showTurnRim(): void {
+    clearTimeout(this.turnRimTimer);
+    this.turnEffects.set([++this.nextTurnEffectId]);
+    this.turnRimTimer = setTimeout(() => this.turnEffects.set([]), TURN_RIM_DURATION);
   }
 
   /** Entre rodadas, marca "pronto" sozinho se o jogador não apertar a tempo. */

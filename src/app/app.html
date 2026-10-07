@@ -12,7 +12,7 @@
 <app-perguntas [service]="puzzleService" />
 }
 @case ('partida/:id') {
-<app-partida [service]="gameService" [partidaId]="partidaId()" />
+<app-partida [service]="gameService" [partidaId]="partidaId()" (navigate)="navigate($event)" />
 }
 @case ('ranking') {
 <app-ranking [ranking]="rankingService" [playerId]="auth.session()?.user?.id ?? null" (navigate)="navigate($event)" />

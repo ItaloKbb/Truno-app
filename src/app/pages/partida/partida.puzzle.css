@@ -1,0 +1,195 @@
+/* A carta de desafio usa a linguagem azul e as alternativas redondas da página de puzzles. */
+.puzzle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  background: #061524d9;
+  backdrop-filter: blur(6px);
+}
+
+.puzzle-dialog {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(600px, 100%);
+  max-height: calc(100dvh - 32px);
+  padding: clamp(22px, 5vw, 38px);
+  overflow-y: auto;
+  border: 3px solid #96cfff;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 8% 0%, #7cc6ff99 0 8%, transparent 27%),
+    radial-gradient(circle at 100% 100%, #61a9ee70 0 10%, transparent 32%),
+    linear-gradient(145deg, #2377bf, #164c98 60%, #103877);
+  box-shadow: 0 25px 70px #000b, inset 0 0 0 4px #ffffff18;
+  color: #fff;
+}
+
+.puzzle-dialog::before,
+.puzzle-dialog::after {
+  position: absolute;
+  z-index: -1;
+  width: 165px;
+  height: 165px;
+  border: 2px dashed #ffffff3d;
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.puzzle-dialog::before {
+  top: -95px;
+  left: -65px;
+}
+
+.puzzle-dialog::after {
+  right: -100px;
+  bottom: -105px;
+}
+
+.puzzle-decoration {
+  position: absolute;
+  top: 7px;
+  right: 24px;
+  color: #ffffff24;
+  font: 900 126px/1 var(--heading);
+  transform: rotate(13deg);
+  pointer-events: none;
+}
+
+.puzzle-kicker {
+  position: relative;
+  margin: 0 0 8px;
+  color: #cceaff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.puzzle-dialog h2 {
+  position: relative;
+  margin: 0;
+  color: #fff;
+  font: 900 clamp(25px, 6vw, 38px)/1.1 var(--heading);
+  text-shadow: 0 3px 0 #092f6b, 0 6px 14px #092f6b99;
+}
+
+.puzzle-subtitle {
+  position: relative;
+  margin: 9px 0 22px;
+  color: #e5f5ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.question-text {
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border: 2px solid #ffffffa8;
+  border-radius: 16px;
+  background: #eff8ff;
+  box-shadow: 0 7px 0 #0b33748a;
+  color: #123464;
+  font-size: clamp(18px, 4vw, 24px);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.alternative-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 8px 14px;
+  border: 2px solid #123464;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 5px 0 #082d6a;
+  color: #123464;
+  font: 800 14px/1.25 'Trebuchet MS', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+  overflow-wrap: anywhere;
+}
+
+.option-index {
+  display: grid;
+  place-items: center;
+  flex: 0 0 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: #1c64ac;
+  color: #fff;
+}
+
+.option-button:hover:not(:disabled),
+.option-button:focus-visible {
+  outline: none;
+  background: #dff4ff;
+  box-shadow: 0 3px 0 #082d6a;
+  transform: translateY(2px);
+}
+
+.option-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.puzzle-overlay.is-waiting .puzzle-dialog {
+  border-color: #9ed8e2;
+  background:
+    radial-gradient(circle at 8% 0%, #74c4d788 0 8%, transparent 27%),
+    linear-gradient(145deg, #1a6b88, #164d70 65%, #103855);
+}
+
+.puzzle-wait-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 54px;
+  margin: 0;
+  border: 2px dashed #d7f5ff99;
+  border-radius: 999px;
+  color: #f0fbff;
+  font-weight: 800;
+}
+
+.puzzle-wait-message span {
+  color: #b4ebff;
+  letter-spacing: 3px;
+  animation: puzzle-dots 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes puzzle-dots {
+  to { opacity: 0.35; }
+}
+
+@media (max-width: 560px) {
+  .alternative-list {
+    grid-template-columns: 1fr;
+  }
+
+  .puzzle-dialog {
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puzzle-wait-message span {
+    animation: none;
+  }
+}
