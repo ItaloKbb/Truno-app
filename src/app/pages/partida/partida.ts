@@ -3,6 +3,7 @@ import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
   BUY_POWER,
+  PUZZLE_POWER,
   SKILL_ICON,
   SKILL_LABEL,
   SURPRISE_POWER,
@@ -44,6 +45,8 @@ interface SkillBurstItem {
   roll: number | null;
   coinDelta: number | null;
   cardsDrawn: number | null;
+  puzzleCorrect: boolean | null;
+  puzzleAmount: number | null;
 }
 
 const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, error: 3500 };
@@ -378,6 +381,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     if (previous) {
       this.playStateSound(previous, updated);
       this.announceSkills(previous, updated);
+      this.announcePuzzleResults(previous, updated);
       this.announceRoundWinners(previous, updated);
     }
     this.announceTurn(previous, updated);
@@ -404,6 +408,12 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         play.card.skill === 'BUY' &&
         (updated.roundNumber !== previous.roundNumber || !previous.plays.some((old) => old.order === play.order)),
     );
+    const puzzleOpened = updated.plays.find(
+      (play) =>
+        play.card.skill === 'PUZZLE' &&
+        (updated.roundNumber !== previous.roundNumber || !previous.plays.some((old) => old.order === play.order)),
+    );
+    const puzzleResolved = this.resolvedPuzzles(previous, updated)[0];
 
     let effect: MatchSound | null = null;
     if (updated.phase === 'FINALIZADO' && previous.phase !== 'FINALIZADO') {
@@ -428,8 +438,15 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
     if (surprise) this.sounds.playSurprise(SURPRISE_POWER[surprise.card.naipe], (surprise.surpriseRoll ?? 0) > 0);
     if (buy) this.sounds.playBuy(BUY_POWER[buy.card.naipe], buy.buyCardsDrawn ?? BUY_POWER[buy.card.naipe], surprise ? 0.55 : 0);
-    const specialSkill = !!surprise || !!buy;
-    if (effect && (!specialSkill || effect !== 'skill')) this.sounds.play(effect, specialSkill ? 0.7 : 0);
+    // Abertura e resposta do puzzle substituem os sons genéricos 'puzzle', 'answer' e 'skill'.
+    if (puzzleOpened && !puzzleResolved) this.sounds.playPuzzle(PUZZLE_POWER[puzzleOpened.card.naipe], surprise || buy ? 0.55 : 0);
+    if (puzzleResolved) {
+      this.sounds.playPuzzleResult(PUZZLE_POWER[puzzleResolved.card.naipe], !!puzzleResolved.puzzleCorrect, surprise || buy ? 0.55 : 0);
+    }
+    const puzzleSound = !!puzzleOpened || !!puzzleResolved;
+    const specialSkill = !!surprise || !!buy || puzzleSound;
+    const replaced = effect === 'skill' || (puzzleSound && (effect === 'puzzle' || effect === 'answer'));
+    if (effect && (!specialSkill || !replaced)) this.sounds.play(effect, specialSkill ? 0.7 : 0);
     if (turnChanged) this.sounds.play('turn', specialSkill ? 1 : effect ? 0.22 : 0);
   }
 
@@ -491,6 +508,10 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       const buyDetail = buyCardsDrawn !== null && buyCardsDrawn !== undefined
         ? `${buyCardsDrawn > 0 ? `O próximo jogador comprou ${buyCardsDrawn} ${buyCardsDrawn === 1 ? 'carta' : 'cartas'}` : 'Nenhuma carta comprada'} · força ${BUY_POWER[play.card.naipe]}`
         : null;
+      const puzzlePower = PUZZLE_POWER[play.card.naipe];
+      const puzzleDetail = play.card.skill === 'PUZZLE'
+        ? `Acerto ganha ${puzzlePower} ${puzzlePower === 1 ? 'moeda' : 'moedas'}; erro compra ${puzzlePower} ${puzzlePower === 1 ? 'carta' : 'cartas'} · força ${puzzlePower}`
+        : null;
       this.pushNotice({
         kind: 'skill',
         icon: SKILL_ICON[play.card.skill],
@@ -499,24 +520,62 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
           : buyDetail
             ? `${this.displayName(play.nickname)} usou Compra!`
           : `${this.displayName(play.nickname)} usou ${definition?.name ?? SKILL_LABEL[play.card.skill]}`,
-        detail: surpriseDetail ?? buyDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
+        detail: surpriseDetail ?? buyDetail ?? puzzleDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
       });
       this.pushBurst(play.card.skill, play);
     }
   }
 
-  private pushBurst(type: SkillType, play: GamePlay): void {
+  /** Puzzles respondidos desde o último estado (inclui abertura e resposta no mesmo poll). */
+  private resolvedPuzzles(previous: GameState, updated: GameState): GamePlay[] {
+    const sameRound = previous.roundNumber === updated.roundNumber;
+    return updated.plays.filter(
+      (play) =>
+        play.card.skill === 'PUZZLE' &&
+        typeof play.puzzleCorrect === 'boolean' &&
+        (!sameRound || typeof previous.plays.find((old) => old.order === play.order)?.puzzleCorrect !== 'boolean'),
+    );
+  }
+
+  private announcePuzzleResults(previous: GameState, updated: GameState): void {
+    for (const play of this.resolvedPuzzles(previous, updated)) {
+      const power = PUZZLE_POWER[play.card.naipe];
+      const amount = play.puzzleAmount ?? power;
+      const correct = !!play.puzzleCorrect;
+      this.pushNotice({
+        kind: 'skill',
+        icon: correct ? '✅' : '❌',
+        title: `${this.displayName(play.nickname)} ${correct ? 'acertou' : 'errou'} o puzzle!`,
+        detail: correct
+          ? `Ganhou ${amount} ${amount === 1 ? 'moeda' : 'moedas'} · força ${power}`
+          : `${amount > 0 ? `Pagou a prenda: comprou ${amount} ${amount === 1 ? 'carta' : 'cartas'}` : 'Sem cartas para comprar'} · força ${power}`,
+      });
+      this.pushBurst('PUZZLE', play, true);
+    }
+  }
+
+  private pushBurst(type: SkillType, play: GamePlay, puzzleResult = false): void {
     if (this.skillBursts().length >= MAX_BURSTS) return;
     const id = ++this.nextBurstId;
     // Habilidades do mesmo poll entram escalonadas; o tempo de vida cobre o atraso.
     const delay = this.skillBursts().length * BURST_STAGGER;
-    const power = type === 'SURPRISE' ? SURPRISE_POWER[play.card.naipe] : type === 'BUY' ? BUY_POWER[play.card.naipe] : 1;
-    const duration = type === 'SURPRISE' ? 1500 + power * 240 : type === 'BUY' ? 1500 + power * 230 : BURST_DURATION;
+    const power =
+      type === 'SURPRISE' ? SURPRISE_POWER[play.card.naipe]
+      : type === 'BUY' ? BUY_POWER[play.card.naipe]
+      : type === 'PUZZLE' ? PUZZLE_POWER[play.card.naipe]
+      : 1;
+    const duration =
+      type === 'SURPRISE' ? 1500 + power * 240
+      : type === 'BUY' ? 1500 + power * 230
+      : type === 'PUZZLE' ? 1400 + power * 250
+      : BURST_DURATION;
     this.skillBursts.update((list) => [...list, {
       id, type, delay, duration, power,
       roll: type === 'SURPRISE' ? (play.surpriseRoll ?? null) : null,
       coinDelta: type === 'SURPRISE' ? (play.surpriseCoinDelta ?? null) : null,
       cardsDrawn: type === 'BUY' ? (play.buyCardsDrawn ?? null) : null,
+      puzzleCorrect: puzzleResult ? !!play.puzzleCorrect : null,
+      puzzleAmount: puzzleResult ? (play.puzzleAmount ?? null) : null,
     }]);
     this.burstTimers.set(
       id,

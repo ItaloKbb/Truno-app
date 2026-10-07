@@ -91,6 +91,44 @@ export class MatchSoundService {
     this.playNotes(notes, 'triangle', 0.038 + strength * 0.012, startDelay);
   }
 
+  /** Suspense do desafio: o motivo de pergunta repete e sobe um degrau por ponto de força. */
+  playPuzzle(power: number, startDelay = 0): void {
+    const strength = Math.max(1, Math.min(4, power));
+    const notes: Note[] = [];
+    for (let step = 0; step < strength; step++) {
+      const base = 440 + step * 70;
+      const at = step * 0.24;
+      notes.push([base, 0.1, at], [base * 1.26, 0.1, at + 0.1]);
+    }
+    notes.push([440 + strength * 90, 0.22, strength * 0.24]);
+    this.playNotes(notes, 'sine', 0.045 + strength * 0.01, startDelay);
+  }
+
+  /** Acerto sobe em arpejo brilhante; erro desce em zumbido. Naipes fortes alongam e reforçam. */
+  playPuzzleResult(power: number, correct: boolean, startDelay = 0): void {
+    const strength = Math.max(1, Math.min(4, power));
+    if (correct) {
+      const notes: Note[] = Array.from({ length: strength + 2 }, (_, index) => [
+        523 * 2 ** (index / 4),
+        0.12 + strength * 0.02,
+        index * 0.08,
+      ]);
+      // Força alta fecha com um acorde agudo.
+      if (strength >= 3) {
+        const end = (strength + 2) * 0.08;
+        notes.push([1047, 0.32, end], [1319, 0.32, end], ...(strength === 4 ? [[1568, 0.4, end] as const] : []));
+      }
+      this.playNotes(notes, 'sine', 0.04 + strength * 0.012, startDelay);
+      return;
+    }
+    const notes: Note[] = Array.from({ length: strength + 1 }, (_, index) => [
+      330 - index * (30 + strength * 6),
+      0.14 + strength * 0.02,
+      index * 0.12,
+    ]);
+    this.playNotes(notes, 'sawtooth', 0.03 + strength * 0.012, startDelay);
+  }
+
   private playNotes(notes: readonly Note[], wave: OscillatorType, volume: number, startDelay = 0): void {
     if (!this.enabled()) return;
     this.activate();

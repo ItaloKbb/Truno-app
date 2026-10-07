@@ -60,6 +60,28 @@
   font-size: min(var(--burst-size), 55vw);
 }
 
+:host(.is-puzzle) .burst::after {
+  inset: calc(-40% - var(--particle-distance) * 0.2);
+  opacity: 0.7;
+}
+
+:host(.is-puzzle) .emoji {
+  font-size: min(var(--burst-size), 55vw);
+}
+
+/* Força 3+ sacode o emoji no auge do efeito. */
+:host(.is-puzzle.is-strong) .emoji {
+  animation:
+    skill-spin var(--burst-duration) ease-in-out var(--delay) both,
+    puzzle-shake 0.12s linear calc(var(--delay) + var(--burst-duration) * 0.45) 4;
+}
+
+.puzzle-outcome {
+  border-color: #c9ffd9;
+  background: #1d5a34;
+  color: #effff3;
+}
+
 :host(.is-buy) .burst::after {
   inset: -65%;
   opacity: 0.68;
@@ -148,6 +170,12 @@
   color: #fff0f3;
 }
 
+@keyframes puzzle-shake {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -6px 3px; }
+  75% { translate: 6px -3px; }
+}
+
 @keyframes surprise-spark {
   0%, 32% { opacity: 0; transform: rotate(var(--angle)) translateY(0) scale(0.2); }
   48% { opacity: 1; }
@@ -204,7 +232,8 @@
     animation: skill-fade var(--burst-duration) ease-in-out var(--delay) both;
   }
 
-  .emoji {
+  .emoji,
+  :host(.is-puzzle.is-strong) .emoji {
     animation: none;
   }
 

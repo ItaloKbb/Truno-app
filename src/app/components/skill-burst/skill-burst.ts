@@ -27,7 +27,9 @@ const SKILL_GLOW: Record<SkillType, string> = {
     '[style.--particle-distance.px]': 'particleDistance',
     '[class.is-surprise]': 'isSurprise',
     '[class.is-buy]': 'isBuy',
+    '[class.is-puzzle]': 'isPuzzle',
     '[class.is-bad]': 'isBad',
+    '[class.is-strong]': 'power >= 3',
   },
 })
 export class SkillBurst {
@@ -35,6 +37,9 @@ export class SkillBurst {
   @Input() roll: number | null = null;
   @Input() coinDelta: number | null = null;
   @Input() cardsDrawn: number | null = null;
+  /** Nulo na abertura do desafio; definido no efeito da resposta. */
+  @Input() puzzleCorrect: boolean | null = null;
+  @Input() puzzleAmount: number | null = null;
 
   private _power = 1;
   particles: number[] = [];
@@ -56,6 +61,19 @@ export class SkillBurst {
     return this.type === 'BUY';
   }
 
+  get isPuzzle(): boolean {
+    return this.type === 'PUZZLE';
+  }
+
+  get isPuzzleResult(): boolean {
+    return this.isPuzzle && this.puzzleCorrect !== null;
+  }
+
+  get puzzleOutcomeText(): string {
+    const amount = this.puzzleAmount ?? this.power;
+    return this.puzzleCorrect ? `+${amount} 🪙` : `+${amount} 🂠`;
+  }
+
   get buyCards(): number[] {
     const count = Math.max(0, Math.min(this.power, this.cardsDrawn ?? this.power));
     return Array.from({ length: count }, (_, index) => index);
@@ -67,7 +85,7 @@ export class SkillBurst {
   }
 
   get isBad(): boolean {
-    return this.isSurprise && this.roll !== null && this.roll < 0;
+    return (this.isSurprise && this.roll !== null && this.roll < 0) || (this.isPuzzle && this.puzzleCorrect === false);
   }
 
   get burstSize(): number {
@@ -84,11 +102,13 @@ export class SkillBurst {
   }
 
   get icon(): string {
+    if (this.isPuzzleResult) return this.puzzleCorrect ? '✅' : '❌';
     return SKILL_ICON[this.type];
   }
 
   get glow(): string {
     if (this.isSurprise && this.roll !== null) return this.isBad ? '#ff5e78' : '#ffe080';
+    if (this.isPuzzleResult) return this.puzzleCorrect ? '#6dffa0' : '#ff5e78';
     return SKILL_GLOW[this.type];
   }
 }

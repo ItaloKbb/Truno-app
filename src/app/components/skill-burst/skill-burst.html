@@ -1,14 +1,17 @@
 <span class="burst">
   <span class="emoji">{{ icon }}</span>
-  @if (isSurprise) {
+  @if (isSurprise || isPuzzle) {
     <span class="surprise-particles">
       @for (particle of particles; track particle) {
         <i class="surprise-particle" [style.--angle]="(particle / particles.length * 360) + 'deg'"></i>
       }
     </span>
-    @if (roll !== null) {
+    @if (isSurprise && roll !== null) {
       <span class="surprise-outcome">{{ outcomeText }}</span>
     }
+  }
+  @if (isPuzzleResult) {
+    <span class="surprise-outcome puzzle-outcome">{{ puzzleOutcomeText }}</span>
   }
   @if (isBuy) {
     <span class="buy-cards">
