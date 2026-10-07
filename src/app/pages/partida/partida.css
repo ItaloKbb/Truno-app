@@ -537,7 +537,7 @@
   color: var(--gold-bright);
 }
 
-.menu {
+.match-menu-control {
   position: relative;
 }
 
@@ -805,7 +805,7 @@
     left: auto;
   }
 
-  .hud-actions .menu {
+  .hud-actions .match-menu-control {
     grid-column: 2;
     grid-row: 1;
   }
