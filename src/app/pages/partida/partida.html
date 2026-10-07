@@ -6,9 +6,19 @@
       <app-turn-flames />
     }
 
+    @for (burst of skillBursts(); track burst.id) {
+      <app-skill-burst [type]="burst.type" [style.--delay.ms]="burst.delay" />
+    }
+
     <div class="notice-stack" role="status" aria-live="polite">
       @for (notice of notices(); track notice.id) {
-        <button type="button" class="notice" [attr.data-kind]="notice.kind" (click)="dismissNotice(notice.id)">
+        <button
+          type="button"
+          class="notice"
+          [attr.data-kind]="notice.kind"
+          [attr.role]="notice.kind === 'error' ? 'alert' : null"
+          (click)="dismissNotice(notice.id)"
+        >
           <span class="notice-icon" aria-hidden="true">{{ notice.icon }}</span>
           <span class="notice-text">
             <strong>{{ notice.title }}</strong>

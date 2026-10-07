@@ -9,6 +9,7 @@ import {
   type GameCard,
   type GamePhase,
   type GamePlay,
+  type GamePlayer,
   type GameState,
   type RoundWinner,
   type SkillDefinition,
@@ -18,8 +19,9 @@ import { GameService } from '../../services/modules/game.service';
 import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
+import { SkillBurst } from '../../components/skill-burst/skill-burst';
 
-type NoticeKind = 'turn' | 'skill' | 'round';
+type NoticeKind = 'turn' | 'skill' | 'round' | 'error';
 
 interface MatchNotice {
   id: number;
@@ -29,14 +31,23 @@ interface MatchNotice {
   detail: string;
 }
 
-const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, round: 5000 };
+interface SkillBurstItem {
+  id: number;
+  type: SkillType;
+  delay: number;
+}
+
+const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, round: 5000, error: 3500 };
 const MAX_NOTICES = 4;
+const BURST_DURATION = 1800;
+const BURST_STAGGER = 350;
+const MAX_BURSTS = 3;
 
 @Component({
   selector: 'app-partida',
   styleUrl: './partida.css',
   templateUrl: './partida.html',
-  imports: [TurnFlames],
+  imports: [TurnFlames, SkillBurst],
 })
 export class Partida implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) partidaId!: number;
@@ -47,6 +58,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private liveUpdates?: Subscription;
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextNoticeId = 0;
+  private readonly burstTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private nextBurstId = 0;
   private skillCatalog: SkillDefinition[] = [];
 
   public readonly game = signal<GameState | null>(null);
@@ -55,6 +68,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly errorMessage = signal('');
   public readonly liveUpdateError = signal('');
   public readonly notices = signal<MatchNotice[]>([]);
+  public readonly skillBursts = signal<SkillBurstItem[]>([]);
   public readonly menuOpen = signal(false);
 
   ngOnInit(): void {
@@ -101,6 +115,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.liveUpdates?.unsubscribe();
     this.noticeTimers.forEach((handle) => clearTimeout(handle));
     this.noticeTimers.clear();
+    this.burstTimers.forEach((handle) => clearTimeout(handle));
+    this.burstTimers.clear();
   }
 
   public cardImage(card: GameCard | null): string {
@@ -140,8 +156,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public isCurrentPlayerReady(game: GameState): boolean {
-    const nickname = this.myNickname();
-    return !!nickname && game.players.some((player) => player.nickname === nickname && player.ready);
+    return !!this.myPlayer(game)?.ready;
   }
 
   public isMyTurn(game: GameState): boolean {
@@ -188,6 +203,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public play(handCardId: number | null): void {
     if (handCardId === null) return;
+    const game = this.game();
+    if (game && !this.isMyTurn(game)) {
+      this.notifyError('⏳', 'Não é sua vez', `Aguarde a vez de ${this.currentPlayerName(game)}.`);
+      return;
+    }
     this.run(this.service.playCard(this.partidaId, handCardId));
   }
 
@@ -200,6 +220,16 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   public buyTrophy(): void {
+    const game = this.game();
+    const me = game && this.myPlayer(game);
+    if (game && me && me.matchCoins < game.settings.trophyPrice) {
+      this.notifyError(
+        '🪙',
+        'Moedas insuficientes',
+        `O troféu custa ${game.settings.trophyPrice} moeda(s); você tem ${me.matchCoins}.`,
+      );
+      return;
+    }
     this.run(this.service.buyTrophy(this.partidaId));
   }
 
@@ -214,7 +244,6 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   private run(request: Observable<GameState>): void {
     this.pending.set(true);
-    this.errorMessage.set('');
 
     request.subscribe({
       next: (updated) => {
@@ -222,9 +251,14 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         this.pending.set(false);
         this.liveUpdateError.set('');
       },
+      // Erro de ação vira aviso: o tabuleiro continua na tela.
       error: (error: unknown) => {
         this.pending.set(false);
-        this.errorMessage.set(error instanceof Error ? error.message : 'A ação não pôde ser concluída.');
+        this.notifyError(
+          '⚠️',
+          'Ação não permitida',
+          error instanceof Error ? error.message : 'A ação não pôde ser concluída.',
+        );
       },
     });
   }
@@ -278,7 +312,31 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         title: `${this.displayName(play.nickname)} usou ${definition?.name ?? SKILL_LABEL[play.card.skill]}`,
         detail: definition?.description ?? `Carta ${this.cardName(play.card)}`,
       });
+      this.pushBurst(play.card.skill);
     }
+  }
+
+  private pushBurst(type: SkillType): void {
+    if (this.skillBursts().length >= MAX_BURSTS) return;
+    const id = ++this.nextBurstId;
+    // Habilidades do mesmo poll entram escalonadas; o tempo de vida cobre o atraso.
+    const delay = this.skillBursts().length * BURST_STAGGER;
+    this.skillBursts.update((list) => [...list, { id, type, delay }]);
+    this.burstTimers.set(
+      id,
+      setTimeout(() => {
+        this.burstTimers.delete(id);
+        this.skillBursts.update((list) => list.filter((burst) => burst.id !== id));
+      }, BURST_DURATION + delay),
+    );
+  }
+
+  /** Um aviso de erro por vez: o novo substitui o anterior. */
+  private notifyError(icon: string, title: string, detail: string): void {
+    this.notices()
+      .filter((notice) => notice.kind === 'error')
+      .forEach((notice) => this.dismissNotice(notice.id));
+    this.pushNotice({ kind: 'error', icon, title, detail });
   }
 
   private announceRoundWinners(previous: GameState, updated: GameState): void {
@@ -346,6 +404,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   private displayName(nickname: string): string {
     return nickname === this.myNickname() ? 'Você' : nickname;
+  }
+
+  private myPlayer(game: GameState): GamePlayer | undefined {
+    const nickname = this.myNickname();
+    return nickname ? game.players.find((player) => player.nickname === nickname) : undefined;
   }
 
   private myNickname(): string | undefined {
