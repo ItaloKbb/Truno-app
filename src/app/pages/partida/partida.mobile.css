@@ -1,0 +1,306 @@
+/* ---------- Celular: tela cheia, sem scroll ---------- */
+
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  .match-page {
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+
+  .match-board {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 6px;
+    height: 100%;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+
+  .notice-stack {
+    top: 44px;
+  }
+
+  /* Barra do topo */
+
+  .mobile-bar {
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--gold-bright);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  .mobile-bar-warning {
+    color: #ffc3b9;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  /* Avatares flutuando à esquerda */
+
+  .player-avatars {
+    position: absolute;
+    top: 42px;
+    left: 0;
+    z-index: 15;
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .player-avatars li {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #2f6f62, #123029 75%);
+    box-shadow: 0 6px 14px #0008;
+  }
+
+  .player-avatars li.is-me {
+    border-color: var(--teal-bright);
+  }
+
+  .player-avatars li.is-current {
+    border-color: var(--gold);
+    animation: avatar-pulse 1.4s ease-in-out infinite alternate;
+  }
+
+  .avatar-initial {
+    color: #f4e4bb;
+    font: 700 18px/1 var(--heading);
+  }
+
+  .avatar-badge,
+  .avatar-ready {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .avatar-badge {
+    right: -5px;
+    bottom: -4px;
+    background: var(--gold);
+    color: #21180b;
+  }
+
+  .avatar-ready {
+    top: -4px;
+    right: -5px;
+    background: #53b77b;
+    color: #0b1f13;
+  }
+
+  /* Muitos jogadores: avatares menores para caber na coluna. */
+  .player-avatars:has(li:nth-child(6)) {
+    gap: 5px;
+  }
+
+  .player-avatars:has(li:nth-child(6)) li {
+    width: 32px;
+    height: 32px;
+  }
+
+  .player-avatars:has(li:nth-child(6)) .avatar-initial {
+    font-size: 14px;
+  }
+
+  /* Mesa no topo */
+
+  .table-area {
+    grid-row: 2;
+    align-self: start;
+    box-sizing: border-box;
+    max-height: 100%;
+    margin-left: 50px;
+    padding: 6px;
+    border-radius: 22px;
+  }
+
+  .table-felt {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  .vira img {
+    width: 48px;
+  }
+
+  .played-cards {
+    flex-wrap: nowrap;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .played-card + .played-card {
+    margin-left: -16px;
+  }
+
+  .played-card img {
+    width: 52px;
+  }
+
+  .played-card figcaption {
+    max-width: 52px;
+    font-size: 10px;
+  }
+
+  .skill-chip {
+    max-width: 64px;
+    overflow: hidden;
+    padding: 1px 5px;
+    font-size: 9px;
+    text-overflow: ellipsis;
+  }
+
+  /* Mão em leque 3D na base */
+
+  .hand-area {
+    grid-row: 3;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    perspective: 700px;
+  }
+
+  .hand-area.is-my-turn {
+    box-shadow: none;
+  }
+
+  .hand-area .hud-heading {
+    display: none;
+  }
+
+  .hand-area > .muted {
+    margin: 0;
+    padding: 12px 0;
+    text-align: center;
+  }
+
+  .hand-row {
+    justify-content: center;
+    gap: 0;
+    padding: 26px 0 6px;
+    overflow: visible;
+    transform: rotateX(22deg);
+    transform-origin: 50% 100%;
+    transform-style: preserve-3d;
+  }
+
+  .hand-area.is-my-turn .hand-row {
+    filter: drop-shadow(0 0 10px #d99b3788);
+  }
+
+  .hand-card {
+    /* Largura total = w * (0.6n + 0.4): todas as cartas cabem na tela. */
+    --w: min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), 18vh);
+    --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
+    width: var(--w);
+    margin-left: calc(var(--w) * -0.4);
+    transform: var(--fan);
+    transform-origin: 50% 260%;
+  }
+
+  .hand-card:first-child {
+    margin-left: 0;
+  }
+
+  .hand-card img {
+    width: 100%;
+  }
+
+  .hand-card:hover:not(:disabled),
+  .hand-card:focus-visible,
+  .hand-card:active:not(:disabled) {
+    z-index: 2;
+    transform: var(--fan) translateY(-14px) translateZ(20px);
+  }
+
+  .hand-card .skill-chip {
+    top: -7px;
+  }
+
+  /* Ações na última linha, sem ficar flutuando */
+
+  .hud-actions {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    z-index: 46; /* menu-panel acima da folha de detalhes */
+    grid-row: 4;
+    padding: 6px;
+  }
+
+  .hud-actions .btn {
+    min-height: 40px;
+  }
+
+  /* Detalhes e vencedores só com o Menu aberto */
+
+  .hud-sheet {
+    display: none;
+  }
+
+  .match-board.menu-open .hud-sheet {
+    position: fixed;
+    top: 48px;
+    right: 8px;
+    bottom: 76px;
+    left: 8px;
+    z-index: 45;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .hud-sheet .hud {
+    padding: 12px 14px;
+  }
+}
+
+@keyframes avatar-pulse {
+  from {
+    box-shadow: 0 6px 14px #0008, 0 0 0 0 #e5b75d00;
+  }
+  to {
+    box-shadow: 0 6px 14px #0008, 0 0 14px 3px #e5b75d99;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .player-avatars li.is-current {
+    animation: none;
+  }
+}

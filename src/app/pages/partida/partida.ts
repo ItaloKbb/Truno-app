@@ -45,7 +45,7 @@ const MAX_BURSTS = 3;
 
 @Component({
   selector: 'app-partida',
-  styleUrl: './partida.css',
+  styleUrls: ['./partida.css', './partida.mobile.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst],
 })
@@ -185,6 +185,15 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     if (game.phase !== 'ENTRE_RODADAS') return false;
     const result = game.roundWinners?.find((round) => round.roundNumber === game.roundNumber);
     return !!result && result.playerId === play.playerId;
+  }
+
+  /** Só a primeira letra do apelido, para o avatar do celular. */
+  public initial(nickname: string): string {
+    return [...nickname.trim()][0]?.toUpperCase() ?? '?';
+  }
+
+  public isMe(player: GamePlayer): boolean {
+    return player.nickname === this.myNickname();
   }
 
   public roundWins(game: GameState, playerId: number): number {
