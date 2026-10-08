@@ -68,6 +68,85 @@
   opacity: 0.3;
 }
 
+/* ---------- Coringa (manilha) na mão: aura de chamas negras esverdeadas ---------- */
+
+.fx-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* As camadas ficam atrás da imagem, mas dentro do botão (isolation). */
+.hand-card.is-wild {
+  isolation: isolate;
+}
+
+/* Acima das vizinhas, para a aura não ficar escondida no leque. */
+.hand-card-slot:has(.is-wild) {
+  z-index: 1;
+}
+
+.hand-card.is-wild::before,
+.hand-card.is-wild::after {
+  position: absolute;
+  z-index: -1;
+  border-radius: 14px;
+  content: '';
+  pointer-events: none;
+}
+
+/* Chamas: corpo quase preto, mais alto em cima, recortado em línguas pelo filtro SVG. */
+.hand-card.is-wild::before {
+  inset: -24px -10px -6px;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 100%, #000 40%, transparent 72%),
+    radial-gradient(ellipse 92% 74% at 50% 56%, #010302 48%, #0b2615 68%, #1d5a3488 76%, transparent 84%);
+  filter: url(#wild-flame);
+  transform-origin: 50% 100%;
+  animation: wild-flicker 1.6s ease-in-out infinite alternate;
+}
+
+/* Brilho esverdeado nas pontas, para as chamas escuras se destacarem do fundo. */
+.hand-card.is-wild::after {
+  inset: -30px -16px -10px;
+  background: radial-gradient(ellipse 82% 72% at 50% 58%, transparent 50%, #36d47a5c 64%, #1f8c4f33 72%, transparent 82%);
+  filter: url(#wild-flame) blur(2px);
+  animation: wild-glow 2.2s ease-in-out infinite alternate;
+}
+
+.hand-card.is-wild > img {
+  box-shadow: 0 0 0 1px #3fd98144, 0 0 14px #1f8c4f66, 0 8px 16px #0008;
+}
+
+.hand-details-wild {
+  color: #8fe3b0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px #2fbf6c66;
+}
+
+@keyframes wild-flicker {
+  from {
+    scale: 1 1;
+    opacity: 0.92;
+  }
+  to {
+    scale: 1.03 1.08;
+    opacity: 1;
+  }
+}
+
+@keyframes wild-glow {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Painel da carta selecionada: no desktop, no canto livre à esquerda da mão. */
 .hand-details {
   position: absolute;
@@ -267,5 +346,12 @@
 
   .drag-ghost {
     transition: none;
+  }
+
+  /* Aura parada: sem tremulação nem distorção animada. */
+  .hand-card.is-wild::before,
+  .hand-card.is-wild::after {
+    filter: blur(3px);
+    animation: none;
   }
 }
