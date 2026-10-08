@@ -1,0 +1,58 @@
+<article class="chat-panel" aria-labelledby="lobby-chat-title">
+	<div class="chat-heading">
+		<span class="chat-icon" aria-hidden="true">✉</span>
+		<div>
+			<p class="chat-eyebrow">CONVERSE E CONVIDE</p>
+			<h2 id="lobby-chat-title">Chat do lobby</h2>
+		</div>
+	</div>
+
+	<div #log class="chat-log" role="log" aria-live="polite" aria-label="Mensagens do lobby">
+		@for (line of lines(); track line.id) {
+			<p class="chat-line" [class.chat-line-mine]="line.mine">
+				<span class="chat-meta">
+					<strong>{{ line.nickname }}</strong>
+					<time [attr.datetime]="line.sentAt">{{ line.time }}</time>
+				</span>
+				<span class="chat-text">
+					@for (segment of line.segments; track $index) {
+						@if (segment.kind === 'code') {
+							<button
+								type="button"
+								class="chat-code"
+								[attr.aria-label]="'Entrar na partida ' + segment.value"
+								(click)="join.emit(segment.value)"
+							>
+								<span aria-hidden="true">↗</span>{{ segment.value }}
+							</button>
+						} @else {
+							<span>{{ segment.value }}</span>
+						}
+					}
+				</span>
+			</p>
+		} @empty {
+			<p class="chat-empty">{{ loaded() ? 'Ninguém falou nada ainda. Mande um oi ou o código da sua mesa!' : 'Carregando mensagens...' }}</p>
+		}
+	</div>
+
+	@if (error(); as message) {
+		<p class="chat-error" role="alert">{{ message }}</p>
+	}
+
+	<form class="chat-form" (submit)="$event.preventDefault(); send()">
+		<input
+			id="lobby-chat-input"
+			aria-label="Mensagem"
+			type="text"
+			autocomplete="off"
+			placeholder="Mensagem ou código da partida"
+			[maxLength]="maxLength"
+			[value]="draft()"
+			(input)="draft.set($any($event.target).value)"
+		/>
+		<button type="submit" [disabled]="sending() || !draft().trim()" aria-label="Enviar mensagem">
+			{{ sending() ? '...' : 'Enviar' }}
+		</button>
+	</form>
+</article>

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { SKILL_ICON, type SkillType, type TheftKind } from '../../domain/truno-api';
+import { skillIconAsset, type GameDirection, type SkillType, type TheftKind } from '../../domain/truno-api';
 
 /** Cor do brilho de cada habilidade no efeito de giro. */
 const SKILL_GLOW: Record<SkillType, string> = {
@@ -15,7 +15,7 @@ const SKILL_GLOW: Record<SkillType, string> = {
   SHIELD: '#4f8cff',
 };
 
-/** Emoji da habilidade atravessando a tela em giro 3D; não captura cliques. */
+/** Ícone da habilidade atravessando a tela; não captura cliques. */
 @Component({
   selector: 'app-skill-burst',
   styleUrl: './skill-burst.css',
@@ -35,6 +35,7 @@ const SKILL_GLOW: Record<SkillType, string> = {
 })
 export class SkillBurst {
   @Input({ required: true }) type!: SkillType;
+  @Input() direction: GameDirection | null = null;
   @Input() roll: number | null = null;
   @Input() coinDelta: number | null = null;
   @Input() cardsDrawn: number | null = null;
@@ -122,9 +123,8 @@ export class SkillBurst {
     return `${change > 0 ? '+' : change < 0 ? '−' : ''}${Math.abs(change)} 🪙`;
   }
 
-  get icon(): string {
-    if (this.isPuzzleResult) return this.puzzleCorrect ? '✅' : '❌';
-    return SKILL_ICON[this.type];
+  get iconAsset(): string {
+    return skillIconAsset(this.type, { surpriseRoll: this.roll, direction: this.direction });
   }
 
   get glow(): string {

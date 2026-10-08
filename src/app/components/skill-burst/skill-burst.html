@@ -1,5 +1,5 @@
 <span class="burst">
-  <span class="emoji">{{ icon }}</span>
+  <img class="emoji" [src]="iconAsset" alt="" width="32" height="32" />
   @if (isSurprise || isPuzzle || isTheft) {
     <span class="surprise-particles">
       @for (particle of particles; track particle) {

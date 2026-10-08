@@ -3,12 +3,13 @@ import type { Observable } from 'rxjs';
 import type { CreateGameInput, GameState } from '../../domain/truno-api';
 import { GameService } from '../../services/modules/game.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LobbyChat } from '../../components/lobby-chat/lobby-chat';
 
 type FormFields = 'name' | 'maxPlayers' | 'initialCards' | 'roundReward' | 'emptyHandReward' | 'trophyPrice';
 
 @Component({
   selector: 'app-lobby',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LobbyChat],
   styleUrl: './lobby.css',
   templateUrl: './lobby.html',
 })
