@@ -93,7 +93,8 @@
   top: 44%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(640px, calc(100% - 600px));
+  /* A altura do feltro segue a largura (16:10); limita para não invadir a mão. */
+  width: min(700px, calc(100% - 600px), calc((100vh - 360px) * 1.6));
 }
 
 .hand-area {
@@ -308,10 +309,8 @@
 .table-felt {
   display: flex;
   align-items: center;
+  justify-content: center;
   min-width: 0;
-  gap: 20px;
-  min-height: 220px;
-  padding: 20px 32px;
   border-radius: 48% / 35%;
   background: radial-gradient(ellipse at center, #167144 0%, var(--felt) 50%, var(--felt-deep) 100%);
   box-shadow: inset 0 0 40px #0008;
@@ -333,64 +332,28 @@
 }
 
 .vira img {
-  width: 84px;
+  width: var(--card);
   border-radius: 8px;
   transform: rotate(-8deg);
   box-shadow: 0 10px 20px #0008;
 }
 
-.played-cards {
-  flex: 1;
-  display: flex;
-  min-width: 0;
-  flex-wrap: nowrap;
-  justify-content: safe center;
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 14px 2px 8px;
-  scrollbar-width: thin;
-  touch-action: pan-x;
-}
-
-.played-cards .muted {
-  color: #b9d7c5;
-}
-
 .played-card {
   position: relative;
-  display: grid;
-  flex: 0 0 112px;
-  justify-items: center;
-  gap: 6px;
   margin: 0;
   animation: card-drop 0.35s ease-out;
 }
 
 .played-card > img {
-  width: 74px;
+  display: block;
+  width: var(--card);
   border-radius: 8px;
   box-shadow: 0 8px 16px #0008;
-}
-
-.played-card figcaption {
-  max-width: 90px;
-  overflow: hidden;
-  color: #f4e9cf;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .played-card.is-winner > img {
   outline: 3px solid var(--gold);
   box-shadow: 0 0 18px #e5b75d99;
-}
-
-.played-card.is-winner figcaption {
-  color: var(--gold-bright);
 }
 
 .skill-chip {
@@ -466,51 +429,54 @@
 
 /* ---------- Mão ---------- */
 
+/* Página fixa de cartas, sem rolagem: as setas trocam de página. */
 .hand-row {
   display: flex;
-  justify-content: safe center;
+  justify-content: center;
   gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 20px 4px 4px;
-  scrollbar-width: thin;
-  touch-action: pan-x;
+  min-width: 0;
+  padding: 22px 4px 4px;
 }
 
 .hand-card-slot {
   position: relative;
   display: grid;
-  flex: 0 0 108px;
+  flex: 0 1 96px;
   justify-items: center;
+  min-width: 0;
 }
 
 .hand-card-slot:hover,
-.hand-card-slot:focus-within {
+.hand-card-slot:focus-within,
+.hand-card-slot.is-selected {
   z-index: 2;
-}
-
-.hand-card-slot .skill-chip {
-  max-width: 106px;
 }
 
 .hand-card {
   position: relative;
-  flex: 0 0 auto;
+  width: 100%;
+  max-width: 78px;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  /* O arrasto é por eventos de ponteiro: sem rolagem, seleção de texto nem menu de toque longo. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .hand-card > img {
   display: block;
-  width: 78px;
+  width: 100%;
   border-radius: 8px;
   box-shadow: 0 8px 16px #0006;
+  transition: filter 0.2s ease;
 }
 
-.hand-card:hover:not(:disabled),
+.hand-card:hover,
 .hand-card:focus-visible {
   transform: translateY(-8px);
 }
@@ -519,11 +485,6 @@
   border-radius: 8px;
   outline: 2px solid #fff1c7;
   outline-offset: 3px;
-}
-
-.hand-card:disabled {
-  opacity: 0.65;
-  cursor: default;
 }
 
 /* ---------- Botões: mesmo padrão dos botões de ação do lobby ---------- */
@@ -848,27 +809,11 @@
   .table-felt {
     border-radius: 28px;
   }
-
-  .table-felt {
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: 0;
-    padding: 20px;
-  }
 }
 
 @media (max-width: 560px) {
   .match-page {
     padding: 12px;
-  }
-
-  .played-card > img,
-  .hand-card > img {
-    width: 62px;
-  }
-
-  .vira img {
-    width: 70px;
   }
 
   .btn {
