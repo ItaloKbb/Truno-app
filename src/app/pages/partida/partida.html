@@ -218,9 +218,17 @@
               <figure class="played-card" [class.is-winner]="isRoundWinnerPlay(current, play)">
                 <img [src]="cardImage(play.card)" [alt]="play.nickname + ' jogou ' + cardName(play.card)" />
                 @if (play.card.skill) {
-                  <span class="skill-chip" [title]="skillName(play.card)">
-                    <img [src]="skillIcon(play.card.skill, play.surpriseRoll ?? null, directionAfterPlay(current, play))" alt="" width="16" height="16" /> {{ skillName(play.card) }}
-                  </span>
+                  <button
+                    type="button"
+                    class="skill-chip"
+                    [disabled]="!skillDescription(play.card)"
+                    [attr.aria-label]="'Ver descrição de ' + skillName(play.card)"
+                    aria-haspopup="dialog"
+                    (click)="showSkillDetails(play.card, $event, play.surpriseRoll ?? null, directionAfterPlay(current, play))"
+                  >
+                    <img [src]="skillIcon(play.card.skill, play.surpriseRoll ?? null, directionAfterPlay(current, play))" alt="" width="16" height="16" />
+                    <span class="skill-chip-label">{{ skillName(play.card) }}</span>
+                  </button>
                 }
                 @if (play.card.skill === 'SURPRISE' && play.surpriseRoll != null) {
                   <span class="surprise-chip" [class.is-bad]="play.surpriseRoll < 0">{{ surpriseDeltaLabel(play) }}</span>
@@ -249,19 +257,29 @@
         @if (current.hand.length > 0) {
           <div class="hand-row">
             @for (card of current.hand; track card.handCardId; let i = $index, n = $count) {
-              <button
-                type="button"
-                class="hand-card"
-                [style.--i]="i"
-                [style.--n]="n"
-                [disabled]="pending() || !isMyTurn(current) || !!current.pendingPuzzle"
-                (click)="play(card.handCardId)"
-              >
-                <img [src]="cardImage(card)" [alt]="cardName(card)" />
+              <div class="hand-card-slot" [style.--i]="i" [style.--n]="n">
+                <button
+                  type="button"
+                  class="hand-card"
+                  [disabled]="pending() || !isMyTurn(current) || !!current.pendingPuzzle"
+                  (click)="play(card.handCardId)"
+                >
+                  <img [src]="cardImage(card)" [alt]="cardName(card)" />
+                </button>
                 @if (card.skill) {
-                  <span class="skill-chip"><img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="16" height="16" /> {{ skillName(card) }}</span>
+                  <button
+                    type="button"
+                    class="skill-chip"
+                    [disabled]="!skillDescription(card)"
+                    [attr.aria-label]="'Ver descrição de ' + skillName(card)"
+                    aria-haspopup="dialog"
+                    (click)="showSkillDetails(card, $event, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')"
+                  >
+                    <img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="16" height="16" />
+                    <span class="skill-chip-label">{{ skillName(card) }}</span>
+                  </button>
                 }
-              </button>
+              </div>
             }
           </div>
         } @else {
@@ -361,5 +379,15 @@
     }
   } @else if (loading()) {
     <p class="status-banner">Carregando a partida...</p>
+  }
+  @if (selectedSkill(); as skill) {
+    <div class="skill-details-backdrop" (click)="closeSkillDetails()">
+      <section class="skill-details" role="dialog" aria-modal="true" aria-labelledby="skill-details-title" aria-describedby="skill-details-description" (click)="$event.stopPropagation()">
+        <button #skillDetailsClose type="button" class="skill-details-close" aria-label="Fechar descrição da habilidade" (click)="closeSkillDetails()">×</button>
+        <img [src]="skill.icon" alt="" width="48" height="48" />
+        <h2 id="skill-details-title">{{ skill.name }}</h2>
+        <p id="skill-details-description">{{ skill.description }}</p>
+      </section>
+    </div>
   }
 </main>
