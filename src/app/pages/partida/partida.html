@@ -191,60 +191,85 @@
       </div>
 
       <!-- Centro: mesa -->
-      <section class="table-area" aria-label="Mesa">
+      <section
+        class="table-area"
+        aria-label="Mesa"
+        [class.is-drop-ready]="!!cardDrag() && canPlayCard(current)"
+        [class.is-drop-over]="!!cardDrag()?.overTable && canPlayCard(current)"
+      >
         @for (effect of turnEffects(); track effect) {
           <span class="turn-rim-effect" aria-hidden="true"></span>
         }
-        <div class="table-felt">
-          <!-- Só no celular: o essencial da partida "impresso" no feltro -->
-          <p class="felt-print">
-            <span>R{{ current.roundNumber }} · {{ directionLabel(current.direction) }} · {{ current.code }}</span>
-            @if (liveUpdateError()) {
-              <span class="felt-print-warning" role="status">Reconectando…</span>
-            }
-          </p>
+        <div #tableFelt class="table-felt" [attr.data-seats]="tableSeats().length">
+          <div class="table-center">
+            <div class="vira">
+              <span class="label">Vira</span>
+              @if (current.vira) {
+                <img [src]="cardImage(current.vira)" [alt]="'Carta virada: ' + cardName(current.vira)" />
+              } @else {
+                <img src="assets/cards/reverso.png" alt="Carta virada ainda não definida" />
+              }
+            </div>
 
-          <div class="vira">
-            <span class="label">Vira</span>
-            @if (current.vira) {
-              <img [src]="cardImage(current.vira)" [alt]="'Carta virada: ' + cardName(current.vira)" />
-            } @else {
-              <img src="assets/cards/reverso.png" alt="Carta virada ainda não definida" />
-            }
+            <!-- Só no celular: o essencial da partida "impresso" no feltro -->
+            <p class="felt-print">
+              <span>R{{ current.roundNumber }} · {{ directionLabel(current.direction) }} · {{ current.code }}</span>
+              @if (liveUpdateError()) {
+                <span class="felt-print-warning" role="status">Reconectando…</span>
+              }
+            </p>
           </div>
 
-          <div class="played-cards">
-            @for (play of current.plays; track play.order) {
-              <figure class="played-card" [class.is-winner]="isRoundWinnerPlay(current, play)">
-                <img [src]="cardImage(play.card)" [alt]="play.nickname + ' jogou ' + cardName(play.card)" />
-                @if (play.card.skill) {
-                  <button
-                    type="button"
-                    class="skill-chip"
-                    [disabled]="!skillDescription(play.card)"
-                    [attr.aria-label]="'Ver descrição de ' + skillName(play.card)"
-                    aria-haspopup="dialog"
-                    (click)="showSkillDetails(play.card, $event, play.surpriseRoll ?? null, directionAfterPlay(current, play))"
-                  >
-                    <img [src]="skillIcon(play.card.skill, play.surpriseRoll ?? null, directionAfterPlay(current, play))" alt="" width="16" height="16" />
-                    <span class="skill-chip-label">{{ skillName(play.card) }}</span>
-                  </button>
+          <!-- Um lugar por jogador; o seu fica embaixo -->
+          @for (seat of tableSeats(); track seat.player.id) {
+            <div
+              class="table-seat"
+              role="group"
+              [attr.aria-label]="'Lugar de ' + seat.player.nickname"
+              [class.is-me]="seat.isMe"
+              [class.is-current]="seat.player.id === current.currentPlayerId"
+              [style.--seat-cos]="seat.cos"
+              [style.--seat-sin]="seat.sin"
+              [style.--seat-row]="seat.row"
+            >
+              <div class="seat-cards">
+                @for (play of seat.plays; track play.order) {
+                  <figure class="played-card" [class.is-winner]="isRoundWinnerPlay(current, play)">
+                    <img [src]="cardImage(play.card)" [alt]="play.nickname + ' jogou ' + cardName(play.card)" />
+                    @if (play.card.skill) {
+                      <button
+                        type="button"
+                        class="skill-chip"
+                        [disabled]="!skillDescription(play.card)"
+                        [attr.aria-label]="'Ver descrição de ' + skillName(play.card)"
+                        aria-haspopup="dialog"
+                        (click)="showSkillDetails(play.card, $event, play.surpriseRoll ?? null, directionAfterPlay(current, play))"
+                      >
+                        <img [src]="skillIcon(play.card.skill, play.surpriseRoll ?? null, directionAfterPlay(current, play))" alt="" width="16" height="16" />
+                        <span class="skill-chip-label">{{ skillName(play.card) }}</span>
+                      </button>
+                    }
+                    @if (play.card.skill === 'SURPRISE' && play.surpriseRoll != null) {
+                      <span class="surprise-chip" [class.is-bad]="play.surpriseRoll < 0">{{ surpriseDeltaLabel(play) }}</span>
+                    }
+                    @if (play.card.skill === 'BUY' && play.buyCardsDrawn != null) {
+                      <span class="buy-chip">{{ play.buyCardsDrawn > 0 ? '+' : '' }}{{ play.buyCardsDrawn }} 🂠</span>
+                    }
+                  </figure>
+                } @empty {
+                  <span class="seat-placeholder" aria-hidden="true"></span>
                 }
-                @if (play.card.skill === 'SURPRISE' && play.surpriseRoll != null) {
-                  <span class="surprise-chip" [class.is-bad]="play.surpriseRoll < 0">{{ surpriseDeltaLabel(play) }}</span>
-                }
-                @if (play.card.skill === 'BUY' && play.buyCardsDrawn != null) {
-                  <span class="buy-chip">{{ play.buyCardsDrawn > 0 ? '+' : '' }}{{ play.buyCardsDrawn }} 🂠</span>
-                }
-                <figcaption>
-                  @if (isRoundWinnerPlay(current, play)) { 🏆 }
-                  {{ play.nickname }}
-                </figcaption>
-              </figure>
-            } @empty {
-              <p class="muted">Ainda não houve jogadas nesta rodada.</p>
-            }
-          </div>
+              </div>
+              <span class="seat-name" [class.is-winner]="seat.plays.length > 0 && isRoundWinnerPlay(current, seat.plays[0])">
+                @if (seat.plays.length > 0 && isRoundWinnerPlay(current, seat.plays[0])) { 🏆 }
+                {{ seat.isMe ? 'Você' : seat.player.nickname }}
+              </span>
+            </div>
+          }
+
+          @if (cardDrag() && canPlayCard(current)) {
+            <p class="drop-hint" aria-hidden="true">{{ cardDrag()?.overTable ? 'Solte para jogar' : 'Arraste até a mesa' }}</p>
+          }
         </div>
       </section>
 
@@ -252,40 +277,111 @@
       <section class="hand-area" [class.is-my-turn]="isMyTurn(current)" aria-label="Sua mão">
         <div class="hud-heading">
           <h2>Sua mão</h2>
-          <span>{{ current.hand.length }} carta(s)</span>
+          <span>
+            {{ current.hand.length }} carta(s)
+            @if (handPageCount() > 1) { · página {{ handPage() + 1 }} de {{ handPageCount() }} }
+          </span>
         </div>
         @if (current.hand.length > 0) {
-          <div class="hand-row">
-            @for (card of current.hand; track card.handCardId; let i = $index, n = $count) {
-              <div class="hand-card-slot" [style.--i]="i" [style.--n]="n">
-                <button
-                  type="button"
-                  class="hand-card"
-                  [disabled]="pending() || !isMyTurn(current) || !!current.pendingPuzzle"
-                  (click)="play(card.handCardId)"
+          <div class="hand-pager">
+            @if (handPageCount() > 1) {
+              <button
+                type="button"
+                class="hand-arrow hand-arrow-prev"
+                aria-label="Página anterior da mão"
+                [disabled]="handPage() === 0"
+                (click)="changeHandPage(-1)"
+              >‹</button>
+            }
+            <div class="hand-row">
+              @for (card of visibleHand(); track card.handCardId; let i = $index, n = $count) {
+                <div
+                  class="hand-card-slot"
+                  [class.is-selected]="card.handCardId !== null && selectedHandCard()?.handCardId === card.handCardId"
+                  [class.is-dragging]="card.handCardId !== null && cardDrag()?.handCardId === card.handCardId"
+                  [style.--i]="i"
+                  [style.--n]="n"
                 >
-                  <img [src]="cardImage(card)" [alt]="cardName(card)" />
-                </button>
-                @if (card.skill) {
                   <button
                     type="button"
-                    class="skill-chip"
-                    [disabled]="!skillDescription(card)"
-                    [attr.aria-label]="'Ver descrição de ' + skillName(card)"
-                    aria-haspopup="dialog"
-                    (click)="showSkillDetails(card, $event, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')"
+                    class="hand-card"
+                    [class.is-playable]="canPlayCard(current)"
+                    [attr.aria-label]="cardName(card) + (card.skill ? ', ' + skillName(card) : '')"
+                    [attr.aria-pressed]="card.handCardId !== null && selectedHandCard()?.handCardId === card.handCardId"
+                    aria-controls="hand-card-details"
+                    (click)="toggleHandCard(card, $event)"
+                    (pointerdown)="startCardDrag(card, $event)"
+                    (pointermove)="moveCardDrag($event)"
+                    (pointerup)="endCardDrag($event)"
+                    (pointercancel)="cancelCardDrag()"
+                    (lostpointercapture)="cancelCardDrag()"
+                    (dragstart)="$event.preventDefault()"
                   >
-                    <img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="16" height="16" />
-                    <span class="skill-chip-label">{{ skillName(card) }}</span>
+                    <img [src]="cardImage(card)" alt="" draggable="false" />
+                    @if (card.skill) {
+                      <span class="skill-chip is-static" aria-hidden="true">
+                        <img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="16" height="16" />
+                        <span class="skill-chip-label">{{ skillName(card) }}</span>
+                      </span>
+                    }
                   </button>
-                }
-              </div>
+                </div>
+              }
+            </div>
+            @if (handPageCount() > 1) {
+              <button
+                type="button"
+                class="hand-arrow hand-arrow-next"
+                aria-label="Próxima página da mão"
+                [disabled]="handPage() >= handPageCount() - 1"
+                (click)="changeHandPage(1)"
+              >›</button>
             }
           </div>
         } @else {
           <p class="muted">Sua mão está vazia.</p>
         }
+
+        <div id="hand-card-details" class="hand-details-slot" aria-live="polite">
+          @if (selectedHandCard(); as card) {
+            <section class="hand-details" aria-label="Carta selecionada">
+              <button type="button" class="hand-details-close" aria-label="Fechar detalhes da carta" (click)="closeHandCard()">×</button>
+              <img class="hand-details-card" [src]="cardImage(card)" alt="" />
+              <div class="hand-details-text">
+                <h3>{{ cardName(card) }}</h3>
+                <p class="hand-details-suit">Naipe: {{ suitName(card) }}</p>
+                @if (card.skill) {
+                  <p class="hand-details-skill">
+                    <img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="24" height="24" />
+                    <strong>{{ skillName(card) }}</strong>
+                  </p>
+                  @if (skillDescription(card); as description) {
+                    <p class="hand-details-description">{{ description }}</p>
+                  }
+                }
+                <button type="button" class="btn btn-primary hand-details-play" [disabled]="!canPlayCard(current)" (click)="playSelectedCard()">
+                  {{ canPlayCard(current) ? 'Jogar carta' : current.pendingPuzzle ? 'Aguarde o puzzle' : pending() ? 'Enviando…' : 'Aguarde seu turno' }}
+                </button>
+                @if (canPlayCard(current)) {
+                  <p class="hand-details-hint">Ou arraste a carta até a mesa.</p>
+                }
+              </div>
+            </section>
+          }
+        </div>
       </section>
+
+      @if (cardDrag(); as drag) {
+        <img
+          class="drag-ghost"
+          [class.is-over]="drag.overTable && canPlayCard(current)"
+          [src]="drag.image"
+          alt=""
+          aria-hidden="true"
+          [style.width.px]="drag.width"
+          [style.transform]="'translate3d(' + drag.x + 'px, ' + drag.y + 'px, 0)'"
+        />
+      }
 
       <!-- HUD inferior direito: ações da fase e menu -->
       <nav class="hud hud-actions" aria-label="Ações da partida">

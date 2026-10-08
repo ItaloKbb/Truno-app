@@ -1,0 +1,267 @@
+/* ---------- Mão: páginas com setas, seleção, painel da carta e arrasto ---------- */
+
+.hand-pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hand-pager .hand-row {
+  flex: 1;
+}
+
+.hand-arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 56px;
+  padding: 0 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff08;
+  color: var(--gold-bright);
+  font: 700 30px/1 var(--heading);
+  cursor: pointer;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+.hand-arrow:hover:not(:disabled) {
+  background: #d6a94918;
+}
+
+.hand-arrow:focus-visible {
+  outline: 2px solid #fff1c7;
+  outline-offset: 2px;
+}
+
+.hand-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Ícone e nome da skill na carta: só leitura, o toque vai para a carta. */
+.skill-chip.is-static {
+  top: -10px;
+  max-width: calc(100% + 16px);
+  cursor: inherit;
+  pointer-events: none;
+}
+
+.hand-card:not(.is-playable) > img {
+  filter: saturate(0.75) brightness(0.88);
+}
+
+.hand-card-slot.is-selected .hand-card {
+  transform: translateY(-12px);
+}
+
+.hand-card-slot.is-selected .hand-card > img {
+  outline: 3px solid var(--gold);
+  box-shadow: 0 0 18px #e5b75d88, 0 8px 16px #0006;
+}
+
+.hand-card-slot.is-dragging .hand-card {
+  opacity: 0.3;
+}
+
+/* Painel da carta selecionada: no desktop, no canto livre à esquerda da mão. */
+.hand-details {
+  position: absolute;
+  right: calc(100% + 16px);
+  bottom: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  width: 250px;
+  max-height: calc(100vh - 340px);
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid #e5b75d99;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a3025f5, #0c1913f5);
+  box-shadow: 0 16px 34px #000a;
+  animation: hand-details-in 0.18s ease-out;
+}
+
+.hand-details-card {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 6px 12px #0008;
+}
+
+.hand-details-text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hand-details h3 {
+  margin: 0 28px 0 0;
+  color: var(--gold-bright);
+  font: 700 16px/1.2 var(--heading);
+}
+
+.hand-details p {
+  margin: 0;
+}
+
+.hand-details-suit {
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.hand-details-skill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--teal-bright);
+  font-size: 13px;
+}
+
+.hand-details-skill img {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.hand-details-description {
+  color: #e3ebe4;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.hand-details-play {
+  margin-top: 4px;
+  min-height: 40px;
+}
+
+.hand-details-play:disabled {
+  cursor: default;
+}
+
+.hand-details-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.hand-details-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gold-bright);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.hand-details-close:focus-visible {
+  outline: 2px solid #fff1c7;
+  outline-offset: -2px;
+}
+
+/* Cópia da carta que acompanha o ponteiro durante o arrasto. */
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  border-radius: 8px;
+  box-shadow: 0 18px 30px #000a;
+  opacity: 0.95;
+  rotate: -6deg;
+  pointer-events: none;
+  transition: scale 0.12s ease, box-shadow 0.12s ease;
+}
+
+.drag-ghost.is-over {
+  scale: 1.08;
+  box-shadow: 0 0 0 3px #f3d995, 0 18px 30px #000a;
+}
+
+@media (max-width: 1100px) {
+  .hand-details {
+    position: static;
+    width: auto;
+    max-height: none;
+    margin-top: 10px;
+  }
+}
+
+/* Celular: o painel flutua logo acima da mão, sobre a borda da mesa. */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  .hand-area {
+    position: relative;
+  }
+
+  .hand-arrow {
+    width: 28px;
+    height: 48px;
+    font-size: 26px;
+  }
+
+  .skill-chip.is-static {
+    top: -14px;
+    width: 30px;
+    height: 30px;
+    min-height: 30px;
+    padding: 3px;
+    border-radius: 9px;
+  }
+
+  .skill-chip.is-static img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .hand-details {
+    position: absolute;
+    right: 4px;
+    bottom: calc(100% + 6px);
+    left: 4px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    width: auto;
+    max-height: 44dvh;
+    margin: 0;
+    padding: 12px;
+  }
+
+  @media (orientation: landscape) {
+    .hand-details {
+      left: auto;
+      width: min(360px, 60vw);
+      max-height: calc(100dvh - 150px);
+    }
+  }
+}
+
+@keyframes hand-details-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hand-details {
+    animation: none;
+  }
+
+  .drag-ghost {
+    transition: none;
+  }
+}

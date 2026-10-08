@@ -175,6 +175,10 @@ export function cardLabel(valor: CardValue, naipe: CardSuit): string {
   return `${VALUE_LABEL[valor]} de ${SUIT_LABEL[naipe]}`;
 }
 
+export function suitLabel(naipe: CardSuit): string {
+  return SUIT_LABEL[naipe];
+}
+
 export function cardAsset(valor: CardValue, naipe: CardSuit): string {
   return `assets/cards/${VALUE_ASSET[valor]}-${SUIT_ASSET[naipe]}.png`;
 }

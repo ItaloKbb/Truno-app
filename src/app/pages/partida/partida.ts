@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, computed, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
@@ -10,6 +10,7 @@ import {
   SURPRISE_POWER,
   cardAsset,
   cardLabel,
+  suitLabel,
   type GameCard,
   type GameDirection,
   type GamePhase,
@@ -64,6 +65,37 @@ interface SkillBurstItem {
   theftBlocked: boolean;
 }
 
+interface TableSeat {
+  player: GamePlayer;
+  plays: GamePlay[];
+  isMe: boolean;
+  /** Direção do lugar a partir do centro da mesa (cosseno e seno do ângulo). */
+  cos: number;
+  sin: number;
+  /** Fileira no feltro baixo do celular deitado: -1 em cima, 0 no meio, 1 embaixo. */
+  row: number;
+}
+
+interface CardDrag {
+  handCardId: number;
+  image: string;
+  x: number;
+  y: number;
+  width: number;
+  overTable: boolean;
+}
+
+interface CardDragStart {
+  handCardId: number;
+  pointerId: number;
+  image: string;
+  startX: number;
+  startY: number;
+  offsetX: number;
+  offsetY: number;
+  width: number;
+}
+
 const NOTICE_DURATION: Record<NoticeKind, number> = { turn: 2800, skill: 4500, error: 3500 };
 const MAX_NOTICES = 4;
 const BURST_DURATION = 1800;
@@ -74,10 +106,25 @@ const ROUND_BANNER_DURATION = 4000;
 const PLAYER_POP_DURATION = 3500;
 const TURN_RIM_DURATION = 1250;
 const SHARE_COOLDOWN = 5000;
+/** Mesmo corte do layout de celular em partida.mobile.css. */
+const COMPACT_QUERY = '(max-width: 760px), (max-height: 500px) and (pointer: coarse)';
+const HAND_PAGE_COMPACT = 6;
+const HAND_PAGE_WIDE = 8;
+/** Distância mínima (px) para um toque virar arrasto. */
+const DRAG_THRESHOLD = 8;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.turn.css', './partida.mobile.css', './partida.skill.css'],
+  styleUrls: [
+    './partida.css',
+    './partida.result.css',
+    './partida.puzzle.css',
+    './partida.turn.css',
+    './partida.mobile.css',
+    './partida.skill.css',
+    './partida.table.css',
+    './partida.hand.css',
+  ],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
@@ -103,6 +150,13 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private readonly skillCatalog = signal<SkillDefinition[]>([]);
   private skillDetailsTrigger?: HTMLElement;
   @ViewChild('skillDetailsClose') private skillDetailsClose?: ElementRef<HTMLButtonElement>;
+  @ViewChild('tableFelt') private tableFelt?: ElementRef<HTMLElement>;
+  private readonly compactQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(COMPACT_QUERY) : null;
+  private readonly onCompactChange = (event: MediaQueryListEvent) => this.setCompactHand(event.matches);
+  private dragStart?: CardDragStart;
+  /** O clique que encerra um arrasto não deve selecionar a carta. */
+  private suppressHandClick = false;
+  private handCardTrigger?: HTMLElement;
 
   public readonly game = signal<GameState | null>(null);
   public readonly loading = signal(true);
@@ -120,8 +174,51 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly turnEffects = signal<number[]>([]);
   /** Bloqueia o "Enviar no chat" durante o envio e por um tempo depois, contra spam. */
   public readonly sharing = signal(false);
+  public readonly compactHand = signal(this.compactQuery?.matches ?? false);
+  private readonly handPageIndex = signal(0);
+  private readonly selectedHandCardId = signal<number | null>(null);
+  public readonly cardDrag = signal<CardDrag | null>(null);
+
+  public readonly handPageSize = computed(() => (this.compactHand() ? HAND_PAGE_COMPACT : HAND_PAGE_WIDE));
+  public readonly handPageCount = computed(() => Math.max(1, Math.ceil((this.game()?.hand.length ?? 0) / this.handPageSize())));
+  public readonly handPage = computed(() => Math.min(this.handPageIndex(), this.handPageCount() - 1));
+  public readonly visibleHand = computed(() => {
+    const start = this.handPage() * this.handPageSize();
+    return (this.game()?.hand ?? []).slice(start, start + this.handPageSize());
+  });
+  /** Só vale enquanto a carta estiver na página visível; fora dela o painel fecha. */
+  public readonly selectedHandCard = computed(() => {
+    const id = this.selectedHandCardId();
+    return id === null ? null : (this.visibleHand().find((card) => card.handCardId === id) ?? null);
+  });
+
+  /** Lugares pela posição da partida, girados para o jogador local ficar embaixo, em sentido horário. */
+  public readonly tableSeats = computed<TableSeat[]>(() => {
+    const game = this.game();
+    if (!game) return [];
+    const players = [...game.players].sort((a, b) => a.position - b.position);
+    const nickname = this.myNickname();
+    const mine = players.findIndex((player) => player.nickname === nickname);
+    const first = Math.max(0, mine);
+
+    return players.map((_, seat) => {
+      const player = players[(first + seat) % players.length];
+      const angle = Math.PI / 2 + (seat * 2 * Math.PI) / players.length;
+      const cos = Math.round(Math.cos(angle) * 1000) / 1000;
+      const sin = Math.round(Math.sin(angle) * 1000) / 1000;
+      return {
+        player,
+        plays: game.plays.filter((play) => play.playerId === player.id),
+        isMe: seat === 0 && mine >= 0,
+        cos,
+        sin,
+        row: Math.abs(sin) < 0.25 ? 0 : Math.sign(sin),
+      };
+    });
+  });
 
   ngOnInit(): void {
+    this.compactQuery?.addEventListener('change', this.onCompactChange);
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
     this.skillService.getAll().subscribe({
       next: (skills) => this.skillCatalog.set(skills),
@@ -151,6 +248,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.errorMessage.set('');
     this.game.set(null);
     this.closeSkillDetails();
+    this.handPageIndex.set(0);
+    this.selectedHandCardId.set(null);
+    this.cancelCardDrag();
 
     this.service.getState(this.partidaId).subscribe({
       next: (game) => {
@@ -167,6 +267,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.liveUpdates?.unsubscribe();
+    this.compactQuery?.removeEventListener('change', this.onCompactChange);
     this.noticeTimers.forEach((handle) => clearTimeout(handle));
     this.noticeTimers.clear();
     this.burstTimers.forEach((handle) => clearTimeout(handle));
@@ -184,6 +285,10 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public cardName(card: GameCard): string {
     return cardLabel(card.valor, card.naipe);
+  }
+
+  public suitName(card: GameCard): string {
+    return suitLabel(card.naipe);
   }
 
   public skillIcon(type: SkillType, surpriseRoll: number | null = null, direction: GameState['direction'] | null = null): string {
@@ -226,7 +331,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   @HostListener('document:keydown.escape')
   public onEscape(): void {
-    this.closeSkillDetails();
+    if (this.selectedSkill()) this.closeSkillDetails();
+    else if (this.dragStart) this.cancelCardDrag();
+    else if (this.selectedHandCard()) this.closeHandCard();
   }
 
   @HostListener('document:keydown.tab', ['$event'])
@@ -352,10 +459,124 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.notices.update((list) => list.filter((notice) => notice.id !== id));
   }
 
+  public canPlayCard(game: GameState): boolean {
+    return !this.pending() && this.isMyTurn(game) && !game.pendingPuzzle;
+  }
+
   public play(handCardId: number | null): void {
     const game = this.game();
-    if (handCardId === null || !game || this.pending() || !this.isMyTurn(game) || !!game.pendingPuzzle) return;
+    if (handCardId === null || !game || !this.canPlayCard(game)) return;
     this.run(this.service.playCard(this.partidaId, handCardId));
+  }
+
+  /** Toque ou clique na mão só seleciona; jogar é arrastar até a mesa ou usar o painel. */
+  public toggleHandCard(card: GameCard, event: Event): void {
+    if (this.suppressHandClick) {
+      this.suppressHandClick = false;
+      return;
+    }
+    if (card.handCardId === null) return;
+    const selected = this.selectedHandCardId() === card.handCardId;
+    this.selectedHandCardId.set(selected ? null : card.handCardId);
+    this.handCardTrigger = selected ? undefined : (event.currentTarget as HTMLElement);
+  }
+
+  public closeHandCard(): void {
+    this.selectedHandCardId.set(null);
+    this.handCardTrigger?.focus();
+    this.handCardTrigger = undefined;
+  }
+
+  public playSelectedCard(): void {
+    this.play(this.selectedHandCard()?.handCardId ?? null);
+  }
+
+  public changeHandPage(step: number): void {
+    const next = this.handPage() + step;
+    if (next < 0 || next >= this.handPageCount()) return;
+    this.handPageIndex.set(next);
+    this.selectedHandCardId.set(null);
+    this.handCardTrigger = undefined;
+  }
+
+  public startCardDrag(card: GameCard, event: PointerEvent): void {
+    const game = this.game();
+    if (card.handCardId === null || !event.isPrimary || event.button !== 0 || !game || !this.canPlayCard(game)) return;
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    // Mantém os eventos do ponteiro nesta carta mesmo quando ele sai dela.
+    target.setPointerCapture?.(event.pointerId);
+    this.dragStart = {
+      handCardId: card.handCardId,
+      pointerId: event.pointerId,
+      image: this.cardImage(card),
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      width: rect.width,
+    };
+  }
+
+  public moveCardDrag(event: PointerEvent): void {
+    const start = this.dragStart;
+    if (!start || event.pointerId !== start.pointerId) return;
+    if (!this.cardDrag() && Math.hypot(event.clientX - start.startX, event.clientY - start.startY) < DRAG_THRESHOLD) return;
+    event.preventDefault();
+    this.cardDrag.set({
+      handCardId: start.handCardId,
+      image: start.image,
+      x: event.clientX - start.offsetX,
+      y: event.clientY - start.offsetY,
+      width: start.width,
+      overTable: this.isOverTable(event.clientX, event.clientY),
+    });
+  }
+
+  public endCardDrag(event: PointerEvent): void {
+    const start = this.dragStart;
+    if (!start || event.pointerId !== start.pointerId) return;
+    const drag = this.cardDrag();
+    this.cancelCardDrag();
+    // Sem movimento foi um toque: o clique cuida da seleção.
+    if (!drag) return;
+
+    this.suppressHandClick = true;
+    setTimeout(() => (this.suppressHandClick = false));
+    // O turno pode ter mudado durante o arrasto: a jogada só sai se ainda valer.
+    const game = this.game();
+    if (game && this.canPlayCard(game) && this.isOverTable(event.clientX, event.clientY)) this.play(drag.handCardId);
+  }
+
+  public cancelCardDrag(): void {
+    this.dragStart = undefined;
+    this.cardDrag.set(null);
+  }
+
+  private isOverTable(x: number, y: number): boolean {
+    const rect = this.tableFelt?.nativeElement.getBoundingClientRect();
+    return !!rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+
+  /** Mantém à vista a carta selecionada (ou a primeira da página) quando o tamanho da página muda. */
+  private setCompactHand(compact: boolean): void {
+    if (compact === this.compactHand()) return;
+    const hand = this.game()?.hand ?? [];
+    const selected = hand.findIndex((card) => card.handCardId !== null && card.handCardId === this.selectedHandCardId());
+    const anchor = selected >= 0 ? selected : this.handPage() * this.handPageSize();
+    this.compactHand.set(compact);
+    this.handPageIndex.set(Math.floor(anchor / this.handPageSize()));
+  }
+
+  /** Depois de cada estado: página dentro dos limites, sem seleção ou arrasto de carta que saiu da página. */
+  private syncHand(): void {
+    this.handPageIndex.set(this.handPage());
+    if (this.selectedHandCardId() !== null && !this.selectedHandCard()) {
+      this.selectedHandCardId.set(null);
+      this.handCardTrigger = undefined;
+    }
+    const dragged = this.dragStart?.handCardId;
+    if (dragged !== undefined && !this.visibleHand().some((card) => card.handCardId === dragged)) this.cancelCardDrag();
   }
 
   public start(): void {
@@ -460,6 +681,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private applyState(updated: GameState): void {
     const previous = this.game();
     this.game.set(updated);
+    this.syncHand();
 
     if (previous) {
       this.playStateSound(previous, updated);

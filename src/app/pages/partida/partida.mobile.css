@@ -52,19 +52,15 @@
   /* Rodada, direção e código "impressos" no feltro, como o logo de uma mesa de pôquer */
 
   .felt-print {
-    position: absolute;
-    bottom: 9%;
-    left: 50%;
     display: grid;
     justify-items: center;
     gap: 2px;
     margin: 0;
     color: #f3d99566;
-    font: 700 11px var(--heading);
-    letter-spacing: 2px;
+    font: 700 10px var(--heading);
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     white-space: nowrap;
-    transform: translateX(-50%);
     pointer-events: none;
   }
 
@@ -264,18 +260,9 @@
   }
 
   .table-felt {
-    /* As cartas se medem pela própria mesa: maiores quando há espaço. */
-    container-type: size;
-    --card: min(clamp(44px, 26cqh, 96px), 24cqw);
-    position: relative;
     box-sizing: border-box;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 18px;
     height: 100%;
     min-height: 0;
-    padding: 28px 22px 44px;
     border-radius: 9999px;
     /* Linha de aposta pintada no feltro */
     background:
@@ -283,13 +270,8 @@
       radial-gradient(ellipse at center, #167144 0%, var(--felt) 50%, var(--felt-deep) 100%);
   }
 
-  .played-cards {
-    flex: 0 1 auto;
-    width: 100%;
-  }
-
   /* Celular deitado: pouca altura, então a mesa fica com o que sobrar
-     e vira horizontal, com a vira ao lado das jogadas. */
+     (lugares e vira em partida.table.css). */
   @media (orientation: landscape) {
     .match-board {
       grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -303,42 +285,6 @@
     .hand-row .hand-card-slot {
       --w: clamp(46px, 14vh, 66px);
     }
-
-    .table-felt {
-      --card: min(clamp(40px, calc(62cqh - 14px), 84px), 22cqw);
-      flex-direction: row;
-      padding: 14px 48px 30px;
-    }
-
-    .felt-print {
-      bottom: 6px;
-    }
-  }
-
-  .vira img {
-    width: var(--card);
-  }
-
-  .played-cards {
-    flex-wrap: nowrap;
-    gap: 6px;
-    min-width: 0;
-    overflow-x: auto;
-    justify-content: safe center;
-    padding-top: 22px;
-  }
-
-  .played-card {
-    flex: 0 0 calc(var(--card) + 16px);
-  }
-
-  .played-card > img {
-    width: var(--card);
-  }
-
-  .played-card figcaption {
-    max-width: var(--card);
-    font-size: 10px;
   }
 
   .skill-chip {
@@ -386,15 +332,10 @@
     text-align: center;
   }
 
+  /* Cartas mais largas que a fatia de cada uma: sobrepõem-se como num leque. */
   .hand-row {
-    min-width: 0;
-    justify-content: safe center;
     gap: 0;
-    padding: 26px 10px 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
+    padding: 24px 4px 10px;
   }
 
   .hand-area.is-my-turn .hand-row {
@@ -404,24 +345,22 @@
   .hand-card-slot {
     --w: clamp(58px, min(18vw, 19dvh), 78px);
     --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
-    flex: 0 0 calc(var(--w) + 8px);
+    flex: 0 1 calc(var(--w) + 8px);
     transform: var(--fan);
     transform-origin: 50% 260%;
   }
 
-  .hand-card > img {
+  .hand-card {
     width: var(--w);
+    max-width: none;
   }
 
-  .hand-card:hover:not(:disabled),
+  .hand-card:hover,
   .hand-card:focus-visible,
-  .hand-card:active:not(:disabled) {
+  .hand-card:active,
+  .hand-card-slot.is-selected .hand-card {
     z-index: 2;
     transform: translateY(-14px) translateZ(20px);
-  }
-
-  .hand-card-slot .skill-chip {
-    top: -18px;
   }
 
   /* Ações soltas na base da tela, sem painel de fundo */
