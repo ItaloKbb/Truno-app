@@ -16,11 +16,10 @@ import { mockShop } from '../app/models/mock/shop.mock';
 import { mockSkills } from '../app/models/mock/skill.mock';
 
 const profile: Profile = {
-  id: 'user-lucas',
-  displayName: 'Lucas Martins',
-  username: 'lucasmartins',
+  id: 'user-demo',
+  displayName: 'Jogador de demonstração',
+  username: 'jogador-demo',
   avatarUrl: '',
-  bio: 'Jogador competitivo e colecionador de cartas.',
   level: 18,
   experience: 1250,
   experienceToNextLevel: 1500,
@@ -116,10 +115,10 @@ export function createCatalogApi(): CatalogApi {
     {
       id: 'room-1',
       name: 'Mesa rápida',
-      hostId: 'user-lucas',
+      hostId: 'user-demo',
       visibility: 'PUBLICA',
       maxPlayers: 2,
-      playerIds: ['user-lucas'],
+      playerIds: ['user-demo'],
       pointsToWin: 12,
       status: 'ABERTA',
     },

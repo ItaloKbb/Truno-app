@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, of, tap } from 'rxjs';
 import { isApiMessage, isAuthSession, type AuthSession, type LoginCredentials } from '../../domain/auth';
+import { profileUsername } from '../../domain/profile';
 import type { PlayerUser } from '../../domain/truno-api';
 import { API_BASE_URL } from '../config/api-config';
 import { AuthSessionStore } from './auth-session';
@@ -46,7 +47,7 @@ export class AuthService {
   private syncProfile(user: PlayerUser): void {
     const profile = this.profiles.loadProfile();
     profile.displayName = user.nickname;
-    profile.username = user.nickname.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) || 'jogador';
+    profile.username = profileUsername(user.nickname);
     profile.initials = user.nickname
       .split(/\s+/)
       .slice(0, 2)

@@ -16,7 +16,7 @@ Carregar perfil, estatísticas, coleção, conquistas e atividades como uma úni
 
 ## Passo 1 — entender os serviços
 
-`ProfileService` busca dados remotos. `ProfileStorage` mantém apenas o rascunho local usado por partes da interface. Para estatísticas e histórico, use o serviço remoto.
+`ProfileService` busca os dados do jogador autenticado no backend, que identifica a conta pelo token da sessão. `ProfileStorage` mantém apenas o rascunho local usado por partes da interface. Para estatísticas e histórico, use o serviço remoto.
 
 | Método | Informação |
 | --- | --- |

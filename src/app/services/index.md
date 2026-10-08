@@ -21,7 +21,7 @@ registrar o service nos `providers` de cada componente.
 | `ShopService` | Loja | `GET /api/shop` |
 | `SkillService` | Habilidades | `GET /api/skills`, `GET /api/skills/:id` |
 | `PuzzleService` | Perguntas | `GET /api/puzzles`, `GET /api/puzzles/:id` |
-| `ProfileService` | Perfil remoto | `GET /api/profile`, `/stats`, `/collection`, `/achievements`, `/activities` |
+| `ProfileService` | Perfil autenticado do jogador atual | `GET /profile`, `/profile/stats`, `/profile/collection`, `/profile/achievements`, `/profile/activities` |
 | `ProfileStorage` | Rascunho do perfil salvo no navegador | nenhum |
 
 `AuthService` e `ProfileStorage` não seguem só leitura de catálogo: o primeiro grava a sessão e o
@@ -36,9 +36,9 @@ quem já importava de lá. Service novo importa o tipo do domínio.
 tela
   -> CardService.getAll()
     -> readApi + isCard
-      -> HttpClient GET /api/cards
-        -> authInterceptor acrescenta Authorization, se houver token
-          -> catalogRouter em src/server/catalog-api.ts
+      -> HttpClient GET ${API_BASE_URL}/cards
+        -> authInterceptor acrescenta X-Player-Token
+          -> API Truno Crazzy
 ```
 
 `provideHttpClient` já está em `src/app/app.config.ts`, com `withFetch()` e o `authInterceptor`.
