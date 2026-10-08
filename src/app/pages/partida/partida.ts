@@ -229,7 +229,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   }
 
   @HostListener('document:keydown.tab', ['$event'])
-  public keepSkillDetailsFocus(event: KeyboardEvent): void {
+  public keepSkillDetailsFocus(event: Event): void {
     if (!this.selectedSkill()) return;
     event.preventDefault();
     this.skillDetailsClose?.nativeElement.focus();
