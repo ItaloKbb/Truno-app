@@ -137,6 +137,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       this.loading.set(false);
       this.errorMessage.set('Identificador de partida inválido.');
       this.game.set(null);
+      this.closeSkillDetails();
       return;
     }
 
