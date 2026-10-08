@@ -24,6 +24,10 @@ export interface StoredProfile {
   level: number;
 }
 
+export function profileUsername(nickname: string): string {
+  return nickname.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) || 'jogador';
+}
+
 export interface PlayerStats {
   matchesPlayed: number;
   wins: number;

@@ -8,6 +8,7 @@ import type {
   PlayerStats,
   Profile,
 } from '../../domain/profile';
+import { API_BASE_URL } from '../config/api-config';
 import {
   expectList,
   expectOne,
@@ -22,7 +23,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/profile';
+  private readonly apiUrl = `${inject(API_BASE_URL)}/profile`;
 
   getProfile(): Observable<Profile> {
     return readApi(
