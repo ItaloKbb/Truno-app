@@ -28,6 +28,7 @@ import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
 import { ChatService } from '../../services/modules/chat.service';
 import { MatchSoundService, type MatchSound } from '../../services/modules/match-sound.service';
+import { BackgroundMusicService } from '../../services/modules/background-music.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
 import { SkillBurst } from '../../components/skill-burst/skill-burst';
 import { RoundBanner, type RoundResult } from '../../components/round-banner/round-banner';
@@ -150,6 +151,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private readonly skillService = inject(SkillService);
   private readonly chat = inject(ChatService);
   public readonly sounds = inject(MatchSoundService);
+  public readonly music = inject(BackgroundMusicService);
   private liveUpdates?: Subscription;
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextNoticeId = 0;
