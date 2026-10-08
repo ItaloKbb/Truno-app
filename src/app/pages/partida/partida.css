@@ -308,6 +308,7 @@
 .table-felt {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 20px;
   min-height: 220px;
   padding: 20px 32px;
@@ -341,9 +342,15 @@
 .played-cards {
   flex: 1;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 14px;
+  min-width: 0;
+  flex-wrap: nowrap;
+  justify-content: safe center;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 14px 2px 8px;
+  scrollbar-width: thin;
+  touch-action: pan-x;
 }
 
 .played-cards .muted {
@@ -353,13 +360,14 @@
 .played-card {
   position: relative;
   display: grid;
+  flex: 0 0 112px;
   justify-items: center;
   gap: 6px;
   margin: 0;
   animation: card-drop 0.35s ease-out;
 }
 
-.played-card img {
+.played-card > img {
   width: 74px;
   border-radius: 8px;
   box-shadow: 0 8px 16px #0008;
@@ -376,7 +384,7 @@
   white-space: nowrap;
 }
 
-.played-card.is-winner img {
+.played-card.is-winner > img {
   outline: 3px solid var(--gold);
   box-shadow: 0 0 18px #e5b75d99;
 }
@@ -389,25 +397,41 @@
   position: absolute;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 4px;
   top: -9px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 2px 7px;
+  box-sizing: border-box;
+  max-width: calc(100% - 2px);
+  min-height: 24px;
+  padding: 2px 5px;
   border: 1px solid #91d9d566;
   border-radius: 999px;
   background: #10211ce6;
   color: var(--teal-bright);
-  font-size: 10px;
+  font: 800 10px/1.15 'Trebuchet MS', 'Segoe UI', sans-serif;
   font-weight: 800;
-  white-space: nowrap;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  cursor: pointer;
   box-shadow: 0 4px 10px #0006;
+}
+
+.skill-chip:disabled {
+  cursor: default;
+}
+
+.skill-chip:focus-visible {
+  outline: 2px solid #fff1c7;
+  outline-offset: 2px;
 }
 
 .skill-chip img {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   image-rendering: pixelated;
 }
 
@@ -443,9 +467,29 @@
 
 .hand-row {
   display: flex;
-  gap: 10px;
+  justify-content: safe center;
+  gap: 8px;
   overflow-x: auto;
-  padding: 12px 4px 4px;
+  overflow-y: hidden;
+  padding: 20px 4px 4px;
+  scrollbar-width: thin;
+  touch-action: pan-x;
+}
+
+.hand-card-slot {
+  position: relative;
+  display: grid;
+  flex: 0 0 108px;
+  justify-items: center;
+}
+
+.hand-card-slot:hover,
+.hand-card-slot:focus-within {
+  z-index: 2;
+}
+
+.hand-card-slot .skill-chip {
+  max-width: 106px;
 }
 
 .hand-card {
@@ -458,7 +502,7 @@
   transition: transform 0.15s ease;
 }
 
-.hand-card img {
+.hand-card > img {
   display: block;
   width: 78px;
   border-radius: 8px;
@@ -817,8 +861,8 @@
     padding: 12px;
   }
 
-  .played-card img,
-  .hand-card img {
+  .played-card > img,
+  .hand-card > img {
     width: 62px;
   }
 

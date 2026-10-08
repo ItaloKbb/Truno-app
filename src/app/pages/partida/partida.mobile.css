@@ -285,6 +285,7 @@
 
   .played-cards {
     flex: 0 1 auto;
+    width: 100%;
   }
 
   /* Celular deitado: pouca altura, então a mesa fica com o que sobrar
@@ -299,8 +300,8 @@
     }
 
     /* Seletor mais forte que o .hand-card abaixo, que mede pela altura em pé. */
-    .hand-row .hand-card {
-      --w: min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), 18vh);
+    .hand-row .hand-card-slot {
+      --w: clamp(46px, 14vh, 66px);
     }
 
     .table-felt {
@@ -320,15 +321,17 @@
 
   .played-cards {
     flex-wrap: nowrap;
-    gap: 0;
+    gap: 6px;
     min-width: 0;
+    overflow-x: auto;
+    justify-content: safe center;
   }
 
-  .played-card + .played-card {
-    margin-left: calc(var(--card) * -0.35);
+  .played-card {
+    flex: 0 0 calc(var(--card) + 16px);
   }
 
-  .played-card img {
+  .played-card > img {
     width: var(--card);
   }
 
@@ -338,17 +341,27 @@
   }
 
   .skill-chip {
-    max-width: 64px;
-    overflow: hidden;
-    padding: 1px 5px;
-    font-size: 9px;
-    text-overflow: ellipsis;
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .skill-chip-label {
+    display: none;
+  }
+
+  .skill-chip img {
+    width: 28px;
+    height: 28px;
   }
 
   /* Mão em leque 3D na base */
 
   .hand-area {
     grid-row: 3;
+    min-width: 0;
     padding: 0;
     border: none;
     background: none;
@@ -372,47 +385,41 @@
   }
 
   .hand-row {
-    justify-content: center;
+    min-width: 0;
+    justify-content: safe center;
     gap: 0;
-    padding: 26px 0 6px;
-    overflow: visible;
-    transform: rotateX(22deg);
-    transform-origin: 50% 100%;
-    transform-style: preserve-3d;
+    padding: 26px 10px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
   }
 
   .hand-area.is-my-turn .hand-row {
     filter: drop-shadow(0 0 10px #d99b3788);
   }
 
-  .hand-card {
-    /* Largura total = w * (0.6n + 0.4): todas as cartas cabem na tela.
-       Altura: o que sobra abaixo da mesa (40dvh - avatares, ações e folgas) / proporção da carta. */
-    --w: max(34px, min(clamp(30px, calc((100vw - 40px) / (var(--n) * 0.6 + 0.4)), 78px), calc((40dvh - 160px) / 1.45)));
+  .hand-card-slot {
+    --w: clamp(58px, min(18vw, 19dvh), 78px);
     --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
-    width: var(--w);
-    margin-left: calc(var(--w) * -0.4);
+    flex: 0 0 calc(var(--w) + 8px);
     transform: var(--fan);
     transform-origin: 50% 260%;
   }
 
-  .hand-card:first-child {
-    margin-left: 0;
-  }
-
-  .hand-card img {
-    width: 100%;
+  .hand-card > img {
+    width: var(--w);
   }
 
   .hand-card:hover:not(:disabled),
   .hand-card:focus-visible,
   .hand-card:active:not(:disabled) {
     z-index: 2;
-    transform: var(--fan) translateY(-14px) translateZ(20px);
+    transform: translateY(-14px) translateZ(20px);
   }
 
-  .hand-card .skill-chip {
-    top: -7px;
+  .hand-card-slot .skill-chip {
+    top: -16px;
   }
 
   /* Ações soltas na base da tela, sem painel de fundo */

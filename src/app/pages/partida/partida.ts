@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { EMPTY, Subscription, catchError, exhaustMap, tap, timer } from 'rxjs';
 import {
@@ -41,6 +41,12 @@ interface MatchNotice {
   detail: string;
 }
 
+interface SkillDetails {
+  name: string;
+  description: string;
+  icon: string;
+}
+
 interface SkillBurstItem {
   id: number;
   type: SkillType;
@@ -71,7 +77,7 @@ const SHARE_COOLDOWN = 5000;
 
 @Component({
   selector: 'app-partida',
-  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.turn.css', './partida.mobile.css'],
+  styleUrls: ['./partida.css', './partida.result.css', './partida.puzzle.css', './partida.turn.css', './partida.mobile.css', './partida.skill.css'],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
 })
@@ -94,7 +100,9 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private turnRimTimer?: ReturnType<typeof setTimeout>;
   private nextBurstId = 0;
   private nextTurnEffectId = 0;
-  private skillCatalog: SkillDefinition[] = [];
+  private readonly skillCatalog = signal<SkillDefinition[]>([]);
+  private skillDetailsTrigger?: HTMLElement;
+  @ViewChild('skillDetailsClose') private skillDetailsClose?: ElementRef<HTMLButtonElement>;
 
   public readonly game = signal<GameState | null>(null);
   public readonly loading = signal(true);
@@ -103,6 +111,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly liveUpdateError = signal('');
   public readonly notices = signal<MatchNotice[]>([]);
   public readonly skillBursts = signal<SkillBurstItem[]>([]);
+  public readonly selectedSkill = signal<SkillDetails | null>(null);
   public readonly menuOpen = signal(false);
   /** Segundos até o "pronto" automático; null quando não há contagem. */
   public readonly autoReadyIn = signal<number | null>(null);
@@ -115,8 +124,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
     this.skillService.getAll().subscribe({
-      next: (skills) => (this.skillCatalog = skills),
-      error: () => (this.skillCatalog = []),
+      next: (skills) => this.skillCatalog.set(skills),
+      error: () => this.skillCatalog.set([]),
     });
   }
 
@@ -140,6 +149,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.loading.set(true);
     this.errorMessage.set('');
     this.game.set(null);
+    this.closeSkillDetails();
 
     this.service.getState(this.partidaId).subscribe({
       next: (game) => {
@@ -187,6 +197,42 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public skillName(card: GameCard): string {
     return card.skill ? (this.skillFor(card)?.name ?? SKILL_LABEL[card.skill]) : '';
+  }
+
+  public skillDescription(card: GameCard): string {
+    return card.skill ? (this.skillFor(card)?.description.trim() ?? '') : '';
+  }
+
+  public showSkillDetails(card: GameCard, event: Event, surpriseRoll: number | null = null, direction: GameDirection | null = null): void {
+    if (!card.skill) return;
+    const description = this.skillDescription(card);
+    if (!description) return;
+    this.skillDetailsTrigger = event.currentTarget as HTMLElement;
+    this.selectedSkill.set({
+      name: this.skillName(card),
+      description,
+      icon: this.skillIcon(card.skill, surpriseRoll, direction),
+    });
+    setTimeout(() => this.skillDetailsClose?.nativeElement.focus());
+  }
+
+  public closeSkillDetails(): void {
+    if (!this.selectedSkill()) return;
+    this.selectedSkill.set(null);
+    this.skillDetailsTrigger?.focus();
+    this.skillDetailsTrigger = undefined;
+  }
+
+  @HostListener('document:keydown.escape')
+  public onEscape(): void {
+    this.closeSkillDetails();
+  }
+
+  @HostListener('document:keydown.tab', ['$event'])
+  public keepSkillDetailsFocus(event: KeyboardEvent): void {
+    if (!this.selectedSkill()) return;
+    event.preventDefault();
+    this.skillDetailsClose?.nativeElement.focus();
   }
 
   public surpriseDeltaLabel(play: GamePlay): string {
@@ -733,8 +779,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   private skillFor(card: GameCard): SkillDefinition | undefined {
     return (
-      this.skillCatalog.find((skill) => skill.valor === card.valor && skill.naipe === card.naipe) ??
-      this.skillCatalog.find((skill) => skill.type === card.skill)
+      this.skillCatalog().find((skill) => skill.valor === card.valor && skill.naipe === card.naipe) ??
+      this.skillCatalog().find((skill) => skill.type === card.skill)
     );
   }
 
