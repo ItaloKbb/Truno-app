@@ -246,6 +246,7 @@
 .action-panel {
 	min-width: 0;
 	padding: 20px;
+	height: fit-content;
 	border: 1px solid #d6a94944;
 	border-radius: 12px;
 	background: linear-gradient(145deg, #17251d, #101713 78%);
