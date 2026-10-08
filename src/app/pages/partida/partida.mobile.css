@@ -344,13 +344,15 @@
   }
 
   .hand-card-slot {
-    /* Nunca maior que a página permite: no máximo ~40% de sobreposição entre cartas. */
-    --fit: calc(100cqw / var(--n) * 1.4);
+    /* Nunca maior que a página permite: pouca sobreposição entre cartas vizinhas. */
+    --fit: calc(100cqw / var(--n) * 1.2);
     --w: min(clamp(58px, min(18vw, 19dvh), 78px), var(--fit));
-    --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
+    /* Leque girando cada carta no próprio centro, com as pontas um pouco mais baixas:
+       nenhuma carta sai da fileira (girar em torno de um ponto distante as jogava para fora). */
+    --offset: calc(var(--i) - (var(--n) - 1) / 2);
+    --fan: translateY(calc(var(--offset) * var(--offset) * 2px)) rotate(calc(var(--offset) * min(4deg, 30deg / var(--n))));
     flex: 0 1 calc(var(--w) + 8px);
     transform: var(--fan);
-    transform-origin: 50% 260%;
   }
 
   .hand-card {

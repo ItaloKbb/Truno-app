@@ -12,6 +12,8 @@
 }
 
 .hand-arrow {
+  position: relative;
+  z-index: 3;
   flex: none;
   display: grid;
   place-items: center;
@@ -204,8 +206,10 @@
 
 /* Celular: o painel flutua logo acima da mão, sobre a borda da mesa. */
 @media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  /* Ancora o painel; zera os deslocamentos do desktop, que valeriam com relative. */
   .hand-area {
     position: relative;
+    inset: auto;
   }
 
   .hand-arrow {
