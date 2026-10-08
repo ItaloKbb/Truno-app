@@ -325,6 +325,7 @@
     min-width: 0;
     overflow-x: auto;
     justify-content: safe center;
+    padding-top: 22px;
   }
 
   .played-card {
@@ -341,11 +342,12 @@
   }
 
   .skill-chip {
-    width: 42px;
-    height: 42px;
-    min-height: 42px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
     padding: 4px;
     border-radius: 12px;
+    top: -18px;
   }
 
   .skill-chip-label {
@@ -353,8 +355,8 @@
   }
 
   .skill-chip img {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 
   /* Mão em leque 3D na base */
@@ -419,7 +421,7 @@
   }
 
   .hand-card-slot .skill-chip {
-    top: -16px;
+    top: -18px;
   }
 
   /* Ações soltas na base da tela, sem painel de fundo */

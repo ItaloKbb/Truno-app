@@ -403,6 +403,7 @@
   left: 50%;
   transform: translateX(-50%);
   box-sizing: border-box;
+  width: max-content;
   max-width: calc(100% - 2px);
   min-height: 24px;
   padding: 2px 5px;
