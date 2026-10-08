@@ -25,3 +25,18 @@
 @case ('admin/skills') { <app-admin section="skills" /> }
 @case ('admin/puzzles') { <app-admin section="puzzles" /> }
 }
+
+<!-- Música de fundo: na partida o controle fica no Menu, junto do som -->
+@if (page() !== 'partida/:id') {
+<button
+  type="button"
+  class="music-toggle"
+  [class.is-off]="!music.enabled()"
+  [attr.aria-pressed]="music.enabled()"
+  [attr.aria-label]="music.enabled() ? 'Desligar música de fundo' : 'Ligar música de fundo'"
+  [title]="music.enabled() ? 'Música ligada' : 'Música desligada'"
+  (click)="music.toggle()"
+>
+  <span aria-hidden="true">♪</span>
+</button>
+}

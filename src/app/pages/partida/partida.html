@@ -484,6 +484,10 @@
                 <span class="btn-icon" aria-hidden="true">{{ sounds.enabled() ? '🔊' : '🔇' }}</span>
                 Som {{ sounds.enabled() ? 'ligado' : 'desligado' }}
               </button>
+              <button type="button" class="btn btn-ghost" [attr.aria-pressed]="music.enabled()" (click)="music.toggle()">
+                <span class="btn-icon" aria-hidden="true">♪</span>
+                Música {{ music.enabled() ? 'ligada' : 'desligada' }}
+              </button>
               <button type="button" class="btn btn-ghost menu-return-desktop" (click)="navigate.emit('/lobby')">
                 <span class="btn-icon" aria-hidden="true">←</span> Voltar ao lobby
               </button>

@@ -12,6 +12,7 @@ import { Perguntas } from './pages/perguntas/perguntas';
 import { Profile } from './pages/profile/profile';
 import { Ranking } from './pages/ranking/ranking';
 import { AuthService } from './services/modules/auth.service';
+import { BackgroundMusicService } from './services/modules/background-music.service';
 import { GameService } from './services/modules/game.service';
 import { CardService } from './services/modules/card.service';
 import { ProfileService } from './services/modules/profile.service';
@@ -39,6 +40,11 @@ export class App {
   protected readonly puzzleService = inject(PuzzleService);
   protected readonly rankingService = inject(RankingService);
   protected readonly skillService = inject(SkillService);
+  protected readonly music = inject(BackgroundMusicService);
+
+  constructor() {
+    this.music.init();
+  }
 
   protected readonly title = signal('Truno-app');
 
