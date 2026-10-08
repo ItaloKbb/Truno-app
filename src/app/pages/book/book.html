@@ -56,7 +56,7 @@
           @for (skill of card.skills; track skill.id) {
           <div class="book-skill">
             <span class="book-skill-name">
-              <span aria-hidden="true">{{ icon(skill.type) }}</span>
+              <img class="book-skill-icon" [src]="icon(skill.type)" alt="" width="20" height="20" />
               {{ skill.name }}
             </span>
             <p>{{ skill.description }}</p>

@@ -35,18 +35,11 @@
 
 .emoji {
   display: block;
-  font-size: clamp(96px, 22vw, 200px);
-  line-height: 1;
+  width: clamp(96px, 22vw, 200px);
+  height: auto;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
   transform-style: preserve-3d;
-  /* Camadas deslocadas simulam a espessura do emoji. */
-  text-shadow:
-    1px 1px 0 #0006,
-    2px 2px 0 #0005,
-    3px 3px 0 #0005,
-    4px 4px 0 #0004,
-    5px 5px 0 #0004,
-    6px 6px 0 #0003,
-    10px 14px 18px #000a;
   filter: drop-shadow(0 0 24px var(--glow));
   animation: skill-spin var(--burst-duration) ease-in-out var(--delay) both;
 }
@@ -57,7 +50,7 @@
 }
 
 :host(.is-surprise) .emoji {
-  font-size: min(var(--burst-size), 55vw);
+  width: min(var(--burst-size), 55vw);
 }
 
 :host(.is-puzzle) .burst::after {
@@ -66,7 +59,7 @@
 }
 
 :host(.is-puzzle) .emoji {
-  font-size: min(var(--burst-size), 55vw);
+  width: min(var(--burst-size), 55vw);
 }
 
 /* Força 3+ sacode o emoji no auge do efeito. */
@@ -89,7 +82,7 @@
 }
 
 :host(.is-theft) .emoji {
-  font-size: min(var(--burst-size), 50vw);
+  width: min(var(--burst-size), 50vw);
 }
 
 .theft-items {
@@ -145,7 +138,7 @@
 }
 
 :host(.is-buy) .emoji {
-  font-size: min(var(--burst-size), 50vw);
+  width: min(var(--burst-size), 50vw);
 }
 
 .buy-cards {

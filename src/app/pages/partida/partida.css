@@ -387,6 +387,9 @@
 
 .skill-chip {
   position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   top: -9px;
   left: 50%;
   transform: translateX(-50%);
@@ -399,6 +402,13 @@
   font-weight: 800;
   white-space: nowrap;
   box-shadow: 0 4px 10px #0006;
+}
+
+.skill-chip img {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
 }
 
 .surprise-chip {
@@ -688,6 +698,13 @@
   font-size: 26px;
   line-height: 1;
   filter: drop-shadow(0 2px 2px #0006);
+}
+
+.notice-icon img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
 }
 
 .notice-text {

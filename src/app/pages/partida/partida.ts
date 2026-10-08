@@ -5,12 +5,13 @@ import {
   BUY_POWER,
   PUZZLE_POWER,
   THEFT_POWER,
-  SKILL_ICON,
+  skillIconAsset,
   SKILL_LABEL,
   SURPRISE_POWER,
   cardAsset,
   cardLabel,
   type GameCard,
+  type GameDirection,
   type GamePhase,
   type GamePlay,
   type GamePlayer,
@@ -23,6 +24,7 @@ import {
 import { GameService } from '../../services/modules/game.service';
 import { AuthSessionStore } from '../../services/modules/auth-session';
 import { SkillService } from '../../services/modules/skill.service';
+import { ChatService } from '../../services/modules/chat.service';
 import { MatchSoundService, type MatchSound } from '../../services/modules/match-sound.service';
 import { TurnFlames } from '../../components/turn-flames/turn-flames';
 import { SkillBurst } from '../../components/skill-burst/skill-burst';
@@ -34,6 +36,7 @@ interface MatchNotice {
   id: number;
   kind: NoticeKind;
   icon: string;
+  iconAsset?: string;
   title: string;
   detail: string;
 }
@@ -41,6 +44,7 @@ interface MatchNotice {
 interface SkillBurstItem {
   id: number;
   type: SkillType;
+  direction: GameDirection | null;
   delay: number;
   duration: number;
   power: number;
@@ -63,6 +67,7 @@ const AUTO_READY_SECONDS = 3;
 const ROUND_BANNER_DURATION = 4000;
 const PLAYER_POP_DURATION = 3500;
 const TURN_RIM_DURATION = 1250;
+const SHARE_COOLDOWN = 5000;
 
 @Component({
   selector: 'app-partida',
@@ -77,6 +82,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   private readonly authSession = inject(AuthSessionStore);
   private readonly skillService = inject(SkillService);
+  private readonly chat = inject(ChatService);
   public readonly sounds = inject(MatchSoundService);
   private liveUpdates?: Subscription;
   private readonly noticeTimers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -103,6 +109,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   public readonly roundBanner = signal<RoundResult | null>(null);
   public readonly selectedPlayerId = signal<number | null>(null);
   public readonly turnEffects = signal<number[]>([]);
+  /** Bloqueia o "Enviar no chat" durante o envio e por um tempo depois, contra spam. */
+  public readonly sharing = signal(false);
 
   ngOnInit(): void {
     // Só enriquece os avisos com nome/descrição; sem o catálogo usa SKILL_LABEL.
@@ -167,8 +175,14 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     return cardLabel(card.valor, card.naipe);
   }
 
-  public skillIcon(type: SkillType): string {
-    return SKILL_ICON[type];
+  public skillIcon(type: SkillType, surpriseRoll: number | null = null, direction: GameState['direction'] | null = null): string {
+    return skillIconAsset(type, { surpriseRoll, direction });
+  }
+
+  public directionAfterPlay(game: GameState, play: GamePlay): GameDirection {
+    const laterInversions = game.plays.filter((candidate) => candidate.order > play.order && candidate.card.skill === 'INVERTS').length;
+    if (laterInversions % 2 === 0) return game.direction;
+    return game.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO';
   }
 
   public skillName(card: GameCard): string {
@@ -299,6 +313,23 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public start(): void {
     this.run(this.service.start(this.partidaId));
+  }
+
+  /** Divulga o código da mesa no chat do lobby; quem estiver lá entra pelo convite. */
+  public shareCode(game: GameState): void {
+    if (this.sharing()) return;
+    this.sharing.set(true);
+
+    this.chat.send(`Partida "${game.name}": ${game.code}. Bora jogar!`).subscribe({
+      next: () => {
+        this.pushNotice({ kind: 'skill', icon: '💬', title: 'Convite enviado', detail: `Código ${game.code} publicado no chat do lobby.` });
+        setTimeout(() => this.sharing.set(false), SHARE_COOLDOWN);
+      },
+      error: (error: unknown) => {
+        this.sharing.set(false);
+        this.notifyError('⚠️', 'Chat indisponível', error instanceof Error ? error.message : 'Não foi possível enviar o convite.');
+      },
+    });
   }
 
   public answerPuzzle(challengeId: number, alternativeIndex: number): void {
@@ -536,7 +567,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         : null;
       this.pushNotice({
         kind: 'skill',
-        icon: SKILL_ICON[play.card.skill],
+        icon: '',
+        iconAsset: skillIconAsset(play.card.skill, {
+          surpriseRoll,
+          direction: this.game() ? this.directionAfterPlay(this.game()!, play) : null,
+        }),
         title: surpriseResult
           ? `${this.displayName(play.nickname)} teve uma surpresa ${typeof surpriseRoll === 'number' && surpriseRoll > 0 ? 'boa' : 'ruim'}!`
           : buyDetail
@@ -597,6 +632,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
       : BURST_DURATION;
     this.skillBursts.update((list) => [...list, {
       id, type, delay, duration, power,
+      direction: this.game() ? this.directionAfterPlay(this.game()!, play) : null,
       roll: type === 'SURPRISE' ? (play.surpriseRoll ?? null) : null,
       coinDelta: type === 'SURPRISE' ? (play.surpriseCoinDelta ?? null) : null,
       cardsDrawn: type === 'BUY' ? (play.buyCardsDrawn ?? null) : null,

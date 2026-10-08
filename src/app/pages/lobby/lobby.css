@@ -259,6 +259,18 @@
 	animation-delay: 180ms;
 }
 
+/* Coluna direita: o chat ocupa o vão abaixo de "Entrar com código". */
+.lobby-side {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 17px;
+}
+
+.lobby-chat {
+	flex: 1;
+}
+
 .panel-heading {
 	display: flex;
 	align-items: center;
@@ -512,6 +524,10 @@
 
 	.lobby-actions {
 		grid-template-columns: 1fr;
+		gap: 12px;
+	}
+
+	.lobby-side {
 		gap: 12px;
 	}
 

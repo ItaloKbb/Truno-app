@@ -82,18 +82,25 @@ export const SKILL_TYPES = [
 ] as const;
 export type SkillType = (typeof SKILL_TYPES)[number];
 
+/** Ícones SVG de pixel art, todos com grade 32×32 e fundo transparente. */
 export const SKILL_ICON: Record<SkillType, string> = {
-  BLOCK: '⛔',
-  THEFT: '🫳',
-  INVERTS: '🔄',
-  BUY: '➕',
-  BURN: '🔥',
-  SURPRISE: '🎁',
-  PUZZLE: '❓',
-  CHANGEOFHANDS: '🤝',
-  BOMB: '💣',
-  SHIELD: '🛡️',
+  BLOCK: 'assets/skills/bloqueio.svg',
+  THEFT: 'assets/skills/roubo.svg',
+  INVERTS: 'assets/skills/inversao-horario.svg',
+  BUY: 'assets/skills/comprar.svg',
+  BURN: 'assets/skills/queima.svg',
+  SURPRISE: 'assets/skills/surpresa-positiva.svg',
+  PUZZLE: 'assets/skills/puzzle.svg',
+  CHANGEOFHANDS: 'assets/skills/troca-de-maos.svg',
+  BOMB: 'assets/skills/bomba.svg',
+  SHIELD: 'assets/skills/escudo.svg',
 };
+
+export function skillIconAsset(type: SkillType, options?: { surpriseRoll?: number | null; direction?: GameDirection | null }): string {
+  if (type === 'SURPRISE' && (options?.surpriseRoll ?? 0) < 0) return 'assets/skills/surpresa-negativa.svg';
+  if (type === 'INVERTS' && options?.direction === 'ANTI_HORARIO') return 'assets/skills/inversao-anti-horario.svg';
+  return SKILL_ICON[type];
+}
 
 /** Rótulo de reserva quando o catálogo de `GET /skills` não carregou. */
 export const SKILL_LABEL: Record<SkillType, string> = {

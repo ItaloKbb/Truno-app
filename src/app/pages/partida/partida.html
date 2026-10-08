@@ -46,6 +46,7 @@
     @for (burst of skillBursts(); track burst.id) {
       <app-skill-burst
         [type]="burst.type"
+        [direction]="burst.direction"
         [power]="burst.power"
         [roll]="burst.roll"
         [coinDelta]="burst.coinDelta"
@@ -74,7 +75,10 @@
           [attr.role]="notice.kind === 'error' ? 'alert' : null"
           (click)="dismissNotice(notice.id)"
         >
-          <span class="notice-icon" aria-hidden="true">{{ notice.icon }}</span>
+          <span class="notice-icon" aria-hidden="true">
+            @if (notice.iconAsset) { <img [src]="notice.iconAsset" alt="" width="26" height="26" /> }
+            @else { {{ notice.icon }} }
+          </span>
           <span class="notice-text">
             <strong>{{ notice.title }}</strong>
             <small>{{ notice.detail }}</small>
@@ -215,7 +219,7 @@
                 <img [src]="cardImage(play.card)" [alt]="play.nickname + ' jogou ' + cardName(play.card)" />
                 @if (play.card.skill) {
                   <span class="skill-chip" [title]="skillName(play.card)">
-                    {{ skillIcon(play.card.skill) }} {{ skillName(play.card) }}
+                    <img [src]="skillIcon(play.card.skill, play.surpriseRoll ?? null, directionAfterPlay(current, play))" alt="" width="16" height="16" /> {{ skillName(play.card) }}
                   </span>
                 }
                 @if (play.card.skill === 'SURPRISE' && play.surpriseRoll != null) {
@@ -255,7 +259,7 @@
               >
                 <img [src]="cardImage(card)" [alt]="cardName(card)" />
                 @if (card.skill) {
-                  <span class="skill-chip">{{ skillIcon(card.skill) }} {{ skillName(card) }}</span>
+                  <span class="skill-chip"><img [src]="skillIcon(card.skill, null, current.direction === 'HORARIO' ? 'ANTI_HORARIO' : 'HORARIO')" alt="" width="16" height="16" /> {{ skillName(card) }}</span>
                 }
               </button>
             }
@@ -268,7 +272,10 @@
       <!-- HUD inferior direito: ações da fase e menu -->
       <nav class="hud hud-actions" aria-label="Ações da partida">
         @if (current.phase === 'AGUARDANDO_JOGADORES') {
-          <div class="action-group">
+          <div class="action-group action-group-split">
+            <button type="button" class="btn btn-secondary" [disabled]="sharing()" (click)="shareCode(current)">
+              <span class="btn-icon" aria-hidden="true">💬</span> Enviar no chat
+            </button>
             <button type="button" class="btn btn-primary" [disabled]="pending()" (click)="start()">
               <span class="btn-icon" aria-hidden="true">▶</span> Iniciar partida
             </button>
