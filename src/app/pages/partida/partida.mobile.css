@@ -42,13 +42,6 @@
     padding-bottom: 0;
   }
 
-  /* Respingos no centro da mesa: topo + avatares (40px) + gap + meia mesa. */
-  .notice-stack {
-    top: calc(max(10px, env(safe-area-inset-top)) + 48px + 30dvh);
-    transform: translate(-50%, -50%);
-    width: min(320px, calc(100% - 56px));
-  }
-
   /* Rodada, direção e código "impressos" no feltro, como o logo de uma mesa de pôquer */
 
   .felt-print {
@@ -275,10 +268,6 @@
   @media (orientation: landscape) {
     .match-board {
       grid-template-rows: auto minmax(0, 1fr) auto auto;
-    }
-
-    .notice-stack {
-      top: 40%;
     }
 
     /* Seletor mais forte que o .hand-card abaixo, que mede pela altura em pé. */

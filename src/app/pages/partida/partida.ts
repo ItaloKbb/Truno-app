@@ -66,6 +66,15 @@ interface SkillBurstItem {
   theftBlocked: boolean;
 }
 
+/** Marca rápida de uma skill sobre o avatar de quem foi afetado. */
+interface PlayerEffect {
+  id: number;
+  playerId: number;
+  icon: string;
+  text: string;
+  tone: 'good' | 'bad' | 'neutral';
+}
+
 interface TableSeat {
   player: GamePlayer;
   plays: GamePlay[];
@@ -113,6 +122,8 @@ const HAND_PAGE_COMPACT = 6;
 const HAND_PAGE_WIDE = 8;
 /** Distância mínima (px) para um toque virar arrasto. */
 const DRAG_THRESHOLD = 8;
+const PLAYER_EFFECT_DURATION = 3200;
+const MAX_PLAYER_EFFECTS = 2;
 
 @Component({
   selector: 'app-partida',
@@ -125,6 +136,7 @@ const DRAG_THRESHOLD = 8;
     './partida.skill.css',
     './partida.table.css',
     './partida.hand.css',
+    './partida.status.css',
   ],
   templateUrl: './partida.html',
   imports: [TurnFlames, SkillBurst, RoundBanner],
@@ -158,6 +170,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   /** O clique que encerra um arrasto não deve selecionar a carta. */
   private suppressHandClick = false;
   private handCardTrigger?: HTMLElement;
+  private readonly effectTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private nextEffectId = 0;
 
   public readonly game = signal<GameState | null>(null);
   public readonly loading = signal(true);
@@ -179,6 +193,7 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
   private readonly handPageIndex = signal(0);
   private readonly selectedHandCardId = signal<number | null>(null);
   public readonly cardDrag = signal<CardDrag | null>(null);
+  public readonly playerEffects = signal<PlayerEffect[]>([]);
 
   public readonly handPageSize = computed(() => (this.compactHand() ? HAND_PAGE_COMPACT : HAND_PAGE_WIDE));
   public readonly handPageCount = computed(() => Math.max(1, Math.ceil((this.game()?.hand.length ?? 0) / this.handPageSize())));
@@ -273,6 +288,8 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
     this.noticeTimers.clear();
     this.burstTimers.forEach((handle) => clearTimeout(handle));
     this.burstTimers.clear();
+    this.effectTimers.forEach((handle) => clearTimeout(handle));
+    this.effectTimers.clear();
     this.stopAutoReady();
     clearTimeout(this.roundBannerTimer);
     clearTimeout(this.playerPopTimer);
@@ -286,6 +303,35 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public cardName(card: GameCard): string {
     return cardLabel(card.valor, card.naipe);
+  }
+
+  public effectsFor(playerId: number): PlayerEffect[] {
+    return this.playerEffects().filter((effect) => effect.playerId === playerId);
+  }
+
+  /**
+   * Bloqueado na rodada: alvo de um Bloqueio que ainda não jogou depois dele.
+   * A API não expõe o escudo nem o turno pulado, então um bloqueio absorvido por escudo também aparece.
+   */
+  public isBlocked(game: GameState, playerId: number): boolean {
+    if (game.phase !== 'EM_ANDAMENTO') return false;
+    return game.plays.some(
+      (block) =>
+        block.card.skill === 'BLOCK' &&
+        this.targetOf(game, block)?.id === playerId &&
+        !game.plays.some((play) => play.playerId === playerId && play.order > block.order),
+    );
+  }
+
+  /** Escudo erguido nesta rodada e ainda não gasto num roubo. */
+  public isShielded(game: GameState, playerId: number): boolean {
+    if (game.phase !== 'EM_ANDAMENTO') return false;
+    return game.plays.some(
+      (shield) =>
+        shield.card.skill === 'SHIELD' &&
+        shield.playerId === playerId &&
+        !game.plays.some((play) => play.order > shield.order && play.theftTargetPlayerId === playerId && !!play.theftBlocked),
+    );
   }
 
   /** Coringa da rodada: carta da mão com o valor da manilha da vira atual. */
@@ -857,7 +903,94 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
         detail: surpriseDetail ?? buyDetail ?? theftDetail ?? puzzleDetail ?? definition?.description ?? `Carta ${this.cardName(play.card)}`,
       });
       this.pushBurst(play.card.skill, play);
+      this.markSkillTargets(updated, play);
     }
+  }
+
+  /** Mesmo alvo do GameEngineService: o próximo jogador no sentido em vigor quando a carta foi jogada. */
+  private targetOf(game: GameState, play: GamePlay): GamePlayer | undefined {
+    if (play.theftTargetPlayerId != null) return game.players.find((player) => player.id === play.theftTargetPlayerId);
+    const players = [...game.players].sort((a, b) => a.position - b.position);
+    const index = players.findIndex((player) => player.id === play.playerId);
+    if (index < 0 || players.length < 2) return undefined;
+    const step = this.directionAfterPlay(game, play) === 'HORARIO' ? 1 : -1;
+    return players[(index + step + players.length) % players.length];
+  }
+
+  /** Mostra no avatar de cada afetado o que a skill fez com ele. */
+  private markSkillTargets(game: GameState, play: GamePlay): void {
+    const skill = play.card.skill;
+    if (!skill) return;
+    const icon = skillIconAsset(skill, {
+      surpriseRoll: play.surpriseRoll ?? null,
+      direction: this.directionAfterPlay(game, play),
+    });
+    const target = this.targetOf(game, play);
+    const mark = (playerId: number | undefined, text: string, tone: PlayerEffect['tone'], markIcon = icon) => {
+      if (playerId !== undefined) this.pushPlayerEffect({ playerId, icon: markIcon, text, tone });
+    };
+
+    switch (skill) {
+      case 'BLOCK':
+        mark(target?.id, 'Bloqueado', 'bad');
+        break;
+      case 'THEFT': {
+        const loot = `${play.theftAmount ?? 0} ${play.theftKind === 'COIN' ? '🪙' : '🂠'}`;
+        if (play.theftBlocked) {
+          mark(target?.id, 'Defendeu', 'good', skillIconAsset('SHIELD'));
+        } else {
+          mark(target?.id, `−${loot}`, 'bad');
+          mark(play.playerId, `+${loot}`, 'good');
+        }
+        break;
+      }
+      case 'BUY':
+        mark(target?.id, play.buyCardsDrawn ? `+${play.buyCardsDrawn} 🂠` : 'Sem compra', play.buyCardsDrawn ? 'bad' : 'neutral');
+        break;
+      case 'BOMB':
+        game.players.filter((player) => player.id !== play.playerId).forEach((player) => mark(player.id, '+1 🂠', 'bad'));
+        break;
+      case 'CHANGEOFHANDS':
+        mark(play.playerId, 'Trocou', 'neutral');
+        mark(target?.id, 'Trocou', 'neutral');
+        break;
+      case 'SHIELD':
+        mark(play.playerId, 'Escudo', 'good');
+        break;
+      case 'BURN':
+        mark(play.playerId, '−1 🂠', 'good');
+        break;
+      case 'SURPRISE':
+        if (play.surpriseRoll != null) mark(play.playerId, this.surpriseDeltaLabel(play), play.surpriseRoll > 0 ? 'good' : 'bad');
+        break;
+      case 'INVERTS':
+        mark(play.playerId, 'Inverteu', 'neutral');
+        break;
+      case 'PUZZLE':
+        mark(play.playerId, 'Desafio', 'neutral');
+        break;
+    }
+  }
+
+  private pushPlayerEffect(effect: Omit<PlayerEffect, 'id'>): void {
+    const id = ++this.nextEffectId;
+    this.playerEffects.update((list) => {
+      // Poucas marcas por avatar: a mais antiga dá lugar à nova.
+      const mine = list.filter((old) => old.playerId === effect.playerId);
+      const dropped = mine.slice(0, Math.max(0, mine.length - MAX_PLAYER_EFFECTS + 1)).map((old) => old.id);
+      dropped.forEach((oldId) => {
+        clearTimeout(this.effectTimers.get(oldId));
+        this.effectTimers.delete(oldId);
+      });
+      return [...list.filter((old) => !dropped.includes(old.id)), { ...effect, id }];
+    });
+    this.effectTimers.set(
+      id,
+      setTimeout(() => {
+        this.effectTimers.delete(id);
+        this.playerEffects.update((list) => list.filter((old) => old.id !== id));
+      }, PLAYER_EFFECT_DURATION),
+    );
   }
 
   /** Puzzles respondidos desde o último estado (inclui abertura e resposta no mesmo poll). */
@@ -885,6 +1018,12 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
           : `${amount > 0 ? `Pagou a prenda: comprou ${amount} ${amount === 1 ? 'carta' : 'cartas'}` : 'Sem cartas para comprar'} · força ${power}`,
       });
       this.pushBurst('PUZZLE', play, true);
+      this.pushPlayerEffect({
+        playerId: play.playerId,
+        icon: skillIconAsset('PUZZLE'),
+        text: correct ? `+${amount} 🪙` : `+${amount} 🂠`,
+        tone: correct ? 'good' : 'bad',
+      });
     }
   }
 
