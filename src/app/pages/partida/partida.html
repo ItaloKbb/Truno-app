@@ -65,7 +65,8 @@
       <app-round-banner [result]="result" (dismissed)="dismissRoundBanner()" />
     }
 
-    <div class="notice-stack" role="status" aria-live="polite">
+    <!-- Avisos discretos no canto, fora da mesa; acima dos botões quando a fase tem ações -->
+    <div class="notice-stack" role="status" aria-live="polite" [class.has-actions]="current.phase !== 'EM_ANDAMENTO'">
       @for (notice of notices(); track notice.id) {
         <button
           type="button"
@@ -91,11 +92,15 @@
       <!-- Só no celular: jogadores como avatares centralizados no topo -->
       <ul class="player-avatars" aria-label="Jogadores">
         @for (player of current.players; track player.id) {
-          <li [class.is-current]="player.id === current.currentPlayerId" [class.is-me]="isMe(player)">
+          <li
+            [class.is-current]="player.id === current.currentPlayerId"
+            [class.is-me]="isMe(player)"
+            [class.is-blocked]="isBlocked(current, player.id)"
+          >
             <button
               type="button"
               class="avatar-button"
-              [attr.aria-label]="'Ver ' + player.nickname"
+              [attr.aria-label]="'Ver ' + player.nickname + (isBlocked(current, player.id) ? ' (bloqueado)' : '')"
               [attr.aria-expanded]="selectedPlayerId() === player.id"
               (click)="togglePlayer(player.id)"
             >
@@ -104,10 +109,22 @@
               @if (current.phase === 'ENTRE_RODADAS' && player.ready) {
                 <span class="avatar-ready" aria-hidden="true">✓</span>
               }
+              @if (isBlocked(current, player.id)) {
+                <img class="avatar-status is-lock" src="assets/skills/bloqueio.svg" alt="" />
+              } @else if (isShielded(current, player.id)) {
+                <img class="avatar-status is-shield" src="assets/skills/escudo.svg" alt="" />
+              }
             </button>
+            @for (effect of effectsFor(player.id); track effect.id) {
+              <span class="player-effect" [attr.data-tone]="effect.tone" aria-hidden="true">
+                <img [src]="effect.icon" alt="" width="14" height="14" />{{ effect.text }}
+              </span>
+            }
             @if (selectedPlayerId() === player.id) {
               <div class="avatar-pop" role="status">
                 <strong>{{ player.nickname }}@if (isMe(player)) { <small>(você)</small> }</strong>
+                @if (isBlocked(current, player.id)) { <span>🔒 Bloqueado nesta rodada</span> }
+                @if (isShielded(current, player.id)) { <span>🛡 Escudo erguido</span> }
                 <span>🏆 {{ player.trophies }} troféu{{ player.trophies === 1 ? '' : 's' }}</span>
                 <span>🂠 {{ player.handSize }} carta{{ player.handSize === 1 ? '' : 's' }} na mão</span>
               </div>
@@ -147,13 +164,27 @@
           </div>
           <ul class="player-list">
             @for (player of current.players; track player.id) {
-              <li [class.is-current]="player.id === current.currentPlayerId">
+              <li [class.is-current]="player.id === current.currentPlayerId" [class.is-blocked]="isBlocked(current, player.id)">
                 <span class="player-name">
                   <span class="player-indicator" aria-hidden="true">{{ player.id === current.currentPlayerId ? '▶' : '•' }}</span>
                   {{ player.nickname }}
                   @if (player.host) { <small class="tag">host</small> }
                   @if (current.phase === 'ENTRE_RODADAS' && player.ready) { <small class="tag tag-ready">pronto</small> }
+                  @if (isBlocked(current, player.id)) {
+                    <small class="tag tag-status is-lock"><img src="assets/skills/bloqueio.svg" alt="" />bloqueado</small>
+                  } @else if (isShielded(current, player.id)) {
+                    <small class="tag tag-status is-shield"><img src="assets/skills/escudo.svg" alt="" />escudo</small>
+                  }
                 </span>
+                @if (effectsFor(player.id).length > 0) {
+                  <span class="player-effects" aria-hidden="true">
+                    @for (effect of effectsFor(player.id); track effect.id) {
+                      <span class="player-effect" [attr.data-tone]="effect.tone">
+                        <img [src]="effect.icon" alt="" width="14" height="14" />{{ effect.text }}
+                      </span>
+                    }
+                  </span>
+                }
                 <span class="player-meta">
                   <span title="Moedas">🪙 {{ player.matchCoins }}</span>
                   <span title="Troféus">🏆 {{ player.trophies }}</span>
@@ -261,6 +292,11 @@
                 }
               </div>
               <span class="seat-name" [class.is-winner]="seat.plays.length > 0 && isRoundWinnerPlay(current, seat.plays[0])">
+                @if (isBlocked(current, seat.player.id)) {
+                  <img class="seat-status" src="assets/skills/bloqueio.svg" alt="Bloqueado" />
+                } @else if (isShielded(current, seat.player.id)) {
+                  <img class="seat-status" src="assets/skills/escudo.svg" alt="Escudo" />
+                }
                 @if (seat.plays.length > 0 && isRoundWinnerPlay(current, seat.plays[0])) { 🏆 }
                 {{ seat.isMe ? 'Você' : seat.player.nickname }}
               </span>

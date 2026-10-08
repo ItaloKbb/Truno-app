@@ -1,0 +1,305 @@
+/* ---------- Avisos discretos, fora da mesa ---------- */
+
+/* Desktop: coluna livre à esquerda, abaixo dos dados da partida. */
+.notice-stack {
+  position: fixed;
+  top: 280px;
+  left: 16px;
+  z-index: 60;
+  display: grid;
+  gap: 6px;
+  width: 250px;
+  pointer-events: none;
+}
+
+.notice {
+  --tone: #e5b75d;
+  --life: 3000ms;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid #ffffff14;
+  border-left: 3px solid var(--tone);
+  border-radius: 8px;
+  background: #0c1310e6;
+  box-shadow: 0 6px 14px #0007;
+  backdrop-filter: blur(4px);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  animation:
+    notice-in 0.22s ease-out both,
+    notice-out 0.35s ease-in calc(var(--life) - 350ms) forwards;
+}
+
+.notice[data-kind='skill'] {
+  --tone: #4fc2b5;
+}
+
+.notice[data-kind='error'] {
+  --tone: #df7772;
+  background: #2a1311e6;
+}
+
+.notice:focus-visible {
+  outline: 2px solid #fff1c7;
+  outline-offset: 2px;
+}
+
+.notice-icon {
+  flex: none;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.notice-icon img {
+  display: block;
+  width: 20px;
+  height: 20px;
+  image-rendering: pixelated;
+}
+
+.notice-text {
+  display: grid;
+  min-width: 0;
+}
+
+.notice-text strong {
+  overflow: hidden;
+  color: #f4e4bb;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-text small {
+  overflow: hidden;
+  color: var(--text-soft);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Status e efeitos sobre os jogadores ---------- */
+
+.player-effect {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 3px;
+  border: 1px solid #ffffff22;
+  border-radius: 999px;
+  background: #101713f2;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 16px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px #0008;
+  animation: effect-rise 3.2s ease-out both;
+}
+
+.player-effect img {
+  image-rendering: pixelated;
+}
+
+.player-effect[data-tone='good'] {
+  border-color: #53b77b88;
+  color: #a7e3bd;
+}
+
+.player-effect[data-tone='bad'] {
+  border-color: #df777288;
+  color: #ffc3b9;
+}
+
+/* Lista de jogadores (desktop) */
+.player-list li {
+  position: relative;
+}
+
+.player-list li.is-blocked {
+  border-color: #6fa8d666;
+  background: #6fa8d612;
+}
+
+.player-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tag-status img {
+  width: 12px;
+  height: 12px;
+  image-rendering: pixelated;
+}
+
+.tag-status.is-lock {
+  border-color: #6fa8d677;
+  background: #6fa8d61f;
+  color: #c6e3f7;
+}
+
+.tag-status.is-shield {
+  border-color: #e5b75d77;
+  background: #e5b75d1a;
+  color: var(--gold-bright);
+}
+
+/* Nome no lugar da mesa */
+.seat-status {
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+  vertical-align: -3px;
+  image-rendering: pixelated;
+}
+
+/* Avatares (celular): cadeado ou escudo por cima da foto, efeitos logo abaixo. */
+.avatar-status {
+  position: absolute;
+  top: -10px;
+  left: -8px;
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 2px #000a);
+  animation: status-in 0.3s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.player-avatars li.is-blocked .avatar-button {
+  border-color: #6fa8d6;
+  filter: grayscale(0.7) brightness(0.85);
+}
+
+.player-avatars li.is-blocked .avatar-status {
+  filter: drop-shadow(0 2px 2px #000a);
+}
+
+.player-avatars .player-effect {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  z-index: 2;
+  translate: -50% 0;
+}
+
+.player-avatars .player-effect + .player-effect {
+  top: calc(100% + 23px);
+}
+
+@media (max-width: 1100px) {
+  /* Página rolando: canto inferior esquerdo, acima da barra de ações. */
+  .notice-stack {
+    top: auto;
+    bottom: 88px;
+    left: 12px;
+    width: min(320px, calc(100% - 24px));
+  }
+}
+
+/* Celular: na faixa da base, ao lado do Menu; acima dos botões quando a fase tem ações. */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  .notice-stack {
+    right: 112px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 8px;
+    align-content: end;
+    gap: 4px;
+    width: auto;
+  }
+
+  .notice-stack.has-actions {
+    right: 8px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 52px);
+  }
+
+  /* A gaveta do Menu ocupa a base: os avisos esperam ela fechar. */
+  .match-page:has(.match-board.menu-open) .notice-stack {
+    display: none;
+  }
+
+  /* Só os dois avisos mais recentes. */
+  .notice:nth-last-child(n + 3) {
+    display: none;
+  }
+
+  .notice {
+    min-height: 44px;
+    padding: 4px 8px;
+  }
+
+  .notice-text strong {
+    font-size: 12px;
+  }
+
+  .notice-text small {
+    font-size: 10px;
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    translate: -10px 0;
+  }
+}
+
+@keyframes notice-out {
+  to {
+    opacity: 0;
+    translate: -6px 0;
+  }
+}
+
+@keyframes effect-rise {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  10% {
+    opacity: 1;
+    scale: 1.08;
+  }
+  18% {
+    scale: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes status-in {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice {
+    animation: notice-out 0.3s linear calc(var(--life) - 300ms) forwards;
+  }
+
+  .player-effect,
+  .avatar-status {
+    animation: none;
+  }
+}
