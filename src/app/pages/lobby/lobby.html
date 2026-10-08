@@ -3,7 +3,7 @@
 		<header class="lobby-header">
 			<div class="lobby-brand">
 				<span class="brand-suits" aria-hidden="true"><i>♠</i><i>♥</i></span>
-				<span>TRUNO</span>
+				<span>TRUNO CRAZZY</span>
 				<span class="brand-suits" aria-hidden="true"><i>♦</i><i>♣</i></span>
 			</div>
 			<nav class="lobby-nav" aria-label="Navegação principal">
@@ -30,7 +30,7 @@
 						<div class="deck-card deck-card-front">
 							<span class="deck-corner">T <i>♠</i></span>
 							<span class="deck-emblem">♛</span>
-							<strong>TRUNO</strong>
+							<strong>TRUNO CRAZZY</strong>
 							<span class="deck-corner deck-corner-bottom">T <i>♠</i></span>
 						</div>
 					</div>
@@ -153,20 +153,24 @@
 				</form>
 			</article>
 
-			<article class="action-panel join-panel">
-				<div class="panel-heading">
-					<span class="panel-icon" aria-hidden="true">⌑</span>
-					<div>
-						<p class="eyebrow">JÁ TEM UM CONVITE?</p>
-						<h2>Entrar com código</h2>
+			<div class="lobby-side">
+				<article class="action-panel join-panel">
+					<div class="panel-heading">
+						<span class="panel-icon" aria-hidden="true">⌑</span>
+						<div>
+							<p class="eyebrow">JÁ TEM UM CONVITE?</p>
+							<h2>Entrar com código</h2>
+						</div>
 					</div>
-				</div>
-			<label for="game-code">Código da partida</label>
-			<input #gameCode id="game-code" type="text" placeholder="Digite o código" autocomplete="off" />
-			<button class="action-button join-button" type="button" [disabled]="pending()" (click)="accessGame(gameCode.value)">
-				<span aria-hidden="true">↗</span>{{ pending() ? 'Aguarde...' : 'Entrar na sala' }}
-			</button>
-			</article>
+					<label for="game-code">Código da partida</label>
+					<input #gameCode id="game-code" type="text" placeholder="Digite o código" autocomplete="off" />
+					<button class="action-button join-button" type="button" [disabled]="pending()" (click)="accessGame(gameCode.value)">
+						<span aria-hidden="true">↗</span>{{ pending() ? 'Aguarde...' : 'Entrar na sala' }}
+					</button>
+				</article>
+
+				<app-lobby-chat class="lobby-chat" (join)="accessGame($event)" />
+			</div>
 		</section>
 
 		@if (pending()) {
@@ -177,7 +181,7 @@
 		}
 
 		<footer class="lobby-footer">
-			<span>TRUNO · Lobby principal</span>
+			<span>TRUNO CRAZZY · Lobby principal</span>
 			<span>Mesas novas para até 6 jogadores</span>
 		</footer>
 	</div>

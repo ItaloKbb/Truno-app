@@ -139,6 +139,15 @@ O método privado `run` remove duplicação. A API converte o código para maiú
 3. Volte ao lobby e entre com o código da partida.
 4. Tente um código inexistente e confira o alerta.
 
+## Extra: chat do lobby
+
+Abaixo de "Entrar com código" fica o componente `app-lobby-chat` (`components/lobby-chat`). É um chat global via HTTP comum, sem WebSocket:
+
+- `GET /chat/messages?after=<id>`: **polling** (consulta periódica) a cada 3s, que traz só as mensagens novas.
+- `POST /chat/messages` `{ text }`: envia, com no máximo 280 caracteres e um envio por segundo por jogador.
+
+O `ChatService` (`services/modules/chat.service.ts`) segue o mesmo padrão `readApi` dos outros serviços. Quando uma mensagem contém um código de partida (6 caracteres do alfabeto `A-H J-N P-Z 2-9`), `splitMessage` (em `domain/chat.ts`) transforma esse trecho em um botão, e o clique chama `accessGame(code)`. Na sala de espera, o botão **Enviar no chat** publica o código da mesa.
+
 ## Erros comuns
 
 - Importar `LobbyService`: ele não pertence mais ao contrato atual.

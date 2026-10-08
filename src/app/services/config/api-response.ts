@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { isApiMessage } from '../../domain/auth';
+import type { ChatMessage } from '../../domain/chat';
 import { COLLECTION_RARITIES, type Achievement, type CollectionCard, type MatchActivity, type PlayerStats, type Profile } from '../../domain/profile';
 import type { Shop } from '../../domain/shop';
 import {
@@ -97,6 +98,17 @@ export function isRankingEntry(value: unknown): value is RankingEntry {
     typeof value['id'] === 'number' &&
     typeof value['nickname'] === 'string' &&
     typeof value['rankingPoints'] === 'number'
+  );
+}
+
+export function isChatMessage(value: unknown): value is ChatMessage {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value['id'] === 'number' &&
+    typeof value['authorId'] === 'number' &&
+    typeof value['nickname'] === 'string' &&
+    typeof value['text'] === 'string' &&
+    typeof value['sentAt'] === 'string'
   );
 }
 
