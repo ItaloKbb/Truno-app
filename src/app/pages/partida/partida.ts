@@ -10,6 +10,7 @@ import {
   SURPRISE_POWER,
   cardAsset,
   cardLabel,
+  manilhaValue,
   suitLabel,
   type GameCard,
   type GameDirection,
@@ -285,6 +286,11 @@ export class Partida implements OnInit, OnChanges, OnDestroy {
 
   public cardName(card: GameCard): string {
     return cardLabel(card.valor, card.naipe);
+  }
+
+  /** Coringa da rodada: carta da mão com o valor da manilha da vira atual. */
+  public isWildCard(game: GameState, card: GameCard): boolean {
+    return !!game.vira && card.valor === manilhaValue(game.vira.valor);
   }
 
   public suitName(card: GameCard): string {

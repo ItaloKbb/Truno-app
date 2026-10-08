@@ -32,6 +32,14 @@ export const CARD_VALUES = [
 ] as const;
 export type CardValue = (typeof CARD_VALUES)[number];
 
+/** Ordem de força usada pelo GameEngineService do java-web para achar a manilha. */
+const TRUCO_ORDER: readonly CardValue[] = ['QUATRO', 'CINCO', 'SEIS', 'SETE', 'DAMA', 'VALETE', 'REI', 'AS', 'DOIS', 'TRES'];
+
+/** Valor da manilha (coringa) para a vira: o seguinte na ordem do Truco. Só para destaque visual; quem decide é a API. */
+export function manilhaValue(vira: CardValue): CardValue {
+  return TRUCO_ORDER[(TRUCO_ORDER.indexOf(vira) + 1) % TRUCO_ORDER.length];
+}
+
 export const CARD_SUITS = ['OUROS', 'ESPADAS', 'COPAS', 'PAUS'] as const;
 export type CardSuit = (typeof CARD_SUITS)[number];
 
