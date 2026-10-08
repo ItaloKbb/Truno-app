@@ -283,7 +283,7 @@
 
     /* Seletor mais forte que o .hand-card abaixo, que mede pela altura em pé. */
     .hand-row .hand-card-slot {
-      --w: clamp(46px, 14vh, 66px);
+      --w: min(clamp(46px, 14vh, 66px), var(--fit));
     }
   }
 
@@ -334,6 +334,7 @@
 
   /* Cartas mais largas que a fatia de cada uma: sobrepõem-se como num leque. */
   .hand-row {
+    container-type: inline-size;
     gap: 0;
     padding: 24px 4px 10px;
   }
@@ -343,7 +344,9 @@
   }
 
   .hand-card-slot {
-    --w: clamp(58px, min(18vw, 19dvh), 78px);
+    /* Nunca maior que a página permite: no máximo ~40% de sobreposição entre cartas. */
+    --fit: calc(100cqw / var(--n) * 1.4);
+    --w: min(clamp(58px, min(18vw, 19dvh), 78px), var(--fit));
     --fan: rotate(calc((var(--i) - (var(--n) - 1) / 2) * min(5deg, 40deg / var(--n))));
     flex: 0 1 calc(var(--w) + 8px);
     transform: var(--fan);
